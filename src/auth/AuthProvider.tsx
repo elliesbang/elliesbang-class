@@ -1,6 +1,3 @@
-다음 내용을 src/auth/AuthProvider.tsx 파일로 생성해주세요.
-
-(코드 시작)
 import { createContext, useContext, useEffect, useState } from "react";
 import { supabase } from "../lib/supabaseClient";
 
