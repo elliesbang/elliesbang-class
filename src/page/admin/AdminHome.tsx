@@ -1,129 +1,188 @@
 import { useEffect, useState } from "react";
-import {
-  Users,
-  BookOpen,
-  GraduationCap,
-  Video,
-  FolderOpen,
-  Bell,
-} from "lucide-react";
-
-type StatCardProps = {
-  title: string;
-  value: number | string;
-  icon: React.ReactNode;
-};
-
-const StatCard = ({ title, value, icon }: StatCardProps) => {
-  return (
-    <div className="flex items-center gap-4 rounded-xl border bg-white px-6 py-5 shadow-sm">
-      <div className="p-3 rounded-xl bg-[#f3efe4] text-[#404040]">
-        {icon}
-      </div>
-      <div>
-        <p className="text-sm text-[#7a7a7a]">{title}</p>
-        <p className="text-xl font-semibold text-[#404040]">{value}</p>
-      </div>
-    </div>
-  );
-};
+import { Users, Video, BookOpen, ClipboardList } from "lucide-react";
 
 export default function AdminHome() {
   const [stats, setStats] = useState({
     totalStudents: 0,
-    totalVodUsers: 0,
+    totalVod: 0,
     totalClasses: 0,
-    totalAssignments: 0,
-    totalVodVideos: 0,
-    totalNotices: 0,
+    totalAssignmentsThisMonth: 0,
   });
 
-  // ⚡ 추후 Supabase 연동 가능
+  const [recentAssignments, setRecentAssignments] = useState([]);
+  const [latestNotice, setLatestNotice] = useState(null);
+  const [classProgress, setClassProgress] = useState([]);
+
+  // -----------------------------------------------------------
+  // 📌 대시보드 데이터 로딩 (임시 더미 데이터)
+  // -----------------------------------------------------------
   useEffect(() => {
-    async function loadStats() {
-      try {
-        // 예: const { data, error } = await supabase.rpc("get_admin_stats");
-        // 지금은 목업 데이터
-        setStats({
-          totalStudents: 128,
-          totalVodUsers: 67,
-          totalClasses: 12,
-          totalAssignments: 356,
-          totalVodVideos: 42,
-          totalNotices: 18,
-        });
-      } catch (e) {
-        console.error(e);
-      }
+    async function loadDashboard() {
+      // TODO: Supabase에서 실제 데이터 가져오기
+
+      setStats({
+        totalStudents: 128,
+        totalVod: 57,
+        totalClasses: 12,
+        totalAssignmentsThisMonth: 43,
+      });
+
+      setRecentAssignments([
+        {
+          id: 1,
+          student: "김수지",
+          title: "1주차 과제",
+          date: "2025-02-10",
+          status: "checked",
+        },
+        {
+          id: 2,
+          student: "박민지",
+          title: "배너 디자인 제출",
+          date: "2025-02-10",
+          status: "pending",
+        },
+        {
+          id: 3,
+          student: "강효린",
+          title: "2주차 스케치",
+          date: "2025-02-09",
+          status: "checked",
+        },
+      ]);
+
+      setLatestNotice({
+        title: "📢 2월 전체 공지",
+        content: "설 연휴 기간에는 모든 강의가 휴강입니다.",
+        date: "2025-02-01",
+      });
+
+      setClassProgress([
+        { className: "캔디마 기초반", done: 30, total: 50 },
+        { className: "AI 일러스트 챌린지", done: 12, total: 20 },
+        { className: "굿즈 디자인 실전반", done: 40, total: 60 },
+      ]);
     }
-    loadStats();
+
+    loadDashboard();
   }, []);
 
   return (
-    <div className="w-full">
-      {/* 페이지 제목 */}
+    <div className="pb-10">
       <h1 className="text-2xl font-bold text-[#404040] mb-6">
         관리자 대시보드
       </h1>
 
-      {/* 통계 섹션 */}
-      <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-5 mb-10">
-        <StatCard
-          title="수강생 수"
-          value={stats.totalStudents}
-          icon={<Users size={22} />}
-        />
-        <StatCard
-          title="VOD 사용자 수"
-          value={stats.totalVodUsers}
-          icon={<Video size={22} />}
-        />
-        <StatCard
-          title="강의실 수"
-          value={stats.totalClasses}
-          icon={<BookOpen size={22} />}
-        />
-        <StatCard
-          title="과제 제출 수"
-          value={stats.totalAssignments}
-          icon={<GraduationCap size={22} />}
-        />
-        <StatCard
-          title="VOD 영상 수"
-          value={stats.totalVodVideos}
-          icon={<FolderOpen size={22} />}
-        />
-        <StatCard
-          title="전체 공지 수"
-          value={stats.totalNotices}
-          icon={<Bell size={22} />}
-        />
-      </div>
-
-      {/* 최근 섹션 (추후 API 연결) */}
-      <div className="grid grid-cols-1 xl:grid-cols-2 gap-6">
-        {/* 최근 공지 */}
-        <div className="rounded-xl border bg-white p-6 shadow-sm">
-          <h2 className="text-lg font-semibold text-[#404040] mb-4">
-            최근 공지
-          </h2>
-          <ul className="space-y-3 text-sm text-[#5a5a5a]">
-            <li>• 새 강의 영상 업로드 안내</li>
-            <li>• 시스템 점검 예정 공지</li>
-            <li>• 11월 수업 일정 안내</li>
-          </ul>
+      {/* ----------------------------------------------------
+          📌 상단 요약 카드 4개
+          ---------------------------------------------------- */}
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
+        {/* 전체 수강생 */}
+        <div className="bg-white border rounded-xl p-4 shadow-sm flex flex-col gap-2">
+          <Users className="text-[#404040]" size={26} />
+          <p className="text-sm text-gray-500">전체 수강생</p>
+          <p className="text-2xl font-bold">{stats.totalStudents}</p>
         </div>
 
-        {/* 최근 과제 제출 */}
-        <div className="rounded-xl border bg-white p-6 shadow-sm">
-          <h2 className="text-lg font-semibold text-[#404040] mb-4">
-            최근 과제 제출
+        {/* VOD 사용자 */}
+        <div className="bg-white border rounded-xl p-4 shadow-sm flex flex-col gap-2">
+          <Video className="text-[#404040]" size={26} />
+          <p className="text-sm text-gray-500">VOD 사용자</p>
+          <p className="text-2xl font-bold">{stats.totalVod}</p>
+        </div>
+
+        {/* 전체 수업 */}
+        <div className="bg-white border rounded-xl p-4 shadow-sm flex flex-col gap-2">
+          <BookOpen className="text-[#404040]" size={26} />
+          <p className="text-sm text-gray-500">전체 수업 수</p>
+          <p className="text-2xl font-bold">{stats.totalClasses}</p>
+        </div>
+
+        {/* 이번달 과제 제출 */}
+        <div className="bg-white border rounded-xl p-4 shadow-sm flex flex-col gap-2">
+          <ClipboardList className="text-[#404040]" size={26} />
+          <p className="text-sm text-gray-500">이번달 과제 제출</p>
+          <p className="text-2xl font-bold">{stats.totalAssignmentsThisMonth}</p>
+        </div>
+      </div>
+
+      {/* ----------------------------------------------------
+          📌 최신 전체 공지
+          ---------------------------------------------------- */}
+      {latestNotice && (
+        <div className="bg-white border rounded-xl p-5 shadow-sm mb-10">
+          <h2 className="text-lg font-semibold text-[#404040] mb-2">
+            최신 공지
           </h2>
-          <ul className="space-y-3 text-sm text-[#5a5a5a]">
-            <li>• 김수지님의 과제 제출 — 캘리그라피 기초반</li>
-            <li>• 박민지님의 과제 제출 — AI 일러스트 과정</li>
-            <li>• 홍예린님의 과제 제출 — 굿즈 디자인 과정</li>
-          </ul>
+          <p className="text-gray-700 font-medium">{latestNotice.title}</p>
+          <p className="text-sm text-[#555] whitespace-pre-line mt-1">
+            {latestNotice.content}
+          </p>
+          <p className="text-xs text-gray-400 mt-2">{latestNotice.date}</p>
+        </div>
+      )}
+
+      {/* ----------------------------------------------------
+          📌 최근 제출된 과제 목록
+          ---------------------------------------------------- */}
+      <div className="bg-white border rounded-xl p-5 shadow-sm mb-10">
+        <h2 className="text-lg font-semibold text-[#404040] mb-4">
+          최근 제출된 과제
+        </h2>
+
+        <ul className="space-y-3">
+          {recentAssignments.map((a) => (
+            <li
+              key={a.id}
+              className="flex justify-between border-b pb-2"
+            >
+              <div>
+                <p className="font-semibold">{a.student}</p>
+                <p className="text-sm text-gray-600">{a.title}</p>
+                <p className="text-xs text-gray-400 mt-1">{a.date}</p>
+              </div>
+
+              <span
+                className={`px-2 py-1 text-xs rounded self-start ${
+                  a.status === "checked"
+                    ? "bg-green-200 text-green-700"
+                    : "bg-gray-200 text-gray-600"
+                }`}
+              >
+                {a.status === "checked" ? "확인됨" : "미확인"}
+              </span>
+            </li>
+          ))}
+        </ul>
+      </div>
+
+      {/* ----------------------------------------------------
+          📌 수업별 진행 현황 (막대바 UI)
+          ---------------------------------------------------- */}
+      <div className="bg-white border rounded-xl p-5 shadow-sm">
+        <h2 className="text-lg font-semibold text-[#404040] mb-4">
+          수업별 진행 현황
+        </h2>
+
+        <div className="space-y-5">
+          {classProgress.map((cls, idx) => {
+            const percent = Math.round((cls.done / cls.total) * 100);
+
+            return (
+              <div key={idx}>
+                <p className="text-sm font-medium mb-1">{cls.className}</p>
+
+                <div className="w-full h-3 bg-gray-200 rounded-full">
+                  <div
+                    className="h-full bg-[#f3efe4] rounded-full"
+                    style={{ width: `${percent}%` }}
+                  />
+                </div>
+
+                <p className="text-xs text-gray-500 mt-1">{percent}% 진행</p>
+              </div>
+            );
+          })}
         </div>
       </div>
     </div>
