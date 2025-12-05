@@ -23,21 +23,20 @@ export default function AssignmentList() {
   }, []);
 
   // ------------------------------------------
-  // 📌 선택된 강의실의 과제 제출 목록 불러오기
+  // 📌 선택 강의실의 과제 목록 불러오기
   // ------------------------------------------
   useEffect(() => {
     if (!selectedCategory) return;
 
     async function loadAssignments() {
-      // TODO: Supabase 연동 예정
       setAssignments([
         {
           id: 101,
           studentName: "김수지",
           title: "1주차 과제",
           submittedAt: "2025-02-10 14:23",
-          type: "file",
-          contentUrl: "https://example.com/file1.pdf",
+          type: "image",
+          imageUrl: "https://via.placeholder.com/600x400.png",
           status: "pending",
         },
         {
@@ -48,6 +47,15 @@ export default function AssignmentList() {
           type: "text",
           text: "이번 주에는 캘리그라피 연습을…",
           status: "checked",
+        },
+        {
+          id: 103,
+          studentName: "홍예린",
+          title: "1주차 과제",
+          submittedAt: "2025-02-10 13:11",
+          type: "file",
+          contentUrl: "https://example.com/file.pdf",
+          status: "pending",
         },
       ]);
     }
@@ -119,7 +127,6 @@ export default function AssignmentList() {
 
                 {/* 액션 버튼 */}
                 <div className="flex items-center gap-3">
-                  {/* 보기 */}
                   <button
                     onClick={() => setViewingAssignment(a)}
                     className="text-gray-600 hover:text-black"
@@ -127,7 +134,6 @@ export default function AssignmentList() {
                     <Eye size={20} />
                   </button>
 
-                  {/* 피드백 작성 페이지 이동 */}
                   <button
                     onClick={() =>
                       navigate(`/admin/feedback?assignmentId=${a.id}`)
@@ -146,13 +152,13 @@ export default function AssignmentList() {
       {/* --------------------- 과제 보기 모달 --------------------- */}
       {viewingAssignment && (
         <div className="fixed inset-0 bg-black/40 flex justify-center items-center z-50">
-          <div className="bg-white p-6 rounded-xl w-full max-w-lg shadow-xl">
+          <div className="bg-white p-6 rounded-xl w-full max-w-xl shadow-xl">
             <h2 className="text-xl font-semibold mb-4">
               {viewingAssignment.studentName} — {viewingAssignment.title}
             </h2>
 
-            {/* 파일 or 텍스트 */}
-            {viewingAssignment.type === "file" ? (
+            {/* 타입별 렌더링 */}
+            {viewingAssignment.type === "file" && (
               <a
                 href={viewingAssignment.contentUrl}
                 target="_blank"
@@ -160,10 +166,21 @@ export default function AssignmentList() {
               >
                 파일 보기
               </a>
-            ) : (
+            )}
+
+            {viewingAssignment.type === "text" && (
               <p className="text-[#404040] whitespace-pre-line mb-4">
                 {viewingAssignment.text}
               </p>
+            )}
+
+            {/* ⭐ 이미지 제출인 경우 이미지 크게 보여주기 */}
+            {viewingAssignment.type === "image" && (
+              <img
+                src={viewingAssignment.imageUrl}
+                alt="submitted assignment"
+                className="w-full rounded-lg border mb-4"
+              />
             )}
 
             <div className="flex justify-end gap-3">
