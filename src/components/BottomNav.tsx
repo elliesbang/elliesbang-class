@@ -1,159 +1,121 @@
-import { useNavigate, useLocation } from "react-router-dom";
-import { useAuth } from "../auth/AuthProvider";
+import { useEffect, useState } from "react";
+import { useLocation, useNavigate } from "react-router-dom";
+import {
+  Home as HomeIcon,
+  BookOpen,
+  PlayCircle,
+  Megaphone,
+  User,
+} from "lucide-react";
 
-const ICON_SIZE = 22;
-
-// SVG 아이콘 세트
-const icons = {
-  home: (active: boolean) => (
-    <svg
-      width={ICON_SIZE}
-      height={ICON_SIZE}
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke={active ? "#ffd331" : "#b7b7b7"}
-      strokeWidth="2"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-    >
-      <path d="M3 9.5L12 3l9 6.5v11a1 1 0 0 1-1 1h-6v-6H10v6H4a1 1 0 0 1-1-1v-11z" />
-    </svg>
-  ),
-  class: (active: boolean) => (
-    <svg
-      width={ICON_SIZE}
-      height={ICON_SIZE}
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke={active ? "#ffd331" : "#b7b7b7"}
-      strokeWidth="2"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-    >
-      <rect x="3" y="4" width="18" height="14" rx="2" />
-      <path d="M3 10h18" />
-    </svg>
-  ),
-  notice: (active: boolean) => (
-    <svg
-      width={ICON_SIZE}
-      height={ICON_SIZE}
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke={active ? "#ffd331" : "#b7b7b7"}
-      strokeWidth="2"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-    >
-      <path d="M12 22v-6m0 0c-4.418 0-8-3.582-8-8V5l8-3 8 3v3c0 4.418-3.582 8-8 8z" />
-    </svg>
-  ),
-  vod: (active: boolean) => (
-    <svg
-      width={ICON_SIZE}
-      height={ICON_SIZE}
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke={active ? "#ffd331" : "#b7b7b7"}
-      strokeWidth="2"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-    >
-      <polygon points="5 3 19 12 5 21 5 3" />
-    </svg>
-  ),
-  my: (active: boolean) => (
-    <svg
-      width={ICON_SIZE}
-      height={ICON_SIZE}
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke={active ? "#ffd331" : "#b7b7b7"}
-      strokeWidth="2"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-    >
-      <circle cx="12" cy="8" r="4" />
-      <path d="M4 21c0-4 4-7 8-7s8 3 8 7" />
-    </svg>
-  ),
-};
+type Role = "admin" | "student" | "vod" | null;
 
 const BottomNav = () => {
-  const navigate = useNavigate();
+  const [role, setRole] = useState<Role>(null);
   const location = useLocation();
-  const { role } = useAuth();
+  const navigate = useNavigate();
 
-  const path = location.pathname;
+  // 로그인 후 저장해둔 role 가져오기
+  useEffect(() => {
+    const stored = localStorage.getItem("role") as Role | null;
+    if (stored) {
+      setRole(stored);
+    }
+  }, []);
 
+  // 로그인 안 되어 있으면 하단 내비 안 보여줌
   if (!role) return null;
 
-  // 역할별 메뉴 구성
-  const menus =
-    role === "admin"
-      ? [
-          { label: "홈", path: "/", icon: icons.home },
-          { label: "관리", path: "/admin/my", icon: icons.class },
-          { label: "My", path: "/admin/my", icon: icons.my },
-        ]
-      : role === "student"
-      ? [
-          { label: "홈", path: "/", icon: icons.home },
-          { label: "강의실", path: "/student/my", icon: icons.class },
-          { label: "공지", path: "/student/notices", icon: icons.notice },
-          { label: "My", path: "/student/my", icon: icons.my },
-        ]
-      : [
-          { label: "홈", path: "/", icon: icons.home },
-          { label: "VOD", path: "/vod/my", icon: icons.vod },
-          { label: "My", path: "/vod/my", icon: icons.my },
-        ];
+  // 역할별 경로 매핑
+  const paths = getPathsByRole(role);
+
+  const items = [
+    { key: "home", label: "홈", icon: HomeIcon, path: paths.home },
+    { key: "classroom", label: "강의실", icon: BookOpen, path: paths.classroom },
+    { key: "vod", label: "VOD", icon: PlayCircle, path: paths.vod },
+    { key: "notices", label: "공지", icon: Megaphone, path: paths.notices },
+    { key: "my", label: "마이", icon: User, path: paths.my },
+  ];
+
+  const isActive = (path: string) => {
+    // 홈 처리: "/" 또는 "/home" 모두 홈으로 인식
+    if (path === "/home") {
+      if (location.pathname === "/home" || location.pathname === "/") return true;
+    }
+    return (
+      location.pathname === path ||
+      location.pathname.startsWith(path + "/")
+    );
+  };
 
   return (
-    <div
-      style={{
-        position: "fixed",
-        bottom: 0,
-        left: 0,
-        right: 0,
-        height: 68,
-        display: "flex",
-        justifyContent: "space-around",
-        alignItems: "center",
-        background: "#ffffff",
-        borderTop: "1px solid #eee",
-        paddingBottom: "env(safe-area-inset-bottom)",
-        zIndex: 9999,
-      }}
-    >
-      {menus.map((m) => {
-        const active = path === m.path;
-
-        return (
-          <div
-            key={m.path}
-            onClick={() => navigate(m.path)}
-            style={{
-              textAlign: "center",
-              cursor: "pointer",
-              color: active ? "#ffd331" : "#777",
-            }}
-          >
-            <div>{m.icon(active)}</div>
-            <div
-              style={{
-                fontSize: 12,
-                marginTop: 4,
-                fontWeight: active ? 700 : 400,
-              }}
+    <nav className="fixed bottom-0 left-0 right-0 z-40 border-t bg-[#fffdf6]">
+      <div className="mx-auto flex max-w-md items-center justify-between px-4 py-2">
+        {items.map(({ key, label, icon: Icon, path }) => {
+          const active = isActive(path);
+          return (
+            <button
+              key={key}
+              type="button"
+              onClick={() => navigate(path)}
+              className="flex flex-1 flex-col items-center gap-1 text-xs"
             >
-              {m.label}
-            </div>
-          </div>
-        );
-      })}
-    </div>
+              <div
+                className={`flex h-8 w-8 items-center justify-center rounded-full ${
+                  active ? "bg-[#f3e7c7]" : "bg-transparent"
+                }`}
+              >
+                <Icon
+                  size={20}
+                  className={active ? "text-[#404040]" : "text-[#9b8f85]"}
+                />
+              </div>
+              <span
+                className={active ? "text-[11px] text-[#404040]" : "text-[11px] text-[#9b8f85]"}
+              >
+                {label}
+              </span>
+            </button>
+          );
+        })}
+      </div>
+    </nav>
   );
 };
+
+function getPathsByRole(role: Role) {
+  return {
+    // 홈 화면: 전체공지 + VOD 목록 공통
+    home: "/home",
+
+    // 강의실 탭
+    classroom:
+      role === "admin"
+        ? "/admin/classroom"
+        : role === "student"
+        ? "/student/classroom"
+        : "/vod/list", // vod 사용자는 강의실 대신 VOD 리스트로
+
+    // VOD 탭
+    vod:
+      role === "admin"
+        ? "/admin/vod"
+        : "/vod/list",
+
+    // 공지 탭
+    notices:
+      role === "admin"
+        ? "/admin/notices"
+        : "/notices",
+
+    // 마이 탭
+    my:
+      role === "admin"
+        ? "/admin/my"
+        : role === "student"
+        ? "/student/my"
+        : "/vod/my",
+  };
+}
 
 export default BottomNav;
