@@ -1,3 +1,6 @@
+// 파일 상단에 추가
+import ClassroomCategoryPage from "./pages/student/ClassroomCategoryPage";
+import ClassroomDetailPage from "./pages/student/ClassroomDetailPage";
 import { BrowserRouter, Routes, Route, useLocation } from "react-router-dom";
 import { AuthProvider } from "./auth/AuthProvider";
 import ProtectedRoute from "./auth/ProtectedRoute";
