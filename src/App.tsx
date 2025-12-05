@@ -1,6 +1,7 @@
 // 파일 상단에 추가
 import ClassroomCategoryPage from "./pages/student/ClassroomCategoryPage";
 import ClassroomDetailPage from "./pages/student/ClassroomDetailPage";
+
 import { BrowserRouter, Routes, Route, useLocation } from "react-router-dom";
 import { AuthProvider } from "./auth/AuthProvider";
 import ProtectedRoute from "./auth/ProtectedRoute";
@@ -102,12 +103,30 @@ const AppContent = () => {
             }
           />
 
-          {/* ---------------- STUDENT (마이) ---------------- */}
+          {/* ---------------- STUDENT (마이 + 강의실) ---------------- */}
           <Route
             path="/student/my"
             element={
               <ProtectedRoute allow={["student"]}>
                 <StudentMy />
+              </ProtectedRoute>
+            }
+          />
+
+          <Route
+            path="/student/classroom"
+            element={
+              <ProtectedRoute allow={["student", "admin"]}>
+                <ClassroomCategoryPage />
+              </ProtectedRoute>
+            }
+          />
+
+          <Route
+            path="/student/classroom/:categoryId"
+            element={
+              <ProtectedRoute allow={["student", "admin"]}>
+                <ClassroomDetailPage />
               </ProtectedRoute>
             }
           />
