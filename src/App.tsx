@@ -1,49 +1,49 @@
 // 파일 상단에 추가
-import ClassroomCategoryPage from "./pages/student/ClassroomCategoryPage";
-import ClassroomDetailPage from "./pages/student/ClassroomDetailPage";
+import ClassroomCategoryPage from "./page/student/ClassroomCategoryPage";
+import ClassroomDetailPage from "./page/student/ClassroomDetailPage";
 
 import { BrowserRouter, Routes, Route, useLocation } from "react-router-dom";
 import { AuthProvider } from "./auth/AuthProvider";
 import ProtectedRoute from "./auth/ProtectedRoute";
 
 // 인증 페이지
-import RoleSelect from "./pages/auth/RoleSelect";
-import Login from "./pages/auth/Login";
-import Signup from "./pages/auth/Signup";
+import RoleSelect from "./page/auth/RoleSelect";
+import Login from "./page/auth/Login";
+import Signup from "./page/auth/Signup";
 
 // 역할별 마이
-import AdminMy from "./pages/admin/AdminMy";
-import StudentMy from "./pages/student/StudentMy";
-import VodMy from "./pages/vod/VodMy";
+import AdminMy from "./page/admin/AdminMy";
+import StudentMy from "./page/student/StudentMy";
+import VodMy from "./page/vod/VodMy";
 
 // 홈 & VOD 페이지
-import Home from "./pages/Home";
-import VodList from "./pages/vod/VodList";
-import VodDetail from "./pages/vod/VodDetail";
+import Home from "./page/Home";
+import VodList from "./page/vod/VodList";
+import VodDetail from "./page/vod/VodDetail";
 
 // 관리자 대시보드 레이아웃 및 페이지
 import AdminLayout from "./components/admin/AdminLayout";
-import AdminHome from "./pages/admin/AdminHome";
+import AdminHome from "./page/admin/AdminHome";
 
-import ClassroomVideos from "./pages/admin/classroom/ClassroomVideos";
-import ClassroomMaterials from "./pages/admin/classroom/ClassroomMaterials";
-import ClassroomNotices from "./pages/admin/classroom/ClassroomNotices";
+import ClassroomVideos from "./page/admin/classroom/ClassroomVideos";
+import ClassroomMaterials from "./page/admin/classroom/ClassroomMaterials";
+import ClassroomNotices from "./page/admin/classroom/ClassroomNotices";
 
-import AssignmentList from "./pages/admin/assignments/AssignmentList";
-import FeedbackPage from "./pages/admin/assignments/FeedbackPage";
+import AssignmentList from "./page/admin/assignments/AssignmentList";
+import FeedbackPage from "./page/admin/assignments/FeedbackPage";
 
-import GlobalNotices from "./pages/admin/notices/GlobalNotices";
-import VodManager from "./pages/admin/vod/VodManager";
+import GlobalNotices from "./page/admin/notices/GlobalNotices";
+import VodManager from "./page/admin/vod/VodManager";
 
-import StudentUsers from "./pages/admin/users/StudentUsers";
-import VodUsers from "./pages/admin/users/VodUsers";
+import StudentUsers from "./page/admin/users/StudentUsers";
+import VodUsers from "./page/admin/users/VodUsers";
 
-import ClassManager from "./pages/admin/classes/ClassManager";
+import ClassManager from "./page/admin/classes/ClassManager";
 
 // 공통 컴포넌트
 import BottomNav from "./components/BottomNav";
 import Header from "./components/Header";
-import Notifications from "./pages/Notifications";
+import Notifications from "./page/Notifications";
 
 
 // -----------------------------------------------
