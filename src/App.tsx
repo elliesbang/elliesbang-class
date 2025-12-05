@@ -12,79 +12,90 @@ import AdminMy from "./pages/admin/AdminMy";
 import StudentMy from "./pages/student/StudentMy";
 import VodMy from "./pages/vod/VodMy";
 
+// 공통 컴포넌트
+import BottomNav from "./components/BottomNav";
+import Header from "./components/Header";
+
 const App = () => {
   return (
     <BrowserRouter>
       <AuthProvider>
-        <Routes>
+        <>
+          {/* ------------------------------ */}
+          {/* ⭐⭐ 여기! Routes보다 위에 두는 것 ⭐⭐ */}
+          <Header />
+          {/* ------------------------------ */}
 
-          {/* ----------- AUTH ----------- */}
+          {/* 본문이 헤더에 가리지 않도록 패딩 추가 */}
+          <div style={{ paddingTop: 60 }}>
+            <Routes>
 
-          {/* 역할 선택 */}
-          <Route path="/auth/role" element={<RoleSelect />} />
+              {/* ----------- AUTH ----------- */}
 
-          {/* 로그인 페이지 */}
-          {/* 로그인된 상태에서는 접근 불가 → 자동 redirect */}
-          <Route
-            path="/auth/login"
-            element={
-              <ProtectedRoute allow={["admin", "student", "vod"]}>
-                <Login />
-              </ProtectedRoute>
-            }
-          />
+              <Route path="/auth/role" element={<RoleSelect />} />
 
-          {/* 회원가입 페이지 (로그인 상태면 접근 불가) */}
-          <Route
-            path="/auth/signup"
-            element={
-              <ProtectedRoute allow={["admin", "student", "vod"]}>
-                <Signup />
-              </ProtectedRoute>
-            }
-          />
+              <Route
+                path="/auth/login"
+                element={
+                  <ProtectedRoute allow={["admin", "student", "vod"]}>
+                    <Login />
+                  </ProtectedRoute>
+                }
+              />
 
-          {/* ----------- ADMIN ----------- */}
+              <Route
+                path="/auth/signup"
+                element={
+                  <ProtectedRoute allow={["admin", "student", "vod"]}>
+                    <Signup />
+                  </ProtectedRoute>
+                }
+              />
 
-          <Route
-            path="/admin/my"
-            element={
-              <ProtectedRoute allow={["admin"]}>
-                <AdminMy />
-              </ProtectedRoute>
-            }
-          />
+              {/* ----------- ADMIN ----------- */}
 
-          {/* ----------- STUDENT ----------- */}
+              <Route
+                path="/admin/my"
+                element={
+                  <ProtectedRoute allow={["admin"]}>
+                    <AdminMy />
+                  </ProtectedRoute>
+                }
+              />
 
-          <Route
-            path="/student/my"
-            element={
-              <ProtectedRoute allow={["student"]}>
-                <StudentMy />
-              </ProtectedRoute>
-            }
-          />
+              {/* ----------- STUDENT ----------- */}
 
-          {/* ----------- VOD ----------- */}
+              <Route
+                path="/student/my"
+                element={
+                  <ProtectedRoute allow={["student"]}>
+                    <StudentMy />
+                  </ProtectedRoute>
+                }
+              />
 
-          <Route
-            path="/vod/my"
-            element={
-              <ProtectedRoute allow={["vod"]}>
-                <VodMy />
-              </ProtectedRoute>
-            }
-          />
+              {/* ----------- VOD ----------- */}
 
-          {/* 기본 루트 → 역할 선택 */}
-          <Route path="/" element={<RoleSelect />} />
-        </Routes>
-        
-{/* ---- 하단 내비: 로그인한 경우에만 표시 ---- */}
+              <Route
+                path="/vod/my"
+                element={
+                  <ProtectedRoute allow={["vod"]}>
+                    <VodMy />
+                  </ProtectedRoute>
+                }
+              />
+
+              {/* 기본 루트 */}
+              <Route path="/" element={<RoleSelect />} />
+
+            </Routes>
+          </div>
+
+          {/* 하단 네비게이션 */}
           <BottomNav />
+
         </>
-       </AuthProvider>
+      </AuthProvider>
     </BrowserRouter>
   );
 };
