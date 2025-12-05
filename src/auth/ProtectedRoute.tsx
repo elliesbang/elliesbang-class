@@ -3,29 +3,32 @@ import { useAuth } from "./AuthProvider";
 
 type Props = {
   children: React.ReactNode;
-  allowedRoles?: ("student" | "vod" | "admin")[];
+  allow?: ("student" | "vod" | "admin")[];
 };
 
-const ProtectedRoute = ({ children, allowedRoles }: Props) => {
+const ProtectedRoute = ({ children, allow }: Props) => {
   const { user, role, loading } = useAuth();
 
-  // 인증/역할 로딩 중일 때 화면 깜빡임 방지
+  // 아직 세션 확인 중이면 화면 깜빡임 방지
   if (loading) {
-    return <div style={{ padding: 20 }}>Loading...</div>;
+    return <div>Loading...</div>;
   }
 
-  // 로그인 안됨 → 역할 선택 페이지로 이동
-  if (!user || !role) {
-    return <Navigate to="/auth/role" replace />;
+  // 로그인 안 된 경우 → 로그인 화면으로 이동
+  if (!user) {
+    return <Navigate to="/auth/login" replace />;
   }
 
-  // 역할 제한이 있는 페이지라면 역할 검사
-  if (allowedRoles && !allowedRoles.includes(role)) {
-    return <Navigate to="/auth/role" replace />;
+  // 특정 역할만 접근 가능한 페이지라면 체크
+  if (allow && !allow.includes(role as any)) {
+    // 역할이 맞지 않으면 해당 역할의 홈으로 보내기
+    if (role === "admin") return <Navigate to="/admin/my" replace />;
+    if (role === "student") return <Navigate to="/student/my" replace />;
+    if (role === "vod") return <Navigate to="/vod/my" replace />;
+    return <Navigate to="/" replace />;
   }
 
   return <>{children}</>;
 };
 
 export default ProtectedRoute;
-(코드 끝)
