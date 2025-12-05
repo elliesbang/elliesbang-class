@@ -29,8 +29,8 @@ import ClassroomVideos from "./page/admin/classroom/ClassroomVideos";
 import ClassroomMaterials from "./page/admin/classroom/ClassroomMaterials";
 import ClassroomNotices from "./page/admin/classroom/ClassroomNotices";
 
-import AssignmentList from "./page/admin/assignments/AssignmentList";
-import FeedbackPage from "./page/admin/assignments/FeedbackPage";
+import AssignmentList from "./page/admin/AssignmentList";
+import FeedbackPage from "./page/admin/FeedbackPage";
 
 import GlobalNotices from "./page/admin/notices/GlobalNotices";
 import VodManager from "./page/admin/vod/VodManager";
