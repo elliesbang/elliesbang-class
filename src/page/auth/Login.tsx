@@ -1,91 +1,78 @@
-import { useEffect, useState } from "react";
-import { supabase } from "../../lib/supabaseClient";
+import { useState } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
+import { supabase } from "../../lib/supabaseClient";
 
 const Login = () => {
-  const [params] = useSearchParams();
-  const role = params.get("role"); // student | vod | admin
-
   const navigate = useNavigate();
+  const [params] = useSearchParams();
+  const role = params.get("role"); // student / vod / admin
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [error, setError] = useState<string | null>(null);
+  const [loading, setLoading] = useState(false);
 
-  useEffect(() => {
-    if (!role) {
-      navigate("/auth/role");
-    }
-  }, [role]);
-
-  const handleLogin = async () => {
-    setError(null);
+  const onLogin = async () => {
+    setLoading(true);
 
     const { data, error } = await supabase.auth.signInWithPassword({
       email,
       password,
     });
 
+    setLoading(false);
+
     if (error) {
-      setError(error.message);
+      alert(error.message);
       return;
     }
 
-    // 역할 확인
-    const userRole = data.user.user_metadata?.role;
+    // 로그인 성공 → 역할 확인 후 이동
+    const userRole = data.user.user_metadata.role;
 
-    if (userRole !== role) {
-      setError("선택한 역할과 계정 역할이 일치하지 않습니다.");
-      await supabase.auth.signOut();
-      return;
-    }
-
-    // 로그인 성공 → 역할별 이동
-    if (userRole === "admin") navigate("/admin");
-    if (userRole === "student") navigate("/student");
-    if (userRole === "vod") navigate("/vod");
+    if (userRole === "admin") navigate("/admin/my");
+    else if (userRole === "student") navigate("/student/my");
+    else if (userRole === "vod") navigate("/vod/my");
+    else navigate("/");
   };
 
-  const handleGoogleLogin = async () => {
-    if (role === "admin") return; // admin은 구글 로그인 없음
-
+  const loginWithGoogle = async () => {
     await supabase.auth.signInWithOAuth({
       provider: "google",
       options: {
-        queryParams: { role },
+        queryParams: { role }, // 가입 시 의도한 역할 전달
+        redirectTo: window.location.origin + "/auth/login",
       },
     });
   };
 
   return (
     <div style={{ padding: 40 }}>
-      <h2>{role?.toUpperCase()} 로그인</h2>
+      <h2>로그인 ({role})</h2>
 
-      <div style={{ marginTop: 20 }}>
-        <input
-          placeholder="이메일"
-          value={email}
-          onChange={(e) => setEmail(e.target.value)}
-          style={{ display: "block", marginBottom: 10 }}
-        />
+      <input
+        type="email"
+        placeholder="이메일"
+        value={email}
+        onChange={(e) => setEmail(e.target.value)}
+        style={{ display: "block", marginTop: 20 }}
+      />
 
-        <input
-          placeholder="비밀번호"
-          type="password"
-          value={password}
-          onChange={(e) => setPassword(e.target.value)}
-          style={{ display: "block", marginBottom: 10 }}
-        />
+      <input
+        type="password"
+        placeholder="비밀번호"
+        value={password}
+        onChange={(e) => setPassword(e.target.value)}
+        style={{ display: "block", marginTop: 10 }}
+      />
 
-        <button onClick={handleLogin}>로그인</button>
+      <button onClick={onLogin} disabled={loading} style={{ marginTop: 20 }}>
+        이메일 로그인
+      </button>
 
-        {role !== "admin" && (
-          <button style={{ marginLeft: 10 }} onClick={handleGoogleLogin}>
-            구글 로그인
-          </button>
-        )}
-      </div>
-
-      {error && <p style={{ color: "red", marginTop: 15 }}>{error}</p>}
+      {role !== "admin" && (
+        <button onClick={loginWithGoogle} style={{ marginTop: 20 }}>
+          구글 로그인
+        </button>
+      )}
     </div>
   );
 };
