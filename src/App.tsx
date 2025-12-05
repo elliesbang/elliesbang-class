@@ -35,7 +35,7 @@ import FeedbackPage from "./page/admin/FeedbackPage";
 import GlobalNotices from "./page/admin/notices/GlobalNotices";
 import VodManager from "./page/admin/vod/VodManager";
 
-import UserManage from "./page/admin/users/UserManage";
+import StudentUsers from "./page/admin/users/StudentUsers";
 import VodUsers from "./page/admin/users/VodUsers";
 
 import ClassManager from "./page/admin/classes/ClassManager";
