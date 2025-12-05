@@ -38,7 +38,7 @@ import VodManager from "./page/admin/vod/VodManager";
 import StudentUsers from "./page/admin/users/StudentUsers";
 import VodUsers from "./page/admin/users/VodUsers";
 
-import ClassManager from "./page/admin/classes/ClassManager";
+import ClassManager from "./page/admin/class/ClassManager";
 
 // 공통 컴포넌트
 import BottomNav from "./components/BottomNav";
