@@ -85,6 +85,16 @@ const App = () => {
                 }
               />
 
+              {/* ⭐⭐⭐ 여기다가 두면 가장 적절함! ⭐⭐⭐ */}
+  <Route
+    path="/notifications"
+    element={
+      <ProtectedRoute allow={["admin", "student", "vod"]}>
+        <Notifications />
+      </ProtectedRoute>
+    }
+  />
+
               {/* 기본 루트 */}
               <Route path="/" element={<RoleSelect />} />
 
