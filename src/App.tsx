@@ -80,7 +80,11 @@ const App = () => {
           {/* 기본 루트 → 역할 선택 */}
           <Route path="/" element={<RoleSelect />} />
         </Routes>
-      </AuthProvider>
+        
+{/* ---- 하단 내비: 로그인한 경우에만 표시 ---- */}
+          <BottomNav />
+        </>
+       </AuthProvider>
     </BrowserRouter>
   );
 };
