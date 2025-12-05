@@ -1,62 +1,87 @@
-import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
+import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { AuthProvider } from "./auth/AuthProvider";
 import ProtectedRoute from "./auth/ProtectedRoute";
 
-// Auth Pages
+// 인증 페이지
 import RoleSelect from "./pages/auth/RoleSelect";
 import Login from "./pages/auth/Login";
 import Signup from "./pages/auth/Signup";
 
-// My Pages (역할별)
+// 역할별 홈
 import AdminMy from "./pages/admin/AdminMy";
 import StudentMy from "./pages/student/StudentMy";
 import VodMy from "./pages/vod/VodMy";
 
 const App = () => {
   return (
-    <Router>
+    <BrowserRouter>
       <AuthProvider>
         <Routes>
-          {/* 역할 선택 / 로그인 / 회원가입 */}
-          <Route path="/auth/role" element={<RoleSelect />} />
-          <Route path="/auth/login" element={<Login />} />
-          <Route path="/auth/signup" element={<Signup />} />
 
-          {/* 관리자 마이 */}
+          {/* ----------- AUTH ----------- */}
+
+          {/* 역할 선택 */}
+          <Route path="/auth/role" element={<RoleSelect />} />
+
+          {/* 로그인 페이지 */}
+          {/* 로그인된 상태에서는 접근 불가 → 자동 redirect */}
+          <Route
+            path="/auth/login"
+            element={
+              <ProtectedRoute allow={["admin", "student", "vod"]}>
+                <Login />
+              </ProtectedRoute>
+            }
+          />
+
+          {/* 회원가입 페이지 (로그인 상태면 접근 불가) */}
+          <Route
+            path="/auth/signup"
+            element={
+              <ProtectedRoute allow={["admin", "student", "vod"]}>
+                <Signup />
+              </ProtectedRoute>
+            }
+          />
+
+          {/* ----------- ADMIN ----------- */}
+
           <Route
             path="/admin/my"
             element={
-              <ProtectedRoute allowedRoles={["admin"]}>
+              <ProtectedRoute allow={["admin"]}>
                 <AdminMy />
               </ProtectedRoute>
             }
           />
 
-          {/* 수강생 마이 */}
+          {/* ----------- STUDENT ----------- */}
+
           <Route
             path="/student/my"
             element={
-              <ProtectedRoute allowedRoles={["student"]}>
+              <ProtectedRoute allow={["student"]}>
                 <StudentMy />
               </ProtectedRoute>
             }
           />
 
-          {/* VOD 마이 */}
+          {/* ----------- VOD ----------- */}
+
           <Route
             path="/vod/my"
             element={
-              <ProtectedRoute allowedRoles={["vod"]}>
+              <ProtectedRoute allow={["vod"]}>
                 <VodMy />
               </ProtectedRoute>
             }
           />
 
-          {/* 기본 경로 → 역할 선택으로 보내기 */}
-          <Route path="*" element={<RoleSelect />} />
+          {/* 기본 루트 → 역할 선택 */}
+          <Route path="/" element={<RoleSelect />} />
         </Routes>
       </AuthProvider>
-    </Router>
+    </BrowserRouter>
   );
 };
 
