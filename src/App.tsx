@@ -43,7 +43,7 @@ import ClassManager from "./page/admin/class/ClassManager";
 // 공통 컴포넌트
 import BottomNav from "./components/BottomNav";
 import Header from "./components/Header";
-import Notifications from "./page/Notifications";
+import Notifications from "./page/notifications/Notifications";
 
 
 // -----------------------------------------------
