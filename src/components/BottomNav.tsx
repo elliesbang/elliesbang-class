@@ -19,9 +19,6 @@ export default function BottomNav() {
       ? "/vod/my"
       : "/home";
 
-  const classroomPath =
-    role === "student" || role === "admin" ? "/student/classroom" : "/home";
-
   const menu = [
     {
       key: "home",
@@ -34,7 +31,7 @@ export default function BottomNav() {
       key: "classroom",
       label: "강의실",
       icon: BookOpen,
-      to: classroomPath,
+      to: "/student/classroom",
       active: pathname.startsWith("/student/classroom"),
     },
     {
