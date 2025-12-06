@@ -1,8 +1,11 @@
 // src/page/Home.tsx
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Megaphone, PlayCircle, ChevronRight } from "lucide-react";
 import { supabase } from "../lib/supabaseClient";
+import { useAuth } from "../auth/AuthProvider";
+import { VodVideo } from "../types/VodVideo";
+import { openLoginModal } from "../lib/authModal";
 
 type Notice = {
   id: number;
@@ -11,16 +14,10 @@ type Notice = {
   created_at: string;
 };
 
-type VodVideo = {
-  id: number;
-  title: string;
-  category: string;       // "추천" | "기초" | "심화"
-  thumbnail_url: string;  // 썸네일 주소
-};
-
 export default function Home() {
   const navigate = useNavigate();
-  const [role, setRole] = useState<string | null>(null);
+  const { user, role: authRole } = useAuth();
+  const [role, setRole] = useState<"student" | "vod" | "admin" | null>(null);
 
   const [notices, setNotices] = useState<Notice[]>([]);
   const [vodByCategory, setVodByCategory] = useState<Record<string, VodVideo[]>>({});
@@ -30,13 +27,19 @@ export default function Home() {
     try {
       if (typeof window !== "undefined") {
         const userRole = window.localStorage.getItem("role");
-        if (userRole) setRole(userRole);
+        if (userRole) setRole(userRole as any);
       }
     } catch (e) {
       console.warn("localStorage 사용 불가(Home):", e);
       setRole(null);
     }
   }, []);
+
+  useEffect(() => {
+    if (authRole) {
+      setRole(authRole as any);
+    }
+  }, [authRole]);
 
   // 🔔 전체 공지 불러오기 (notifications 테이블)
   useEffect(() => {
@@ -70,7 +73,9 @@ export default function Home() {
       try {
         const { data, error } = await supabase
           .from("vod_videos")
-          .select("id, title, category, thumbnail_url, created_at")
+          .select(
+            "id, title, thumbnail_url, vod_category_id, created_at, vod_category(id, name)"
+          )
           .order("created_at", { ascending: false });
 
         if (error) {
@@ -82,7 +87,7 @@ export default function Home() {
         const list = (data ?? []) as VodVideo[];
 
         const grouped = list.reduce<Record<string, VodVideo[]>>((acc, video) => {
-          const key = video.category || "기타";
+          const key = video.vod_category?.name || "기타";
           if (!acc[key]) acc[key] = [];
           acc[key].push(video);
           return acc;
@@ -99,19 +104,47 @@ export default function Home() {
   }, []);
 
   // 재생 권한 체크
-  function handlePlay(videoId: number) {
-    if (!role) {
-      alert("로그인이 필요합니다.");
-      return navigate("/auth/login");
+  const effectiveRole = useMemo(
+    () => role ?? (typeof window !== "undefined"
+      ? ((window.localStorage.getItem("role") as "student" | "vod" | "admin" | null) ?? null)
+      : null),
+    [role]
+  );
+
+  async function handlePlay(videoId: number) {
+    const currentRole = effectiveRole;
+
+    if (!currentRole || !user) {
+      openLoginModal("vod", "로그인이 필요한 서비스입니다.");
+      return;
     }
 
-    if (role === "admin" || role === "vod") {
-      return navigate(`/vod/${videoId}`);
+    if (currentRole !== "admin" && currentRole !== "vod") {
+      alert("해당 메뉴는 VOD 전용 서비스입니다.");
+      return;
     }
 
-    if (role === "student") {
-      alert("이 영상은 VOD 이용권이 필요합니다.");
+    if (currentRole !== "admin") {
+      const { data, error } = await supabase
+        .from("vod_purchases")
+        .select("id")
+        .eq("user_id", user.id)
+        .eq("vod_id", videoId)
+        .maybeSingle();
+
+      if (error && error.code !== "PGRST116") {
+        console.error("구매 여부 확인 실패", error);
+        alert("권한 확인 중 오류가 발생했습니다. 다시 시도해주세요.");
+        return;
+      }
+
+      if (!data) {
+        alert("이용권이 필요한 콘텐츠입니다.");
+        return;
+      }
     }
+
+    return navigate(`/vod/${videoId}`);
   }
 
   return (
@@ -161,8 +194,8 @@ export default function Home() {
         {/* ------------------------------ */}
         {/* VOD 섹션들 */}
         {/* ------------------------------ */}
-        <VodCollectionSection
-          groups={["추천", "기초", "심화"].map((category) => ({
+          <VodCollectionSection
+          groups={Object.keys(vodByCategory).map((category) => ({
             category,
             videos: (vodByCategory[category] ?? []).slice(0, 2),
           }))}
@@ -241,7 +274,7 @@ function VodCollectionSection({
                               {v.title}
                             </p>
                             <p className="mt-1 text-xs text-[#7a6f68]">
-                              {v.category} VOD
+                              {group.category} VOD
                             </p>
                           </div>
 
