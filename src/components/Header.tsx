@@ -5,7 +5,7 @@ import { useAuth } from "../auth/AuthProvider";
 import { useLogout } from "../hooks/useLogout";
 import { getUserNotifications } from "@/lib/supabase/userNotifications";
 import { UserNotification } from "@/types/UserNotification";
-import UserNotificationDropdown from "@/components/notifications/UserNotificationDropdown";  // ⭐ 추가
+import UserNotificationDropdown from "@/components/UserNotificationDropdown";  // ⭐ 추가
 
 const Header = ({ onLoginClick }: { onLoginClick: () => void }) => {
   const navigate = useNavigate();
