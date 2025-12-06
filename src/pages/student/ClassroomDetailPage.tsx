@@ -4,6 +4,7 @@ import NoticesTab from "@/pages/student/tabs/NoticesTab";
 import ClassroomVideosTab from "./tabs/ClassroomVideosTab";
 import ClassroomMaterialsTab from "./tabs/ClassroomMaterialsTab";
 import ClassroomFeedbackTab from "./tabs/ClassroomFeedbackTab";
+import ClassroomAssignmentsTab from "./tabs/ClassroomAssignmentsTab";
 
 type TabKey = "video" | "material" | "notice" | "assignment" | "feedback";
 
