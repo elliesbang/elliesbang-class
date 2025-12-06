@@ -45,16 +45,21 @@ type SessionDeadline = {
 };
 
 type ClassroomAssignmentsTabProps = {
-  classroomId: string;
+  classroomId: string | number;
   classId: number;
 };
 
-const ClassroomAssignmentsTab = ({ classroomId, classId }: ClassroomAssignmentsTabProps) => {
+const ClassroomAssignmentsTab = ({
+  classroomId,
+  classId,
+}: ClassroomAssignmentsTabProps) => {
   const { user } = useAuth();
   const [assignments, setAssignments] = useState<Assignment[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [selectedSessionNo, setSelectedSessionNo] = useState<string | null>(null);
+  const [selectedSessionNo, setSelectedSessionNo] = useState<string | null>(
+    null
+  );
   const [title, setTitle] = useState("");
   const [linkUrl, setLinkUrl] = useState("");
   const [imageFile, setImageFile] = useState<File | null>(null);
@@ -63,26 +68,38 @@ const ClassroomAssignmentsTab = ({ classroomId, classId }: ClassroomAssignmentsT
   const [deadlines, setDeadlines] = useState<SessionDeadline[]>([]);
   const [downloadingCertificate, setDownloadingCertificate] = useState(false);
 
-  const normalizedClassroomId = useMemo(() => classroomId?.toLowerCase?.() ?? "", [classroomId]);
+  // classroomId 가 숫자로 들어와도 문자열로 통일해서 사용
+  const classroomKey = useMemo(
+    () => String(classroomId ?? ""),
+    [classroomId]
+  );
+  const normalizedClassroomId = useMemo(
+    () => classroomKey.toLowerCase(),
+    [classroomKey]
+  );
+
   const sessionCount = useMemo(() => {
     if (!normalizedClassroomId) return undefined;
     return (
       SESSION_COUNT_BY_CLASSROOM[normalizedClassroomId] ??
-      SESSION_COUNT_BY_CLASSROOM[classroomId] ??
+      SESSION_COUNT_BY_CLASSROOM[classroomKey] ??
       undefined
     );
-  }, [classroomId, normalizedClassroomId]);
+  }, [classroomKey, normalizedClassroomId]);
+
   const hasSessionSelection = Boolean(sessionCount);
   const totalSessions = sessionCount ?? 1;
 
+  // 회차 드롭다운 초기값
   useEffect(() => {
     if (hasSessionSelection && sessionCount) {
       setSelectedSessionNo("1");
     } else {
       setSelectedSessionNo(null);
     }
-  }, [hasSessionSelection, sessionCount, classroomId]);
+  }, [hasSessionSelection, sessionCount, classroomKey]);
 
+  // 데드라인 불러오기
   useEffect(() => {
     const fetchDeadlines = async () => {
       if (!classId) {
@@ -107,17 +124,19 @@ const ClassroomAssignmentsTab = ({ classroomId, classId }: ClassroomAssignmentsT
     fetchDeadlines();
   }, [classId]);
 
+  // 과제 목록 불러오기
   const fetchAssignments = async () => {
-    if (!classroomId) return;
+    if (!classroomKey) return;
+
     setLoading(true);
     setError(null);
 
     let query = supabase
       .from("assignments")
       .select(
-        "id, classroom_id, class_id, student_id, session_no, image_url, link_url, created_at, title, profiles:student_id (id, full_name, nickname, username)"
+        "id, classroom_id, class_id, student_id, session_no, image_url, link_url, created_at, title, profiles(id, full_name, nickname, username)"
       )
-      .eq("classroom_id", classroomId)
+      .eq("classroom_id", classroomKey)
       .order("created_at", { ascending: false });
 
     if (selectedSessionNo) {
@@ -140,11 +159,12 @@ const ClassroomAssignmentsTab = ({ classroomId, classId }: ClassroomAssignmentsT
   useEffect(() => {
     fetchAssignments();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [classroomId, selectedSessionNo]);
+  }, [classroomKey, selectedSessionNo]);
 
+  // 이미지 업로드
   const uploadImage = async (file: File, sessionNo: string) => {
     const fileExt = file.name.split(".").pop();
-    const filePath = `${classroomId}/${user?.id ?? "guest"}/${sessionNo}/${Date.now()}.${fileExt}`;
+    const filePath = `${classroomKey}/${user?.id ?? "guest"}/${sessionNo}/${Date.now()}.${fileExt}`;
 
     const { error: uploadError } = await supabase.storage
       .from(ASSIGNMENT_BUCKET)
@@ -155,7 +175,9 @@ const ClassroomAssignmentsTab = ({ classroomId, classId }: ClassroomAssignmentsT
       throw new Error("이미지 업로드에 실패했습니다.");
     }
 
-    const { data } = supabase.storage.from(ASSIGNMENT_BUCKET).getPublicUrl(filePath);
+    const { data } = supabase.storage
+      .from(ASSIGNMENT_BUCKET)
+      .getPublicUrl(filePath);
     return data.publicUrl;
   };
 
@@ -166,6 +188,7 @@ const ClassroomAssignmentsTab = ({ classroomId, classId }: ClassroomAssignmentsT
     setEditingId(null);
   };
 
+  // 과제 제출/수정
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!user) {
@@ -197,7 +220,7 @@ const ClassroomAssignmentsTab = ({ classroomId, classId }: ClassroomAssignmentsT
       }
 
       const payload = {
-        classroom_id: classroomId,
+        classroom_id: classroomKey,
         class_id: classId,
         student_id: user.id,
         session_no: sessionNo,
@@ -236,6 +259,7 @@ const ClassroomAssignmentsTab = ({ classroomId, classId }: ClassroomAssignmentsT
     }
   };
 
+  // 과제 삭제
   const handleDelete = async (assignmentId: number) => {
     if (!user) return;
     const confirmed = confirm("이 과제를 삭제하시겠습니까?");
@@ -256,6 +280,7 @@ const ClassroomAssignmentsTab = ({ classroomId, classId }: ClassroomAssignmentsT
     fetchAssignments();
   };
 
+  // 과제 수정 클릭
   const handleEdit = (assignment: Assignment) => {
     setEditingId(assignment.id);
     setTitle(assignment.title ?? "");
@@ -266,11 +291,13 @@ const ClassroomAssignmentsTab = ({ classroomId, classId }: ClassroomAssignmentsT
     }
   };
 
+  // 현재 로그인 사용자의 과제만 추출
   const userAssignments = useMemo(
     () => assignments.filter((a) => String(a.student_id) === String(user?.id)),
     [assignments, user]
   );
 
+  // 완주 회차 계산
   const completedSessions = useMemo(() => {
     const completed = new Set<string>();
     userAssignments.forEach((assignment) => {
@@ -295,9 +322,14 @@ const ClassroomAssignmentsTab = ({ classroomId, classId }: ClassroomAssignmentsT
     Math.round((completedSessions.size / totalSessions) * 100)
   );
 
-  const remainingSessions = Math.max(totalSessions - completedSessions.size, 0);
-  const canDownloadCertificate = remainingSessions === 0 && totalSessions > 0;
+  const remainingSessions = Math.max(
+    totalSessions - completedSessions.size,
+    0
+  );
+  const canDownloadCertificate =
+    remainingSessions === 0 && totalSessions > 0;
 
+  // 수료증 다운로드
   const handleCertificateDownload = async () => {
     if (!user || !classId) return;
     setDownloadingCertificate(true);
@@ -310,7 +342,7 @@ const ClassroomAssignmentsTab = ({ classroomId, classId }: ClassroomAssignmentsT
       const url = `/functions/certificate?${params.toString()}`;
       const anchor = document.createElement("a");
       anchor.href = url;
-      anchor.download = `certificate-${classroomId}.pdf`;
+      anchor.download = `certificate-${classroomKey}.pdf`;
       anchor.rel = "noreferrer";
       anchor.target = "_blank";
       document.body.appendChild(anchor);
@@ -358,7 +390,7 @@ const ClassroomAssignmentsTab = ({ classroomId, classId }: ClassroomAssignmentsT
           return (
             <div
               key={assignment.id}
-              className="rounded-xl bg-white p-4 shadow-sm border border-[#f1f1f1]"
+              className="rounded-xl bg_WHITE p-4 shadow-sm border border-[#f1f1f1]"
             >
               <div className="flex items-center justify-between">
                 <div className="flex flex-col gap-1">
@@ -368,12 +400,15 @@ const ClassroomAssignmentsTab = ({ classroomId, classId }: ClassroomAssignmentsT
                   <div className="text-xs text-gray-500 flex items-center gap-2">
                     {hasSessionSelection && (
                       <span className="rounded-full bg-[#FFF7D6] px-2 py-0.5 text-[11px] font-medium text-[#947200]">
-                        {assignment.session_no ? `${assignment.session_no}회차` : "회차"}
+                        {assignment.session_no
+                          ? `${assignment.session_no}회차`
+                          : "회차"}
                       </span>
                     )}
                     <span>작성자: {authorName}</span>
                     <span>
-                      제출일: {new Date(assignment.created_at).toLocaleString()}
+                      제출일:{" "}
+                      {new Date(assignment.created_at).toLocaleString()}
                     </span>
                   </div>
                 </div>
@@ -402,7 +437,9 @@ const ClassroomAssignmentsTab = ({ classroomId, classId }: ClassroomAssignmentsT
                     src={assignment.image_url}
                     alt={assignment.title || "과제 이미지"}
                     className="max-h-60 w-full rounded-lg object-cover cursor-pointer"
-                    onClick={() => window.open(assignment.image_url ?? "", "_blank")}
+                    onClick={() =>
+                      window.open(assignment.image_url ?? "", "_blank")
+                    }
                   />
                 )}
 
@@ -428,14 +465,20 @@ const ClassroomAssignmentsTab = ({ classroomId, classId }: ClassroomAssignmentsT
     ? Array.from({ length: sessionCount }, (_, idx) => String(idx + 1))
     : [];
 
-  const disableSubmit = submitting || (!linkUrl && !imageFile) || (hasSessionSelection && !selectedSessionNo);
+  const disableSubmit =
+    submitting ||
+    (!linkUrl && !imageFile) ||
+    (hasSessionSelection && !selectedSessionNo);
 
   return (
     <div className="bg-[#fffdf6]">
       <div className="mx-auto w-full max-w-4xl px-4 py-6 space-y-4">
+        {/* 완주 현황 */}
         <div className="rounded-2xl bg-white p-4 shadow-sm">
           <div className="flex flex-col gap-2">
-            <h2 className="text-base font-semibold text-[#404040]">완주 현황</h2>
+            <h2 className="text-base font-semibold text-[#404040]">
+              완주 현황
+            </h2>
             <p className="text-xs text-[#7a6f68]">
               회차별 마감 시간 안에 제출된 과제로 완주 현황을 확인하세요.
             </p>
@@ -446,7 +489,8 @@ const ClassroomAssignmentsTab = ({ classroomId, classId }: ClassroomAssignmentsT
               />
             </div>
             <p className="text-xs text-[#404040]">
-              완주 현황: {completedSessions.size} / {totalSessions} ({progressPercent}%)
+              완주 현황: {completedSessions.size} / {totalSessions} (
+              {progressPercent}%)
             </p>
             <div className="flex flex-wrap items-center gap-2">
               <button
@@ -459,22 +503,28 @@ const ClassroomAssignmentsTab = ({ classroomId, classId }: ClassroomAssignmentsT
                     : "bg-gray-200 text-gray-500"
                 }`}
               >
-                {downloadingCertificate ? "다운로드 준비 중..." : "수료증 다운로드"}
+                {downloadingCertificate
+                  ? "다운로드 준비 중..."
+                  : "수료증 다운로드"}
               </button>
               {!canDownloadCertificate && (
                 <span className="text-xs text-[#7a6f68]">
-                  {remainingSessions}회차 남았어요. 모든 회차를 제출하면 다운로드할 수 있어요.
+                  {remainingSessions}회차 남았어요. 모든 회차를 제출하면
+                  다운로드할 수 있어요.
                 </span>
               )}
             </div>
           </div>
         </div>
 
+        {/* 과제 제출 폼 */}
         <div className="rounded-2xl bg-white p-4 shadow-sm">
           <div className="flex flex-col gap-3">
             {hasSessionSelection && (
               <div className="flex flex-col gap-1">
-                <label className="text-sm font-medium text-[#404040]">회차 선택</label>
+                <label className="text-sm font-medium text-[#404040]">
+                  회차 선택
+                </label>
                 <select
                   value={selectedSessionNo ?? ""}
                   onChange={(e) => setSelectedSessionNo(e.target.value)}
@@ -491,7 +541,9 @@ const ClassroomAssignmentsTab = ({ classroomId, classId }: ClassroomAssignmentsT
 
             <form onSubmit={handleSubmit} className="space-y-3">
               <div className="flex flex-col gap-1">
-                <label className="text-sm font-medium text-[#404040]">제목 (선택)</label>
+                <label className="text-sm font-medium text-[#404040]">
+                  제목 (선택)
+                </label>
                 <input
                   type="text"
                   value={title}
@@ -502,17 +554,23 @@ const ClassroomAssignmentsTab = ({ classroomId, classId }: ClassroomAssignmentsT
               </div>
 
               <div className="flex flex-col gap-1">
-                <label className="text-sm font-medium text-[#404040]">이미지 업로드</label>
+                <label className="text-sm font-medium text-[#404040]">
+                  이미지 업로드
+                </label>
                 <input
                   type="file"
                   accept="image/*"
-                  onChange={(e) => setImageFile(e.target.files?.[0] ?? null)}
+                  onChange={(e) =>
+                    setImageFile(e.target.files?.[0] ?? null)
+                  }
                   className="w-full text-sm"
                 />
               </div>
 
               <div className="flex flex-col gap-1">
-                <label className="text-sm font-medium text-[#404040]">링크 URL</label>
+                <label className="text-sm font-medium text-[#404040]">
+                  링크 URL
+                </label>
                 <input
                   type="url"
                   value={linkUrl}
@@ -536,7 +594,11 @@ const ClassroomAssignmentsTab = ({ classroomId, classId }: ClassroomAssignmentsT
                       : "bg-[#FFD331] text-[#404040] hover:bg-[#ffcd24]"
                   }`}
                 >
-                  {submitting ? "저장 중..." : editingId ? "수정하기" : "제출하기"}
+                  {submitting
+                    ? "저장 중..."
+                    : editingId
+                    ? "수정하기"
+                    : "제출하기"}
                 </button>
                 {editingId && (
                   <button
@@ -552,8 +614,11 @@ const ClassroomAssignmentsTab = ({ classroomId, classId }: ClassroomAssignmentsT
           </div>
         </div>
 
+        {/* 제출된 과제 목록 */}
         <div className="space-y-2">
-          <h3 className="text-base font-semibold text-[#404040]">제출된 과제</h3>
+          <h3 className="text-base font-semibold text-[#404040]">
+            제출된 과제
+          </h3>
           {renderAssignments()}
         </div>
       </div>
