@@ -1,8 +1,6 @@
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "../auth/AuthProvider";
 import { useLogout } from "../hooks/useLogout";
-import { useState } from "react";
-import LoginModal from "./LoginModal"; // ⭐ 모달 import
 
 const ICON_SIZE = 22;
 
@@ -22,13 +20,10 @@ const BellIcon = (active = true) => (
   </svg>
 );
 
-const Header = () => {
+const Header = ({ onLoginClick }: { onLoginClick: () => void }) => {
   const navigate = useNavigate();
   const { user } = useAuth();
   const logout = useLogout();
-
-  // ⭐ 로그인 모달 제어
-  const [loginOpen, setLoginOpen] = useState(false);
 
   return (
     <>
@@ -82,7 +77,7 @@ const Header = () => {
           {/* 로그인 / 로그아웃 버튼 */}
           {!user ? (
             <button
-              onClick={() => setLoginOpen(true)} // ⭐ 페이지 이동 NO, 모달 OPEN
+              onClick={onLoginClick}
               style={{
                 background: "#ffd331",
                 border: "none",
@@ -113,9 +108,6 @@ const Header = () => {
           )}
         </div>
       </div>
-
-      {/* ⭐ 로그인 모달 추가 */}
-      <LoginModal open={loginOpen} onClose={() => setLoginOpen(false)} />
     </>
   );
 };

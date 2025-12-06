@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { supabase } from "../lib/supabaseClient";
 
 const roles = [
@@ -7,8 +7,15 @@ const roles = [
   { key: "admin", label: "관리자" },
 ];
 
-const LoginModal = ({ onClose, onSignupOpen }) => {
-  const [role, setRole] = useState("student");
+type LoginModalProps = {
+  role: "student" | "vod" | "admin" | null;
+  onClose: () => void;
+  onChangeMode: (mode: "login" | "signup") => void;
+  onSelectRole: (role: "student" | "vod" | "admin") => void;
+};
+
+const LoginModal = ({ role, onClose, onChangeMode, onSelectRole }: LoginModalProps) => {
+  const activeRole = useMemo(() => role ?? "student", [role]);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
 
@@ -23,10 +30,10 @@ const LoginModal = ({ onClose, onSignupOpen }) => {
       return;
     }
 
-    localStorage.setItem("role", role);
+    localStorage.setItem("role", activeRole);
 
-    if (role === "admin") window.location.href = "/admin/my";
-    else if (role === "student") window.location.href = "/student/my";
+    if (activeRole === "admin") window.location.href = "/admin/my";
+    else if (activeRole === "student") window.location.href = "/student/my";
     else window.location.href = "/vod/my";
   };
 
@@ -60,7 +67,7 @@ const LoginModal = ({ onClose, onSignupOpen }) => {
       >
         {/* X 버튼 */}
         <div
-          onClick={onClose}
+          onClick={() => onClose()}
           style={{
             position: "absolute",
             right: 16,
@@ -85,13 +92,13 @@ const LoginModal = ({ onClose, onSignupOpen }) => {
           {roles.map((r) => (
             <div
               key={r.key}
-              onClick={() => setRole(r.key)}
+              onClick={() => onSelectRole(r.key)}
               style={{
                 padding: "6px 10px",
                 borderRadius: 6,
                 cursor: "pointer",
-                background: role === r.key ? "#ffd331" : "#f1f1f1",
-                color: role === r.key ? "#000" : "#777",
+                background: activeRole === r.key ? "#ffd331" : "#f1f1f1",
+                color: activeRole === r.key ? "#000" : "#777",
               }}
             >
               {r.label}
@@ -100,7 +107,7 @@ const LoginModal = ({ onClose, onSignupOpen }) => {
         </div>
 
         <h3 style={{ fontSize: 20, marginBottom: 20, fontWeight: 700 }}>
-          {role} 로그인
+          {activeRole} 로그인
         </h3>
 
         {/* 이메일 */}
@@ -164,9 +171,9 @@ const LoginModal = ({ onClose, onSignupOpen }) => {
         </button>
 
         {/* 회원가입 */}
-        {role !== "admin" && (
+        {activeRole !== "admin" && (
           <div
-            onClick={() => onSignupOpen(role)}
+            onClick={() => onChangeMode("signup")}
             style={{
               marginTop: 16,
               cursor: "pointer",
