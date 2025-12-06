@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { useParams } from "react-router-dom";
 import ClassroomVideosTab from "./tabs/ClassroomVideosTab";
+import ClassroomMaterialsTab from "./tabs/ClassroomMaterialsTab";
 
 type TabKey = "video" | "material" | "notice" | "assignment" | "feedback";
 
@@ -46,20 +47,14 @@ const ClassroomDetailPage = () => {
         />
       )}
 
-      {activeTab !== "video" && (
-        <div className="rounded-2xl bg-white p-4 shadow-sm">
-          {activeTab === "material" && (
-            <div>
-              <h2 className="mb-2 text-base font-semibold text-[#404040]">
-                자료
-              </h2>
-              <p className="text-sm text-[#7a6f68]">
-                TODO: classroom_content (type="material")에서 파일/링크 목록
-                보여주기.
-              </p>
-            </div>
-          )}
+      {activeTab === "material" && (
+        <ClassroomMaterialsTab
+          classroomId={categoryId ? Number(categoryId) : undefined}
+        />
+      )}
 
+      {activeTab !== "video" && activeTab !== "material" && (
+        <div className="rounded-2xl bg-white p-4 shadow-sm">
           {activeTab === "notice" && (
             <div>
               <h2 className="mb-2 text-base font-semibold text-[#404040]">
