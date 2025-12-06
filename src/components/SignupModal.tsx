@@ -1,25 +1,24 @@
 import { useState } from "react";
-import { supabase } from "../lib/supabaseClient";
+import { supabase } from "../../lib/supabaseClient";
 
-type Role = "student" | "vod";
+const signupRoles = [
+  { key: "student", label: "수강생" },
+  { key: "vod", label: "VOD" },
+];
 
-const SignupModal = ({ open, onClose }) => {
-  const [step, setStep] = useState<"role" | "form">("role");
-  const [role, setRole] = useState<Role | null>(null);
-
+const SignupModal = ({ role: initialRole, onClose }) => {
+  const [role, setRole] = useState(initialRole || "student");
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [loading, setLoading] = useState(false);
 
-  if (!open) return null;
+  const signup = async () => {
+    if (!name.trim()) return alert("이름을 입력해주세요.");
+    if (!email.trim()) return alert("이메일을 입력해주세요.");
+    if (!password.trim()) return alert("비밀번호를 입력해주세요.");
 
-  const selectRole = (r: Role) => {
-    setRole(r);
-    setStep("form");
-  };
-
-  const doSignup = async () => {
-    if (!role) return;
+    setLoading(true);
 
     const { data, error } = await supabase.auth.signUp({
       email,
@@ -29,69 +28,158 @@ const SignupModal = ({ open, onClose }) => {
       },
     });
 
-    if (error) return alert(error.message);
-
-    if (data.user) {
-      localStorage.setItem("role", role);
-      onClose();
+    if (error) {
+      setLoading(false);
+      alert(error.message);
+      return;
     }
+
+    // 자동 로그인되지 않을 수도 있음 -> 안내
+    if (!data.user) {
+      setLoading(false);
+      alert("회원가입이 완료되었습니다. 이메일 인증 후 다시 로그인해주세요.");
+      onClose();
+      return;
+    }
+
+    // 자동 로그인되었을 때
+    localStorage.setItem("role", role);
+
+    if (role === "student") window.location.href = "/student/my";
+    else if (role === "vod") window.location.href = "/vod/my";
+
+    setLoading(false);
   };
 
   return (
-    <div style={backdrop}>
-      <div style={box}>
-        <button style={closeBtn} onClick={onClose}>✕</button>
+    <div
+      style={{
+        position: "fixed",
+        inset: 0,
+        background: "rgba(0,0,0,0.45)",
+        display: "flex",
+        justifyContent: "center",
+        alignItems: "center",
+        zIndex: 9999,
+      }}
+    >
+      <div
+        style={{
+          width: 380,
+          background: "#fff",
+          padding: 24,
+          borderRadius: 14,
+          position: "relative",
+        }}
+      >
+        {/* X 버튼 */}
+        <div
+          onClick={onClose}
+          style={{
+            position: "absolute",
+            right: 16,
+            top: 16,
+            fontSize: 20,
+            cursor: "pointer",
+          }}
+        >
+          ×
+        </div>
 
-        {step === "role" && (
-          <>
-            <h3>가입 유형 선택</h3>
-            <button onClick={() => selectRole("student")}>수강생</button>
-            <button onClick={() => selectRole("vod")}>VOD</button>
-          </>
-        )}
+        {/* 회원가입 역할 선택 */}
+        <div
+          style={{
+            display: "flex",
+            gap: 10,
+            marginBottom: 20,
+            fontWeight: 600,
+            fontSize: 15,
+          }}
+        >
+          {signupRoles.map((r) => (
+            <div
+              key={r.key}
+              onClick={() => setRole(r.key)}
+              style={{
+                padding: "6px 10px",
+                borderRadius: 6,
+                cursor: "pointer",
+                background: role === r.key ? "#ffd331" : "#f1f1f1",
+                color: role === r.key ? "#000" : "#777",
+              }}
+            >
+              {r.label}
+            </div>
+          ))}
+        </div>
 
-        {step === "form" && (
-          <>
-            <h3>{role} 회원가입</h3>
+        <h3 style={{ fontSize: 20, marginBottom: 20, fontWeight: 700 }}>
+          회원가입 ({role})
+        </h3>
 
-            <input placeholder="이름" value={name} onChange={(e) => setName(e.target.value)} />
-            <input placeholder="이메일" value={email} onChange={(e) => setEmail(e.target.value)} />
-            <input type="password" placeholder="비밀번호" value={password} onChange={(e) => setPassword(e.target.value)} />
+        {/* 이름 */}
+        <input
+          placeholder="이름"
+          value={name}
+          onChange={(e) => setName(e.target.value)}
+          style={{
+            width: "100%",
+            marginBottom: 10,
+            padding: 12,
+            borderRadius: 8,
+            border: "1px solid #ddd",
+          }}
+        />
 
-            <button onClick={doSignup}>회원가입</button>
-            <button onClick={() => setStep("role")}>← 뒤로</button>
-          </>
-        )}
+        {/* 이메일 */}
+        <input
+          placeholder="이메일"
+          value={email}
+          onChange={(e) => setEmail(e.target.value)}
+          style={{
+            width: "100%",
+            marginBottom: 10,
+            padding: 12,
+            borderRadius: 8,
+            border: "1px solid #ddd",
+          }}
+        />
+
+        {/* 비밀번호 */}
+        <input
+          placeholder="비밀번호"
+          type="password"
+          value={password}
+          onChange={(e) => setPassword(e.target.value)}
+          style={{
+            width: "100%",
+            marginBottom: 16,
+            padding: 12,
+            borderRadius: 8,
+            border: "1px solid #ddd",
+          }}
+        />
+
+        {/* 가입 버튼 */}
+        <button
+          onClick={signup}
+          disabled={loading}
+          style={{
+            width: "100%",
+            padding: 12,
+            background: "#ffd331",
+            border: "none",
+            borderRadius: 8,
+            fontWeight: 700,
+            marginTop: 10,
+            opacity: loading ? 0.6 : 1,
+          }}
+        >
+          {loading ? "처리 중..." : "회원가입"}
+        </button>
       </div>
     </div>
   );
 };
 
 export default SignupModal;
-
-const backdrop = {
-  position: "fixed",
-  inset: 0,
-  background: "rgba(0,0,0,0.45)",
-  display: "flex",
-  justifyContent: "center",
-  alignItems: "center",
-};
-
-const box = {
-  width: 360,
-  background: "#fff",
-  borderRadius: 12,
-  padding: "24px 20px",
-  position: "relative",
-};
-
-const closeBtn = {
-  position: "absolute",
-  right: 12,
-  top: 12,
-  background: "none",
-  border: "none",
-  fontSize: 20,
-  cursor: "pointer",
-};
