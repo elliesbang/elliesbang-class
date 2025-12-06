@@ -6,18 +6,30 @@ export default function BottomNav() {
   const location = useLocation();
   const navigate = useNavigate();
   const { role } = useAuth();
+
   const storedRole =
     typeof window !== "undefined" ? localStorage.getItem("role") : null;
 
+  const currentRole = role ?? storedRole;
+
   const pathname = location.pathname;
 
-  // 마이페이지 경로 (역할에 따라 분기)
+  // 🔥 정확한 경로 기반 active 계산 (깜빡임 원인 제거)
+  const isVodActive =
+    pathname === "/vod/list" || pathname.startsWith("/vod/");
+
+  const isMyActive =
+    pathname.startsWith("/student/my") ||
+    pathname.startsWith("/admin/my") ||
+    pathname.startsWith("/vod/my");
+
+  // 🔥 역할별 마이페이지 이동 경로
   const myPath =
-    (role ?? storedRole) === "admin"
+    currentRole === "admin"
       ? "/admin/my"
-      : (role ?? storedRole) === "student"
+      : currentRole === "student"
       ? "/student/my"
-      : (role ?? storedRole) === "vod"
+      : currentRole === "vod"
       ? "/vod/my"
       : "/home";
 
@@ -41,7 +53,7 @@ export default function BottomNav() {
       label: "VOD",
       icon: PlayCircle,
       to: "/vod/list",
-      active: pathname.startsWith("/vod"),
+      active: isVodActive,
     },
     {
       key: "notice",
@@ -55,10 +67,7 @@ export default function BottomNav() {
       label: "마이",
       icon: UserSquare,
       to: myPath,
-      active:
-        pathname.startsWith("/student/my") ||
-        pathname.startsWith("/admin/my") ||
-        pathname.startsWith("/vod/my"),
+      active: isMyActive,
     },
   ];
 
@@ -68,7 +77,7 @@ export default function BottomNav() {
   const inactiveClass = " text-gray-500 hover:scale-105";
 
   return (
-      <nav className="fixed bottom-0 left-0 w-full h-[70px] bg-white border-t border-[#e5e5e5] backdrop-blur-md z-50 flex justify-around items-center">
+    <nav className="fixed bottom-0 left-0 w-full h-[70px] bg-white border-t border-[#e5e5e5] backdrop-blur-md z-50 flex justify-around items-center">
       {menu.map((item) => {
         const Icon = item.icon;
         const cls = baseBtnClass + (item.active ? activeClass : inactiveClass);
