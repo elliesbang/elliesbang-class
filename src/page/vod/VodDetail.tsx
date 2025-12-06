@@ -1,6 +1,5 @@
 import { useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
-import { supabase } from "@/lib/supabaseClient";
 import { PlayCircle, Lock } from "lucide-react";
 
 export default function VodDetail() {
@@ -8,8 +7,8 @@ export default function VodDetail() {
   const navigate = useNavigate();
 
   const [role, setRole] = useState(null);
-  const [vod, setVod] = useState(null);
-  const [related, setRelated] = useState([]);
+  const [vod, setVod] = useState<any>(null);
+  const [related, setRelated] = useState<any[]>([]);
 
   // 사용자 역할 불러오기
   useEffect(() => {
@@ -17,40 +16,23 @@ export default function VodDetail() {
     setRole(r);
   }, []);
 
-  // VOD 정보 불러오기
+  // 로컬 더미 데이터로 VOD 정보 구성
   useEffect(() => {
-    async function loadVod() {
-      const { data, error } = await supabase
-        .from("vod")
-        .select("*")
-        .eq("id", id)
-        .single();
+    if (!id) return;
 
-      if (error) return console.error(error);
+    const placeholderVod = {
+      id,
+      title: "VOD 정보를 준비 중입니다",
+      category: "VOD",
+      created_at: new Date().toISOString(),
+      description: "실제 데이터 연동 전까지 임시 정보를 표시합니다.",
+      video_url: "",
+      thumbnail: "",
+    };
 
-      setVod(data);
-    }
-
-    loadVod();
+    setVod(placeholderVod);
+    setRelated([]);
   }, [id]);
-
-  // 같은 카테고리의 다른 VOD 불러오기
-  useEffect(() => {
-    if (!vod) return;
-
-    async function loadRelated() {
-      const { data } = await supabase
-        .from("vod")
-        .select("*")
-        .eq("category", vod.category)
-        .neq("id", vod.id)
-        .limit(5);
-
-      setRelated(data || []);
-    }
-
-    loadRelated();
-  }, [vod]);
 
   // ⛔ 권한 체크
   function hasVodPermission() {
@@ -66,11 +48,19 @@ export default function VodDetail() {
       {/* 썸네일 + 영상 */}
       <div className="w-full bg-black">
         {hasVodPermission() ? (
-          <iframe
-            src={vod.video_url}
-            className="w-full h-60"
-            allowFullScreen
-          ></iframe>
+          vod.video_url ? (
+            <iframe
+              src={vod.video_url}
+              className="w-full h-60"
+              allowFullScreen
+              title={vod.title}
+            ></iframe>
+          ) : (
+            <div className="w-full h-60 flex flex-col items-center justify-center text-white">
+              <p className="text-lg mb-2">재생 가능한 영상이 아직 없습니다.</p>
+              <p className="text-sm text-gray-300">영상 업로드 후 시청할 수 있습니다.</p>
+            </div>
+          )
         ) : (
           <div className="w-full h-60 flex flex-col items-center justify-center text-white">
             <Lock size={40} className="mb-3" />

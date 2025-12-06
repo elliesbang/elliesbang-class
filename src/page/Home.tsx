@@ -1,6 +1,5 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { supabase } from "@/lib/supabaseClient";
 import { Megaphone, PlayCircle, ChevronRight } from "lucide-react";
 
 type Notice = {
@@ -21,83 +20,15 @@ export default function Home() {
   const navigate = useNavigate();
   const [role, setRole] = useState<string | null>(null);
 
-  const [notices, setNotices] = useState<Notice[]>([]);
-  const [vodRecommended, setVodRecommended] = useState<VodVideo[]>([]);
-  const [vodBasic, setVodBasic] = useState<VodVideo[]>([]);
-  const [vodAdvanced, setVodAdvanced] = useState<VodVideo[]>([]);
+  const notices: any[] = [];
+  const vodRecommended: any[] = [];
+  const vodBasic: any[] = [];
+  const vodAdvanced: any[] = [];
 
   // 현재 로그인한 사용자 역할(localStorage) 가져오기
   useEffect(() => {
     const userRole = localStorage.getItem("role");
     if (userRole) setRole(userRole);
-  }, []);
-
-  // 🔔 전체 공지 불러오기 (notifications 테이블)
-  useEffect(() => {
-    async function loadNotices() {
-      try {
-        const { data, error } = await supabase
-          .from("notifications")
-          .select("id, title, content, created_at, is_visible, type")
-          .eq("is_visible", true)                 // 보이기 설정된 것만
-          .order("created_at", { ascending: false })
-          .limit(3);
-
-        if (error) {
-          console.error("공지 불러오기 오류", error);
-          setNotices([]);
-          return;
-        }
-
-        const mapped =
-          data?.map((n) => ({
-            id: n.id,
-            title: n.title,
-            content: n.content ?? "",            // null 방지
-            created_at: n.created_at,
-          })) ?? [];
-
-        setNotices(mapped);
-      } catch (err) {
-        console.error("공지 불러오기 실패", err);
-        setNotices([]);
-      }
-    }
-
-    loadNotices();
-  }, []);
-
-  // 🎬 VOD 목록 불러오기 (vod_videos 테이블)
-  useEffect(() => {
-    async function loadVod() {
-      try {
-        const { data, error } = await supabase
-          .from("vod_videos")
-          .select("id, title, category, thumbnail_url, created_at")
-          .order("created_at", { ascending: false });
-
-        if (error) {
-          console.error("VOD 불러오기 오류", error);
-          setVodRecommended([]);
-          setVodBasic([]);
-          setVodAdvanced([]);
-          return;
-        }
-
-        const list = (data ?? []) as VodVideo[];
-
-        setVodRecommended(list.filter((v) => v.category === "추천"));
-        setVodBasic(list.filter((v) => v.category === "기초"));
-        setVodAdvanced(list.filter((v) => v.category === "심화"));
-      } catch (err) {
-        console.error("VOD 불러오기 실패", err);
-        setVodRecommended([]);
-        setVodBasic([]);
-        setVodAdvanced([]);
-      }
-    }
-
-    loadVod();
   }, []);
 
   // 재생 권한 체크
@@ -174,50 +105,39 @@ export default function Home() {
 /* ----------------------------
    VOD 목록 단일 섹션 컴포넌트
 -----------------------------*/
-function VodSection({
-  title,
-  list,
-  onPlay,
-}: {
-  title: string;
-  list: VodVideo[];
-  onPlay: (id: number) => void;
-}) {
-  if (!list || list.length === 0) return null;
-
+function VodSection({ title, list, onPlay }) {
   return (
     <section className="mb-8">
       <h2 className="mb-3 text-lg font-bold text-[#404040]">{title}</h2>
 
-      <div className="grid grid-cols-2 gap-4">
-        {list.map((v) => (
-          <button
-            key={v.id}
-            type="button"
-            className="cursor-pointer rounded-xl border bg-white p-2 text-left shadow-sm transition hover:shadow-md"
-            onClick={() => onPlay(v.id)}
-          >
-            <img
-              src={v.thumbnail_url || "/fallback-thumbnail.png"}
-              alt={v.title}
-              className="h-28 w-full rounded-lg object-cover"
-              onError={(e) => {
-                // 썸네일 URL이 잘못되었을 때 기본 이미지로 교체
-                e.currentTarget.src = "/fallback-thumbnail.png";
-              }}
-            />
+      {list && list.length > 0 ? (
+        <div className="grid grid-cols-2 gap-4">
+          {list.map((v) => (
+            <div
+              key={v.id}
+              className="bg-white border rounded-xl p-2 shadow-sm cursor-pointer"
+              onClick={() => onPlay(v.id)}
+            >
+              <img
+                src={v.thumbnail}
+                alt={v.title}
+                className="w-full h-28 object-cover rounded-lg"
+              />
 
-            <p className="mt-2 line-clamp-1 text-sm font-semibold text-[#404040]">
-              {v.title}
-            </p>
+              <p className="mt-2 text-sm font-semibold text-[#404040] line-clamp-1">
+                {v.title}
+              </p>
 
-            <div className="mt-1 flex items-center text-xs text-[#7a6f68]">
-              <PlayCircle size={14} className="mr-1" />
-              재생하기
+              <div className="flex items-center text-[#7a6f68] text-xs mt-1">
+                <PlayCircle size={14} className="mr-1" />
+                재생하기
+              </div>
             </div>
-          </button>
-        ))}
-      </div>
+          ))}
+        </div>
+      ) : (
+        <p className="text-sm text-gray-500">현재 준비된 영상이 없습니다.</p>
+      )}
     </section>
   );
 }
