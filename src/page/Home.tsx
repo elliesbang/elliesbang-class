@@ -23,9 +23,7 @@ export default function Home() {
   const [role, setRole] = useState<string | null>(null);
 
   const [notices, setNotices] = useState<Notice[]>([]);
-  const [vodRecommended, setVodRecommended] = useState<VodVideo[]>([]);
-  const [vodBasic, setVodBasic] = useState<VodVideo[]>([]);
-  const [vodAdvanced, setVodAdvanced] = useState<VodVideo[]>([]);
+  const [vodByCategory, setVodByCategory] = useState<Record<string, VodVideo[]>>({});
 
   // 현재 로그인한 사용자 역할(localStorage) 가져오기
   useEffect(() => {
@@ -77,22 +75,23 @@ export default function Home() {
 
         if (error) {
           console.error("VOD 불러오기 오류", error);
-          setVodRecommended([]);
-          setVodBasic([]);
-          setVodAdvanced([]);
+          setVodByCategory({});
           return;
         }
 
         const list = (data ?? []) as VodVideo[];
 
-        setVodRecommended(list.filter((v) => v.category === "추천"));
-        setVodBasic(list.filter((v) => v.category === "기초"));
-        setVodAdvanced(list.filter((v) => v.category === "심화"));
+        const grouped = list.reduce<Record<string, VodVideo[]>>((acc, video) => {
+          const key = video.category || "기타";
+          if (!acc[key]) acc[key] = [];
+          acc[key].push(video);
+          return acc;
+        }, {});
+
+        setVodByCategory(grouped);
       } catch (err) {
         console.error("VOD 불러오기 실패", err);
-        setVodRecommended([]);
-        setVodBasic([]);
-        setVodAdvanced([]);
+        setVodByCategory({});
       }
     }
 
@@ -162,21 +161,11 @@ export default function Home() {
         {/* ------------------------------ */}
         {/* VOD 섹션들 */}
         {/* ------------------------------ */}
-        <VodSection
-          title="추천 VOD"
-          list={vodRecommended}
-          onPlay={handlePlay}
-          onSeeAll={() => navigate("/vod/list")}
-        />
-        <VodSection
-          title="기초 VOD"
-          list={vodBasic}
-          onPlay={handlePlay}
-          onSeeAll={() => navigate("/vod/list")}
-        />
-        <VodSection
-          title="심화 VOD"
-          list={vodAdvanced}
+        <VodCollectionSection
+          groups={["추천", "기초", "심화"].map((category) => ({
+            category,
+            videos: (vodByCategory[category] ?? []).slice(0, 2),
+          }))}
           onPlay={handlePlay}
           onSeeAll={() => navigate("/vod/list")}
         />
@@ -185,24 +174,29 @@ export default function Home() {
   );
 }
 
+type VodGroup = {
+  category: string;
+  videos: VodVideo[];
+};
+
 /* ----------------------------
-   VOD 목록 단일 섹션 컴포넌트
------------------------------*/
-function VodSection({
-  title,
-  list,
+   VOD 단일 카드 섹션 컴포넌트
+------------------------------*/
+function VodCollectionSection({
+  groups,
   onPlay,
   onSeeAll,
 }: {
-  title: string;
-  list: VodVideo[];
+  groups: VodGroup[];
   onPlay: (id: number) => void;
   onSeeAll: () => void;
 }) {
+  const hasAnyVod = groups.some((g) => g.videos.length > 0);
+
   return (
     <section className="mb-8">
       <div className="mb-3 flex items-center justify-between">
-        <h2 className="text-lg font-bold text-[#404040]">{title}</h2>
+        <h2 className="text-lg font-bold text-[#404040]">VOD</h2>
         <button
           onClick={onSeeAll}
           className="flex items-center gap-1 text-sm text-[#7a6f68]"
@@ -212,40 +206,59 @@ function VodSection({
       </div>
 
       <div className="rounded-2xl border bg-white p-4 shadow-sm">
-        {list && list.length > 0 ? (
-          <div className="space-y-3">
-            {list.map((v) => (
-              <button
-                key={v.id}
-                type="button"
-                className="flex w-full gap-3 rounded-xl border bg-[#fffbf3] p-3 text-left shadow-sm transition hover:-translate-y-0.5 hover:shadow-md"
-                onClick={() => onPlay(v.id)}
-              >
-                <img
-                  src={v.thumbnail_url || "/fallback-thumbnail.png"}
-                  alt={v.title}
-                  className="h-20 w-28 rounded-lg object-cover"
-                  onError={(e) => {
-                    e.currentTarget.src = "/fallback-thumbnail.png";
-                  }}
-                />
-
-                <div className="flex flex-1 flex-col justify-between">
-                  <div>
-                    <p className="line-clamp-2 text-sm font-semibold text-[#404040]">
-                      {v.title}
-                    </p>
-                    <p className="mt-1 text-xs text-[#7a6f68]">
-                      {v.category} VOD
-                    </p>
-                  </div>
-
-                  <div className="flex items-center gap-1 text-xs text-[#7a6f68]">
-                    <PlayCircle size={14} />
-                    재생하기
-                  </div>
+        {hasAnyVod ? (
+          <div className="space-y-5">
+            {groups.map((group) => (
+              <div key={group.category} className="space-y-3">
+                <div className="flex items-center justify-between">
+                  <h3 className="text-base font-semibold text-[#404040]">
+                    {group.category} VOD
+                  </h3>
+                  <span className="text-xs text-[#9d8f88]">최신 영상</span>
                 </div>
-              </button>
+
+                {group.videos.length > 0 ? (
+                  <div className="space-y-3">
+                    {group.videos.map((v) => (
+                      <button
+                        key={v.id}
+                        type="button"
+                        className="flex w-full gap-3 rounded-xl border bg-[#fffbf3] p-3 text-left shadow-sm transition hover:-translate-y-0.5 hover:shadow-md"
+                        onClick={() => onPlay(v.id)}
+                      >
+                        <img
+                          src={v.thumbnail_url || "/fallback-thumbnail.png"}
+                          alt={v.title}
+                          className="h-20 w-28 rounded-lg object-cover"
+                          onError={(e) => {
+                            e.currentTarget.src = "/fallback-thumbnail.png";
+                          }}
+                        />
+
+                        <div className="flex flex-1 flex-col justify-between">
+                          <div>
+                            <p className="line-clamp-2 text-sm font-semibold text-[#404040]">
+                              {v.title}
+                            </p>
+                            <p className="mt-1 text-xs text-[#7a6f68]">
+                              {v.category} VOD
+                            </p>
+                          </div>
+
+                          <div className="flex items-center gap-1 text-xs text-[#7a6f68]">
+                            <PlayCircle size={14} />
+                            재생하기
+                          </div>
+                        </div>
+                      </button>
+                    ))}
+                  </div>
+                ) : (
+                  <p className="rounded-lg bg-[#fffbf3] px-3 py-4 text-sm text-gray-500">
+                    {group.category} 영상이 아직 준비되지 않았어요.
+                  </p>
+                )}
+              </div>
             ))}
           </div>
         ) : (
