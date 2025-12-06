@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { useParams } from "react-router-dom";
+import NoticesTab from "@/components/classroom/tabs/NoticesTab";
 import ClassroomVideosTab from "./tabs/ClassroomVideosTab";
 import ClassroomMaterialsTab from "./tabs/ClassroomMaterialsTab";
 
@@ -8,6 +9,8 @@ type TabKey = "video" | "material" | "notice" | "assignment" | "feedback";
 const ClassroomDetailPage = () => {
   const { categoryId } = useParams();
   const [activeTab, setActiveTab] = useState<TabKey>("video");
+  const classroomId = Number(categoryId ?? 0);
+  const parsedClassroomId = Number.isNaN(classroomId) ? undefined : classroomId;
 
   const tabs: { key: TabKey; label: string }[] = [
     { key: "video", label: "영상" },
@@ -42,58 +45,46 @@ const ClassroomDetailPage = () => {
 
       {/* 탭 내용 */}
       {activeTab === "video" && (
-        <ClassroomVideosTab
-          classroomId={categoryId ? Number(categoryId) : undefined}
-        />
+        <ClassroomVideosTab classroomId={parsedClassroomId} />
       )}
 
       {activeTab === "material" && (
-        <ClassroomMaterialsTab
-          classroomId={categoryId ? Number(categoryId) : undefined}
-        />
+        <ClassroomMaterialsTab classroomId={parsedClassroomId} />
       )}
 
-      {activeTab !== "video" && activeTab !== "material" && (
+      {activeTab === "notice" && (
+        <NoticesTab classroomId={parsedClassroomId ?? 0} />
+      )}
+
+      {activeTab === "assignment" && (
         <div className="rounded-2xl bg-white p-4 shadow-sm">
-          {activeTab === "notice" && (
-            <div>
-              <h2 className="mb-2 text-base font-semibold text-[#404040]">
-                공지
-              </h2>
-              <p className="text-sm text-[#7a6f68]">
-                TODO: classroom_content (type="notice")에서 이 강의실 공지
-                리스트/본문 표시.
-              </p>
-            </div>
-          )}
+          <div>
+            <h2 className="mb-2 text-base font-semibold text-[#404040]">
+              과제
+            </h2>
+            <p className="mb-2 text-sm text-[#7a6f68]">
+              TODO: 회차 드롭다운 + 이미지 업로드 + 링크 입력 + 저장 목록 +
+              수정/삭제 UI.
+            </p>
+            <p className="text-xs text-[#a28f7a]">
+              회차 정보는 카테고리별로 Supabase에 저장된 회차 설정값을 기준으로
+              드롭다운에 노출.
+            </p>
+          </div>
+        </div>
+      )}
 
-          {activeTab === "assignment" && (
-            <div>
-              <h2 className="mb-2 text-base font-semibold text-[#404040]">
-                과제
-              </h2>
-              <p className="mb-2 text-sm text-[#7a6f68]">
-                TODO: 회차 드롭다운 + 이미지 업로드 + 링크 입력 + 저장 목록 +
-                수정/삭제 UI.
-              </p>
-              <p className="text-xs text-[#a28f7a]">
-                회차 정보는 카테고리별로 Supabase에 저장된 회차 설정값을
-                기준으로 드롭다운에 노출.
-              </p>
-            </div>
-          )}
-
-          {activeTab === "feedback" && (
-            <div>
-              <h2 className="mb-2 text-base font-semibold text-[#404040]">
-                피드백
-              </h2>
-              <p className="text-sm text-[#7a6f68]">
-                TODO: 관리자 대시보드 과제/피드백 관리에서 입력한 피드백을
-                이 강의실 기준으로 모아서 보여주기.
-              </p>
-            </div>
-          )}
+      {activeTab === "feedback" && (
+        <div className="rounded-2xl bg-white p-4 shadow-sm">
+          <div>
+            <h2 className="mb-2 text-base font-semibold text-[#404040]">
+              피드백
+            </h2>
+            <p className="text-sm text-[#7a6f68]">
+              TODO: 관리자 대시보드 과제/피드백 관리에서 입력한 피드백을 이
+              강의실 기준으로 모아서 보여주기.
+            </p>
+          </div>
         </div>
       )}
 
