@@ -1,85 +1,20 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { supabase } from "@/lib/supabaseClient";
 import { Megaphone, PlayCircle, ChevronRight } from "lucide-react";
 
 export default function Home() {
   const navigate = useNavigate();
   const [role, setRole] = useState(null);
 
-  const [notices, setNotices] = useState([]);
-  const [vodRecommended, setVodRecommended] = useState([]);
-  const [vodBasic, setVodBasic] = useState([]);
-  const [vodAdvanced, setVodAdvanced] = useState([]);
+  const notices: any[] = [];
+  const vodRecommended: any[] = [];
+  const vodBasic: any[] = [];
+  const vodAdvanced: any[] = [];
 
   // 현재 로그인한 사용자 역할 가져오기
   useEffect(() => {
     const userRole = localStorage.getItem("role");
     if (userRole) setRole(userRole);
-  }, []);
-
-  // 공지사항 불러오기
-  useEffect(() => {
-    async function loadNotices() {
-      try {
-        const { data, error } = await supabase
-          .from("notifications")
-          .select("*")
-          .order("created_at", { ascending: false })
-          .limit(3);
-
-        if (error) {
-          console.error("공지 불러오기 오류", error);
-          setNotices([]);
-          return;
-        }
-
-        setNotices(data || []);
-      } catch (err) {
-        console.error("공지 불러오기 실패", err);
-        setNotices([]);
-      }
-    }
-
-    loadNotices();
-  }, []);
-
-  // VOD 불러오기
-  useEffect(() => {
-    async function loadVod() {
-      try {
-        const { data, error } = await supabase
-          .from("vod_videos")
-          .select("*")
-          .order("created_at", { ascending: false });
-
-        if (error) {
-          console.error("VOD 불러오기 오류", error);
-          setVodRecommended([]);
-          setVodBasic([]);
-          setVodAdvanced([]);
-          return;
-        }
-
-        if (!data) {
-          setVodRecommended([]);
-          setVodBasic([]);
-          setVodAdvanced([]);
-          return;
-        }
-
-        setVodRecommended(data.filter((v) => v.category === "추천"));
-        setVodBasic(data.filter((v) => v.category === "기초"));
-        setVodAdvanced(data.filter((v) => v.category === "심화"));
-      } catch (err) {
-        console.error("VOD 불러오기 실패", err);
-        setVodRecommended([]);
-        setVodBasic([]);
-        setVodAdvanced([]);
-      }
-    }
-
-    loadVod();
   }, []);
 
   // 재생 권한 체크
@@ -166,36 +101,38 @@ export default function Home() {
    VOD 목록 단일 섹션 컴포넌트
 -----------------------------*/
 function VodSection({ title, list, onPlay }) {
-  if (!list || list.length === 0) return null;
-
   return (
     <section className="mb-8">
       <h2 className="text-lg font-bold text-[#404040] mb-3">{title}</h2>
 
-      <div className="grid grid-cols-2 gap-4">
-        {list.map((v) => (
-          <div
-            key={v.id}
-            className="bg-white border rounded-xl p-2 shadow-sm cursor-pointer"
-            onClick={() => onPlay(v.id)}
-          >
-            <img
-              src={v.thumbnail}
-              alt={v.title}
-              className="w-full h-28 object-cover rounded-lg"
-            />
+      {list && list.length > 0 ? (
+        <div className="grid grid-cols-2 gap-4">
+          {list.map((v) => (
+            <div
+              key={v.id}
+              className="bg-white border rounded-xl p-2 shadow-sm cursor-pointer"
+              onClick={() => onPlay(v.id)}
+            >
+              <img
+                src={v.thumbnail}
+                alt={v.title}
+                className="w-full h-28 object-cover rounded-lg"
+              />
 
-            <p className="mt-2 text-sm font-semibold text-[#404040] line-clamp-1">
-              {v.title}
-            </p>
+              <p className="mt-2 text-sm font-semibold text-[#404040] line-clamp-1">
+                {v.title}
+              </p>
 
-            <div className="flex items-center text-[#7a6f68] text-xs mt-1">
-              <PlayCircle size={14} className="mr-1" />
-              재생하기
+              <div className="flex items-center text-[#7a6f68] text-xs mt-1">
+                <PlayCircle size={14} className="mr-1" />
+                재생하기
+              </div>
             </div>
-          </div>
-        ))}
-      </div>
+          ))}
+        </div>
+      ) : (
+        <p className="text-sm text-gray-500">현재 준비된 영상이 없습니다.</p>
+      )}
     </section>
   );
 }

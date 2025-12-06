@@ -1,6 +1,5 @@
-import { useEffect, useMemo, useState } from "react";
+import { useMemo, useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { supabase } from "@/lib/supabaseClient";
 import { PlayCircle, Search } from "lucide-react";
 
 type VodItem = {
@@ -16,7 +15,7 @@ export default function VodList() {
   const navigate = useNavigate();
 
   const [role, setRole] = useState<string | null>(null);
-  const [vods, setVods] = useState<VodItem[]>([]);
+  const vods: VodItem[] = [];
   const [filter, setFilter] = useState<"all" | "추천" | "기초" | "심화">(
     "all"
   );
@@ -26,31 +25,6 @@ export default function VodList() {
   useEffect(() => {
     const r = localStorage.getItem("role");
     if (r) setRole(r);
-  }, []);
-
-  // ------------------ VOD 목록 불러오기 ------------------
-  useEffect(() => {
-    async function loadVod() {
-      try {
-        const { data, error } = await supabase
-          .from("vod_videos")
-          .select("*")
-          .order("created_at", { ascending: false });
-
-        if (error) {
-          console.error(error);
-          setVods([]);
-          return;
-        }
-
-        setVods((data || []) as VodItem[]);
-      } catch (err) {
-        console.error("VOD 목록 불러오기 실패", err);
-        setVods([]);
-      }
-    }
-
-    loadVod();
   }, []);
 
   // ------------------ 필터 + 검색 ------------------
