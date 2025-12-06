@@ -1,12 +1,7 @@
 import { useEffect, useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
-import {
-  Home as HomeIcon,
-  BookOpen,
-  PlayCircle,
-  Megaphone,
-  User,
-} from "lucide-react";
+import { motion } from "framer-motion";
+import { Bell, Home, PlayCircle, UserSquare } from "lucide-react";
 
 type Role = "admin" | "student" | "vod" | null;
 
@@ -15,106 +10,85 @@ const BottomNav = () => {
   const location = useLocation();
   const navigate = useNavigate();
 
-  // 로그인 후 저장해둔 role 안전하게 가져오기 (Cloudflare-safe)
   useEffect(() => {
     if (typeof window !== "undefined") {
       try {
         const stored = localStorage.getItem("role") as Role | null;
-        if (stored) {
-          setRole(stored);
-        }
-      } catch (e) {
-        console.warn("localStorage not accessible:", e);
+        setRole(stored);
+      } catch (error) {
+        console.warn("Failed to access localStorage", error);
       }
     }
   }, []);
 
-  // 로그인 안 되어 있으면 하단 내비 숨김
-  if (!role) return null;
+  const myPath =
+    role === "admin"
+      ? "/admin/my"
+      : role === "vod"
+      ? "/vod/my"
+      : "/student/my";
 
-  const paths = getPathsByRole(role);
-
-  const items = [
-    { key: "home", label: "홈", icon: HomeIcon, path: paths.home },
-    { key: "classroom", label: "강의실", icon: BookOpen, path: paths.classroom },
-    { key: "vod", label: "VOD", icon: PlayCircle, path: paths.vod },
-    { key: "notices", label: "공지", icon: Megaphone, path: paths.notices },
-    { key: "my", label: "마이", icon: User, path: paths.my },
+  const tabs = [
+    { label: "홈", icon: Home, to: "/home" },
+    { label: "VOD", icon: PlayCircle, to: "/vod/list" },
+    { label: "마이", icon: UserSquare, to: myPath },
+    { label: "알림", icon: Bell, to: "/notifications" },
   ];
 
-  const isActive = (path: string) => {
-    if (path === "/home") {
-      if (location.pathname === "/home" || location.pathname === "/")
-        return true;
+  const isActive = (to: string) => {
+    const pathname = location.pathname;
+
+    if (to === "/home") return pathname === "/" || pathname === "/home";
+    if (to.startsWith("/vod/")) return pathname.startsWith("/vod/");
+    if (to === "/notifications") return pathname === "/notifications";
+    if (to === "/student/my" || to === "/admin/my" || to === "/vod/my") {
+      return (
+        pathname === "/student/my" ||
+        pathname === "/admin/my" ||
+        pathname === "/vod/my"
+      );
     }
-    return (
-      location.pathname === path ||
-      location.pathname.startsWith(path + "/")
-    );
+
+    return pathname === to;
   };
 
   return (
-    <nav className="fixed bottom-0 left-0 right-0 z-40 border-t bg-[#fffdf6]">
-      <div className="mx-auto flex max-w-md items-center justify-between px-4 py-2">
-        {items.map(({ key, label, icon: Icon, path }) => {
-          const active = isActive(path);
+    <nav className="fixed bottom-0 left-0 w-full z-50 h-[70px] border-t border-[#e5e5e5] bg-white backdrop-blur-md">
+      <div className="mx-auto flex h-full max-w-screen-sm items-center justify-between gap-2 px-4">
+        {tabs.map(({ label, icon: Icon, to }) => {
+          const active = isActive(to);
 
           return (
-            <button
-              key={key}
+            <motion.button
+              key={label}
               type="button"
-              onClick={() => navigate(path)}
-              className="flex flex-1 flex-col items-center gap-1 text-xs"
+              onClick={() => navigate(to)}
+              initial={active ? { scale: 0.9 } : undefined}
+              animate={active ? { scale: 1.1 } : { scale: 1 }}
+              transition={
+                active
+                  ? { type: "spring", stiffness: 260, damping: 18 }
+                  : { duration: 0.2 }
+              }
+              whileTap={{ scale: 0.95 }}
+              className="flex flex-1 justify-center"
             >
               <div
-                className={`flex h-8 w-8 items-center justify-center rounded-full ${
-                  active ? "bg-[#f3e7c7]" : "bg-transparent"
+                className={`flex items-center gap-2 rounded-full px-4 py-2 ${
+                  active
+                    ? "bg-[#FFD331] text-[#404040] shadow-md"
+                    : "text-gray-500 transition-all duration-200 hover:scale-105 hover:bg-yellow-50 hover:text-[#404040]"
                 }`}
               >
-                <Icon
-                  size={20}
-                  className={active ? "text-[#404040]" : "text-[#9b8f85]"}
-                />
+                <Icon size={20} />
+                <span className="text-sm font-medium">{label}</span>
               </div>
-              <span
-                className={
-                  active
-                    ? "text-[11px] text-[#404040]"
-                    : "text-[11px] text-[#9b8f85]"
-                }
-              >
-                {label}
-              </span>
-            </button>
+            </motion.button>
           );
         })}
       </div>
     </nav>
   );
 };
-
-function getPathsByRole(role: Role) {
-  return {
-    home: "/home",
-
-    classroom:
-      role === "admin"
-        ? "/admin/classroom"
-        : role === "student"
-        ? "/student/classroom"
-        : "/vod/list",
-
-    vod: role === "admin" ? "/admin/vod" : "/vod/list",
-
-    notices: role === "admin" ? "/admin/notices" : "/notices",
-
-    my:
-      role === "admin"
-        ? "/admin/my"
-        : role === "student"
-        ? "/student/my"
-        : "/vod/my",
-  };
-}
 
 export default BottomNav;

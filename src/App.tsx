@@ -3,7 +3,7 @@ import ClassroomCategoryPage from "./page/student/ClassroomCategoryPage";
 import ClassroomDetailPage from "./page/student/ClassroomDetailPage";
 
 import { useState } from "react";
-import { BrowserRouter, Routes, Route, useLocation } from "react-router-dom";
+import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { AuthProvider } from "./auth/AuthProvider";
 import ProtectedRoute from "./auth/ProtectedRoute";
 
@@ -54,11 +54,6 @@ const AppContent = () => {
   const [selectedRole, setSelectedRole] = useState<
     "student" | "vod" | "admin" | null
   >(null);
-  const location = useLocation();
-  const path = location.pathname;
-
-  // auth 페이지는 삭제했기 때문에 hideBottomNav는 고정 false
-  const hideBottomNav = false;
 
   return (
     <>
@@ -66,7 +61,7 @@ const AppContent = () => {
       <Header onLoginClick={() => setModalMode("login")} />
 
       {/* 본문 영역 여백 */}
-      <div style={{ paddingTop: 60 }}>
+      <div className="min-h-screen pt-16 pb-20 bg-[#fffdf6]">
         <Routes>
 
           {/* ---------------- 홈 ---------------- */}
