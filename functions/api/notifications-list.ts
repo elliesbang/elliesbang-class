@@ -7,7 +7,14 @@ export async function onRequest({ request, env }) {
   if (!token)
     return new Response(JSON.stringify({ error: "No token" }), { status: 401 });
 
-  const { data: userData, error: userError } = await supabase.auth.getUser(token);
+  // ⭐ Cloudflare Functions 전용 안전 인증 방식
+  const { data: userData, error: userError } = await supabase.auth.getUser(token, {
+    auth: {
+      autoRefreshToken: false,
+      persistSession: false,
+    },
+  });
+
   if (userError || !userData?.user)
     return new Response(JSON.stringify({ error: "Invalid user" }), { status: 401 });
 
