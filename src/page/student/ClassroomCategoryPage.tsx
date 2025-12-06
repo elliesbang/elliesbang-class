@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { supabase } from "@/lib/supabaseClient";
 import { useNavigate } from "react-router-dom";
+import { ChevronDown, ChevronUp } from "lucide-react";
 
 export default function ClassroomCategoryPage() {
   const [categories, setCategories] = useState<any[]>([]);
@@ -41,40 +42,60 @@ export default function ClassroomCategoryPage() {
 
         return (
           <div key={parent.id} className="mb-4">
-            {/* Parent Card (홈 화면 카드와 동일 스타일) */}
+            
+            {/* ───────── 상위 카테고리 Card ───────── */}
             <button
               onClick={() =>
                 setOpenParentId((prev) => (prev === parent.id ? null : parent.id))
               }
               className="
-                w-full text-left bg-white rounded-2xl shadow-sm
-                p-4 mb-2 border border-[#f1f1f1]
+                w-full flex justify-between items-center
+                bg-white rounded-2xl shadow-sm p-4 border border-[#f1f1f1]
               "
             >
-              <div className="text-base font-semibold text-[#404040]">
+              <span className="text-base font-semibold text-[#404040]">
                 {parent.name}
-              </div>
+              </span>
+
+              {isOpen ? (
+                <ChevronUp size={20} className="text-gray-500" />
+              ) : (
+                <ChevronDown size={20} className="text-gray-500" />
+              )}
             </button>
 
-            {/* Child Cards */}
+            {/* ───────── 하위 카테고리 목록 ───────── */}
             {isOpen && (
-              <div className="space-y-3 pl-2">
+              <div className="space-y-3 pl-2 mt-2">
                 {subItems.map((child) => (
-                  <button
+                  <div
                     key={child.id}
-                    onClick={() =>
-                      navigate(`/student/classroom/${child.id}`)
-                    }
                     className="
-                      w-full text-left bg-white rounded-2xl shadow-sm
-                      p-4 border border-[#f1f1f1]
+                      w-full bg-[#fffdf6] rounded-xl shadow-sm border border-[#f1f1f1]
+                      p-4 flex justify-between items-center
                     "
                   >
-                    <div className="text-base font-medium text-[#404040]">
-                      {child.name}
-                    </div>
-                  </button>
+                    <span className="text-base text-[#404040]">{child.name}</span>
+
+                    <button
+                      onClick={() =>
+                        navigate(`/student/classroom/${child.id}`)
+                      }
+                      className="
+                        bg-[#FFD331] text-[#404040] px-3 py-1 rounded-lg
+                        text-sm font-medium shadow-sm hover:bg-[#ffcd24]
+                      "
+                    >
+                      수강하기
+                    </button>
+                  </div>
                 ))}
+
+                {subItems.length === 0 && (
+                  <p className="text-sm text-gray-400 pl-2">
+                    하위 카테고리가 없습니다.
+                  </p>
+                )}
               </div>
             )}
           </div>
