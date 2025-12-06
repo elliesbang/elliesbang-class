@@ -10,7 +10,6 @@ type Props = {
 const ProtectedRoute = ({ children, allow }: Props) => {
   const { user, role, loading } = useAuth();
 
-  // localStorage fallback
   const storedRole =
     typeof window !== "undefined"
       ? (localStorage.getItem("role") as "student" | "vod" | "admin" | null)
@@ -18,25 +17,26 @@ const ProtectedRoute = ({ children, allow }: Props) => {
 
   const effectiveRole = role ?? storedRole;
 
-  // 🔥 1) 로딩 중에는 아무것도 렌더링하거나 이동시키면 안 됨
-  if (loading || role === undefined) {
-    return null; // 👈 깜빡임 없애는 핵심
+  // 1) 세션 로딩 중일 때는 아무것도 렌더링하거나 이동시키면 안 됨
+  if (loading || role === undefined) return null;
+
+  // ⭐ 2) allow가 없으면 보호하지 않음 → 그대로 통과
+  if (!allow) {
+    return <>{children}</>;
   }
 
-  // 🔥 2) 로그인 안 된 경우 → 모달만 띄우고 이동은 한 번만 발생
+  // ⭐ 3) allow가 있는 경우에만 로그인 체크
   if (!user || !effectiveRole) {
     openLoginModal(null, "로그인이 필요한 서비스입니다.");
     return <Navigate to="/" replace />;
   }
 
-  // 🔥 3) 역할 제한이 있는 페이지
-  if (allow && !allow.includes(effectiveRole)) {
-    // 안내 메시지 옵션
+  // ⭐ 역할 제한 검사
+  if (!allow.includes(effectiveRole)) {
     if (effectiveRole === "student") {
       alert("해당 메뉴는 VOD 전용 서비스입니다.");
     }
 
-    // 역할별 허용된 마이페이지로 이동
     if (effectiveRole === "admin") return <Navigate to="/admin/my" replace />;
     if (effectiveRole === "student") return <Navigate to="/student/my" replace />;
     if (effectiveRole === "vod") return <Navigate to="/vod/my" replace />;
@@ -44,7 +44,6 @@ const ProtectedRoute = ({ children, allow }: Props) => {
     return <Navigate to="/" replace />;
   }
 
-  // 🔥 4) 모든 조건 충족 → 정상 렌더링
   return <>{children}</>;
 };
 
