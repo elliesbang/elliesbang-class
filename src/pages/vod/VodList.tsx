@@ -17,6 +17,7 @@ export default function VodList() {
   const { user, role: authRole, loading } = useAuth();
 
   const [role, setRole] = useState<UserRole>(null);
+  const [roleLoading, setRoleLoading] = useState(true);
   const [vods, setVods] = useState<VodVideo[]>([]);
   const [categories, setCategories] = useState<VodCategory[]>([]);
   const [filter, setFilter] = useState<"all" | number>("all");
@@ -29,24 +30,14 @@ export default function VodList() {
   }, []);
 
   useEffect(() => {
-    if (authRole) setRole(authRole as UserRole);
-  }, [authRole]);
-
-  useEffect(() => {
-    if (loading) return;
-
-    if (!role || !user) {
-      openLoginModal(null, "로그인이 필요한 서비스입니다.");
-      navigate("/", { replace: true });
+    if (loading) {
+      setRoleLoading(true);
       return;
     }
 
-    if (role === "student") {
-      alert("해당 메뉴는 VOD 전용 서비스입니다.");
-      navigate("/", { replace: true });
-      return;
-    }
-  }, [loading, role, user, navigate]);
+    setRole(authRole as UserRole);
+    setRoleLoading(false);
+  }, [authRole, loading]);
 
   useEffect(() => {
     async function loadCategories() {
@@ -115,10 +106,10 @@ export default function VodList() {
       setPurchased(new Set((data as PurchaseRow[]).map((row) => row.vod_id)));
     }
 
-    if (role === "vod" || role === "admin") {
+    if (!roleLoading && (role === "vod" || role === "admin" || role === "student")) {
       void loadPurchases();
     }
-  }, [role, user]);
+  }, [role, roleLoading, user]);
 
   const filteredVods = useMemo(() => {
     return vods.filter((v) =>
@@ -127,20 +118,24 @@ export default function VodList() {
   }, [vods, search]);
 
   const getStatusLabel = (vodId: number) => {
+    if (roleLoading) return "확인 중";
     if (!role || !user) return "로그인 필요";
-    if (role === "student") return "권한 없음";
     if (role === "admin") return "재생하기";
     return purchased.has(vodId) ? "재생하기" : "구매 필요";
   };
 
   const handlePlay = async (id: number) => {
+    if (roleLoading) return;
+
+    const allowedRoles: UserRole[] = ["student", "vod", "admin"];
+
     if (!role || !user) {
       openLoginModal("vod", "로그인이 필요한 서비스입니다.");
       return;
     }
 
-    if (role !== "admin" && role !== "vod") {
-      alert("이 영상은 VOD 이용권이 필요합니다.");
+    if (!allowedRoles.includes(role)) {
+      openLoginModal("vod", "로그인이 필요한 서비스입니다.");
       return;
     }
 
