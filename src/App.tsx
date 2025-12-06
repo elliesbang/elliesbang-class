@@ -6,12 +6,7 @@ import { BrowserRouter, Routes, Route, useLocation } from "react-router-dom";
 import { AuthProvider } from "./auth/AuthProvider";
 import ProtectedRoute from "./auth/ProtectedRoute";
 
-// 인증 페이지
-import RoleSelect from "./page/auth/RoleSelect";
-import Login from "./page/auth/Login";
-import Signup from "./page/auth/Signup";
-
-// 역할별 마이
+// 역할별 마이페이지
 import AdminMy from "./page/admin/AdminMy";
 import StudentMy from "./page/student/StudentMy";
 import VodMy from "./page/vod/VodMy";
@@ -21,7 +16,7 @@ import Home from "./page/Home";
 import VodList from "./page/vod/VodList";
 import VodDetail from "./page/vod/VodDetail";
 
-// 관리자 대시보드 레이아웃 및 페이지
+// 관리자 대시보드 페이지
 import AdminLayout from "./components/admin/AdminLayout";
 import AdminHome from "./page/admin/AdminHome";
 
@@ -35,7 +30,6 @@ import FeedbackPage from "./page/admin/FeedbackPage";
 import GlobalNotices from "./page/admin/notices/GlobalNotices";
 import VodManager from "./page/admin/vod/VodManager";
 
-// ⭐ 기존 UserManage 삭제, 학생/VOD 파일 사용
 import StudentUsers from "./page/admin/users/StudentUsers";
 import VodUsers from "./page/admin/users/VodUsers";
 
@@ -48,14 +42,14 @@ import Notifications from "./page/notifications/Notifications";
 
 
 // ===========================================================
-// ⭐ BottomNav 조건부 렌더링을 위한 Wrapper
+// ⭐ BottomNav 조건부 렌더링 Wrapper
 // ===========================================================
 const AppContent = () => {
   const location = useLocation();
   const path = location.pathname;
 
-  // auth 페이지에서는 BottomNav 숨김
-  const hideBottomNav = path.startsWith("/auth");
+  // auth 페이지는 삭제했기 때문에 hideBottomNav는 고정 false
+  const hideBottomNav = false;
 
   return (
     <>
@@ -66,28 +60,8 @@ const AppContent = () => {
       <div style={{ paddingTop: 60 }}>
         <Routes>
 
-          {/* ---------------- AUTH ---------------- */}
-          <Route path="/auth/role" element={<RoleSelect />} />
-
-          <Route
-            path="/auth/login"
-            element={
-              <ProtectedRoute allow={["admin", "student", "vod"]}>
-                <Login />
-              </ProtectedRoute>
-            }
-          />
-
-          <Route
-            path="/auth/signup"
-            element={
-              <ProtectedRoute allow={["admin", "student", "vod"]}>
-                <Signup />
-              </ProtectedRoute>
-            }
-          />
-
           {/* ---------------- 홈 ---------------- */}
+          <Route path="/" element={<Home />} />
           <Route path="/home" element={<Home />} />
 
           {/* ---------------- VOD ---------------- */}
@@ -156,7 +130,6 @@ const AppContent = () => {
           {/*                  ⭐ 관리자 대시보드 ⭐                */}
           {/* ===================================================== */}
 
-          {/* 관리자 홈 */}
           <Route
             path="/admin"
             element={
@@ -168,7 +141,6 @@ const AppContent = () => {
             }
           />
 
-          {/* --- 강의실 관리 --- */}
           <Route
             path="/admin/classroom/videos"
             element={
@@ -202,7 +174,6 @@ const AppContent = () => {
             }
           />
 
-          {/* --- 과제 & 피드백 --- */}
           <Route
             path="/admin/assignments"
             element={
@@ -225,7 +196,6 @@ const AppContent = () => {
             }
           />
 
-          {/* --- 전체 공지 관리 --- */}
           <Route
             path="/admin/notices"
             element={
@@ -237,7 +207,6 @@ const AppContent = () => {
             }
           />
 
-          {/* --- VOD 관리 --- */}
           <Route
             path="/admin/vod"
             element={
@@ -249,7 +218,6 @@ const AppContent = () => {
             }
           />
 
-          {/* --- 사용자 관리(학생) --- */}
           <Route
             path="/admin/users/students"
             element={
@@ -261,7 +229,6 @@ const AppContent = () => {
             }
           />
 
-          {/* --- 사용자 관리(VOD) --- */}
           <Route
             path="/admin/users/vod"
             element={
@@ -273,7 +240,6 @@ const AppContent = () => {
             }
           />
 
-          {/* --- 수업 관리 --- */}
           <Route
             path="/admin/classes"
             element={
@@ -285,14 +251,11 @@ const AppContent = () => {
             }
           />
 
-          {/* ---------------- ROOT ---------------- */}
-          <Route path="/" element={<RoleSelect />} />
-
         </Routes>
       </div>
 
-      {/* auth에서는 숨기고 그 외에는 항상 노출 */}
-      {!hideBottomNav && <BottomNav />}
+      {/* auth 라우트는 제거했으므로 항상 BottomNav 표시 */}
+      <BottomNav />
     </>
   );
 };
