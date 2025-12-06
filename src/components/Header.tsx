@@ -41,7 +41,7 @@ const Header = ({ onLoginClick }: { onLoginClick: () => void }) => {
           top: 0,
           left: 0,
           right: 0,
-          zIndex: 9999,
+          zIndex: 20,
         }}
       >
         {/* 왼쪽 로고 텍스트 */}

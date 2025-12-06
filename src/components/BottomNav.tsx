@@ -69,7 +69,7 @@ export default function BottomNav() {
   const inactiveClass = " text-gray-500 hover:scale-105";
 
   return (
-    <nav className="fixed bottom-0 left-0 w-full h-[70px] bg-white border-t border-[#e5e5e5] backdrop-blur-md z-[80] flex justify-around items-center">
+    <nav className="fixed bottom-0 left-0 w-full h-[70px] bg-white border-t border-[#e5e5e5] backdrop-blur-md z-50 flex justify-around items-center">
       {menu.map((item) => {
         const Icon = item.icon;
         const cls = baseBtnClass + (item.active ? activeClass : inactiveClass);
