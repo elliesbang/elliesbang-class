@@ -11,19 +11,13 @@ export default function BottomNav() {
     typeof window !== "undefined" ? localStorage.getItem("role") : null;
 
   const currentRole = role ?? storedRole;
-
   const pathname = location.pathname;
 
-  // 🔥 정확한 경로 기반 active 계산 (깜빡임 원인 제거)
+  // ⭐ VOD active 정확하게 체크
   const isVodActive =
     pathname === "/vod/list" || pathname.startsWith("/vod/");
 
-  const isMyActive =
-    pathname.startsWith("/student/my") ||
-    pathname.startsWith("/admin/my") ||
-    pathname.startsWith("/vod/my");
-
-  // 🔥 역할별 마이페이지 이동 경로
+  // ⭐ 역할별 마이페이지 분기
   const myPath =
     currentRole === "admin"
       ? "/admin/my"
@@ -67,7 +61,10 @@ export default function BottomNav() {
       label: "마이",
       icon: UserSquare,
       to: myPath,
-      active: isMyActive,
+      active:
+        pathname.startsWith("/student/my") ||
+        pathname.startsWith("/admin/my") ||
+        pathname.startsWith("/vod/my"),
     },
   ];
 
@@ -80,14 +77,12 @@ export default function BottomNav() {
     <nav className="fixed bottom-0 left-0 w-full h-[70px] bg-white border-t border-[#e5e5e5] backdrop-blur-md z-50 flex justify-around items-center">
       {menu.map((item) => {
         const Icon = item.icon;
-        const cls = baseBtnClass + (item.active ? activeClass : inactiveClass);
-
         return (
           <button
             key={item.key}
             type="button"
             onClick={() => navigate(item.to)}
-            className={cls}
+            className={baseBtnClass + (item.active ? activeClass : inactiveClass)}
           >
             <Icon size={20} />
             <span className="mt-1 leading-none">{item.label}</span>
