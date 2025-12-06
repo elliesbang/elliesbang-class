@@ -128,7 +128,7 @@ export default function Home() {
             </h2>
 
             <button
-              onClick={() => navigate("/notices")}
+              onClick={() => navigate("/notifications")}
               className="flex items-center gap-1 text-sm text-[#7a6f68]"
             >
               전체보기 <ChevronRight size={14} />

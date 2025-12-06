@@ -4,6 +4,42 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Ellie's Class</title>
+    <!-- Tailwind CDN for utility classes used across the app -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+      tailwind.config = {
+        theme: {
+          extend: {},
+        },
+        safelist: [
+          "fixed",
+          "bottom-0",
+          "left-0",
+          "w-full",
+          "h-[70px]",
+          "bg-white",
+          "backdrop-blur-md",
+          "border-t",
+          "border-[#e5e5e5]",
+          "flex",
+          "justify-around",
+          "items-center",
+          "rounded-2xl",
+          "transition-all",
+          "duration-200",
+          "scale-105",
+          "scale-100",
+          "text-gray-500",
+          "text-[#404040]",
+          "bg-[#FFD331]",
+          "shadow-sm",
+          "text-xs",
+          "mt-1",
+          "px-4",
+          "py-1",
+        ],
+      };
+    </script>
   </head>
   <body>
     <div id="root"></div>
