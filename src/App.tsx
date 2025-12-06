@@ -49,9 +49,7 @@ import { AuthModalDetail } from "./lib/authModal";
 // ⭐ BottomNav 조건부 렌더링 Wrapper
 // ===========================================================
 const AppContent = () => {
-  const [modalMode, setModalMode] = useState<null | "login" | "signup">(
-    null
-  );
+  const [modalMode, setModalMode] = useState<null | "login" | "signup">(null);
   const [selectedRole, setSelectedRole] = useState<
     "student" | "vod" | "admin" | null
   >(null);
@@ -88,14 +86,11 @@ const AppContent = () => {
           <Route path="/home" element={<Home />} />
 
           {/* ---------------- VOD ---------------- */}
-          <Route
-            path="/vod/list"
-            element={
-              <ProtectedRoute allow={["admin", "vod"]}>
-                <VodList />
-              </ProtectedRoute>
-            }
-          />
+
+          {/* ✅ VOD 목록은 누구나 접근 가능 (ProtectedRoute 제거) */}
+          <Route path="/vod/list" element={<VodList />} />
+
+          {/* ✅ VOD 영상 재생만 로그인 + 권한 필요 */}
           <Route
             path="/vod/:id"
             element={
