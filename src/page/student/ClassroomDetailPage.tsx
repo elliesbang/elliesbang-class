@@ -3,17 +3,16 @@ import { useParams } from "react-router-dom";
 import NoticesTab from "@/components/classroom/tabs/NoticesTab";
 import ClassroomVideosTab from "./tabs/ClassroomVideosTab";
 import ClassroomMaterialsTab from "./tabs/ClassroomMaterialsTab";
-import ClassroomAssignmentsTab from "./tabs/ClassroomAssignmentsTab";
+import ClassroomFeedbackTab from "./tabs/ClassroomFeedbackTab";
 
 type TabKey = "video" | "material" | "notice" | "assignment" | "feedback";
 
 const ClassroomDetailPage = () => {
   const { categoryId } = useParams();
   const [activeTab, setActiveTab] = useState<TabKey>("video");
-  const classroomId = categoryId ?? "";
-  const parsedClassroomId = Number.isNaN(Number(categoryId))
-    ? undefined
-    : Number(categoryId);
+  const classroomId = Number(categoryId ?? 0);
+  const parsedClassroomId = Number.isNaN(classroomId) ? undefined : classroomId;
+  const classId = parsedClassroomId ?? 0;
 
   const tabs: { key: TabKey; label: string }[] = [
     { key: "video", label: "영상" },
@@ -64,17 +63,7 @@ const ClassroomDetailPage = () => {
       )}
 
       {activeTab === "feedback" && (
-        <div className="rounded-2xl bg-white p-4 shadow-sm">
-          <div>
-            <h2 className="mb-2 text-base font-semibold text-[#404040]">
-              피드백
-            </h2>
-            <p className="text-sm text-[#7a6f68]">
-              TODO: 관리자 대시보드 과제/피드백 관리에서 입력한 피드백을 이
-              강의실 기준으로 모아서 보여주기.
-            </p>
-          </div>
-        </div>
+        <ClassroomFeedbackTab classroomId={parsedClassroomId} classId={classId} />
       )}
     </div>
   );
