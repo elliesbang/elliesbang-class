@@ -31,76 +31,83 @@ export default function ClassroomCategoryPage() {
   const children = categories.filter((c) => c.parent_id !== null);
 
   return (
-    <div className="px-4 py-4 bg-[#fffdf6] min-h-screen">
-      <h1 className="text-xl font-bold mb-4 text-[#404040]">
-        강의실 카테고리
-      </h1>
+    <div className="bg-[#fffdf6] min-h-screen pt-4 pb-10">
+      
+      {/* ⭐ 공지카드와 동일한 가로폭 제한 + 중앙 정렬 */}
+      <div className="mx-auto w-full max-w-4xl px-4">
 
-      {parents.map((parent) => {
-        const isOpen = openParentId === parent.id;
-        const subItems = children.filter((c) => c.parent_id === parent.id);
+        <h1 className="text-xl font-bold mb-4 text-[#404040]">
+          강의실 카테고리
+        </h1>
 
-        return (
-          <div key={parent.id} className="mb-4">
-            
-            {/* ───────── 상위 카테고리 Card ───────── */}
-            <button
-              onClick={() =>
-                setOpenParentId((prev) => (prev === parent.id ? null : parent.id))
-              }
-              className="
-                w-full flex justify-between items-center
-                bg-white rounded-2xl shadow-sm p-4 border border-[#f1f1f1]
-              "
-            >
-              <span className="text-base font-semibold text-[#404040]">
-                {parent.name}
-              </span>
+        {parents.map((parent) => {
+          const isOpen = openParentId === parent.id;
+          const subItems = children.filter((c) => c.parent_id === parent.id);
 
-              {isOpen ? (
-                <ChevronUp size={20} className="text-gray-500" />
-              ) : (
-                <ChevronDown size={20} className="text-gray-500" />
-              )}
-            </button>
+          return (
+            <div key={parent.id} className="mb-4">
 
-            {/* ───────── 하위 카테고리 목록 ───────── */}
-            {isOpen && (
-              <div className="space-y-3 pl-2 mt-2">
-                {subItems.map((child) => (
-                  <div
-                    key={child.id}
-                    className="
-                      w-full bg-[#fffdf6] rounded-xl shadow-sm border border-[#f1f1f1]
-                      p-4 flex justify-between items-center
-                    "
-                  >
-                    <span className="text-base text-[#404040]">{child.name}</span>
+              {/* ───────── 상위 카테고리 Card ───────── */}
+              <button
+                onClick={() =>
+                  setOpenParentId((prev) => (prev === parent.id ? null : parent.id))
+                }
+                className="
+                  w-full flex justify-between items-center
+                  bg-white rounded-2xl shadow-sm p-4 
+                  border border-[#ececec]
+                "
+              >
+                <span className="text-base font-semibold text-[#404040]">
+                  {parent.name}
+                </span>
 
-                    <button
-                      onClick={() =>
-                        navigate(`/student/classroom/${child.id}`)
-                      }
+                {isOpen ? (
+                  <ChevronUp size={20} className="text-gray-500" />
+                ) : (
+                  <ChevronDown size={20} className="text-gray-500" />
+                )}
+              </button>
+
+              {/* ───────── 하위 카테고리 목록 ───────── */}
+              {isOpen && (
+                <div className="space-y-3 mt-2">
+                  {subItems.map((child) => (
+                    <div
+                      key={child.id}
                       className="
-                        bg-[#FFD331] text-[#404040] px-3 py-1 rounded-lg
-                        text-sm font-medium shadow-sm hover:bg-[#ffcd24]
+                        w-full bg-[#fffaf0] rounded-xl shadow-sm 
+                        border border-[#f1f1f1]
+                        px-4 py-3 
+                        flex justify-between items-center
                       "
                     >
-                      수강하기
-                    </button>
-                  </div>
-                ))}
+                      <span className="text-base text-[#404040]">{child.name}</span>
 
-                {subItems.length === 0 && (
-                  <p className="text-sm text-gray-400 pl-2">
-                    하위 카테고리가 없습니다.
-                  </p>
-                )}
-              </div>
-            )}
-          </div>
-        );
-      })}
+                      <button
+                        onClick={() => navigate(`/student/classroom/${child.id}`)}
+                        className="
+                          bg-[#FFD331] text-[#404040] px-3 py-1 rounded-lg
+                          text-sm font-medium shadow-sm hover:bg-[#ffcd24]
+                        "
+                      >
+                        수강하기
+                      </button>
+                    </div>
+                  ))}
+
+                  {subItems.length === 0 && (
+                    <p className="text-sm text-gray-400 pl-2">
+                      하위 카테고리가 없습니다.
+                    </p>
+                  )}
+                </div>
+              )}
+            </div>
+          );
+        })}
+
+      </div>
     </div>
   );
 }
