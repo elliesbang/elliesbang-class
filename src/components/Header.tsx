@@ -3,24 +3,18 @@ import { Bell } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "../auth/AuthProvider";
 import { useLogout } from "../hooks/useLogout";
-import UserNotificationDropdown from "./UserNotificationDropdown";
-import {
-  getUserNotifications,
-  markUserNotificationAsRead,
-} from "@/lib/supabase/userNotifications";
+import { getUserNotifications } from "@/lib/supabase/userNotifications";
 import { UserNotification } from "@/types/UserNotification";
 
 const Header = ({ onLoginClick }: { onLoginClick: () => void }) => {
   const navigate = useNavigate();
   const { user } = useAuth();
   const logout = useLogout();
-  const [openNotif, setOpenNotif] = useState(false);
   const [list, setList] = useState<UserNotification[]>([]);
 
   useEffect(() => {
     if (!user) {
       setList([]);
-      setOpenNotif(false);
       return;
     }
 
@@ -53,7 +47,7 @@ const Header = ({ onLoginClick }: { onLoginClick: () => void }) => {
             className="relative"
             onClick={(e) => {
               e.stopPropagation();
-              setOpenNotif((prev) => !prev);
+              navigate("/user-notifications");
             }}
             aria-label="사용자 알림"
             type="button"
@@ -81,21 +75,6 @@ const Header = ({ onLoginClick }: { onLoginClick: () => void }) => {
           >
             로그아웃
           </button>
-        )}
-
-        {openNotif && user && (
-          <UserNotificationDropdown
-            list={list}
-            onClose={() => setOpenNotif(false)}
-            onRead={async (id) => {
-              try {
-                await markUserNotificationAsRead(id);
-                await loadNotifications(user.id);
-              } catch (error) {
-                console.error("Failed to mark notification as read", error);
-              }
-            }}
-          />
         )}
       </div>
     </header>

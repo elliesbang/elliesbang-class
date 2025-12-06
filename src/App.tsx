@@ -40,6 +40,7 @@ import ClassManager from "./page/admin/class/ClassManager";
 import BottomNav from "./components/BottomNav";
 import Header from "./components/Header";
 import Notifications from "./page/notifications/Notifications";
+import UserNotifications from "./page/userNotifications/UserNotifications";
 import LoginModal from "./components/LoginModal";
 import SignupModal from "./components/SignupModal";
 import { AuthModalDetail } from "./lib/authModal";
@@ -148,12 +149,13 @@ const AppContent = () => {
             }
           />
 
-          {/* ---------------- 공용 알림 ---------------- */}
+          {/* ---------------- 공지 & 알림 ---------------- */}
+          <Route path="/notifications" element={<Notifications />} />
           <Route
-            path="/notifications"
+            path="/user-notifications"
             element={
               <ProtectedRoute allow={["admin", "student", "vod"]}>
-                <Notifications />
+                <UserNotifications />
               </ProtectedRoute>
             }
           />

@@ -1,74 +1,60 @@
+import { Megaphone } from "lucide-react";
 import { useEffect, useState } from "react";
 import { supabase } from "../../lib/supabaseClient";
 
+type Notification = {
+  id: number;
+  title: string;
+  content: string | null;
+  created_at: string;
+};
+
 const Notifications = () => {
-  const [list, setList] = useState([]);
-
-  const fetchNotifications = async () => {
-    const token = (await supabase.auth.getSession()).data.session?.access_token;
-
-    const res = await fetch("/api/notifications-list", {
-      headers: {
-        Authorization: `Bearer ${token}`,
-      },
-    });
-
-    const data = await res.json();
-    setList(data);
-  };
-
-  const markAsRead = async (id) => {
-    const token = (await supabase.auth.getSession()).data.session?.access_token;
-
-    await fetch("/api/notifications-read", {
-      method: "POST",
-      body: JSON.stringify({ notificationId: id }),
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${token}`,
-      },
-    });
-
-    // UI 업데이트
-    setList((prev) =>
-      prev.map((n) => (n.id === id ? { ...n, isRead: true } : n))
-    );
-  };
+  const [list, setList] = useState<Notification[]>([]);
 
   useEffect(() => {
+    async function fetchNotifications() {
+      const { data, error } = await supabase
+        .from("notifications")
+        .select("id, title, content, created_at")
+        .order("created_at", { ascending: false });
+
+      if (error) {
+        console.error("공지 불러오기 실패", error);
+        setList([]);
+        return;
+      }
+
+      setList((data ?? []) as Notification[]);
+    }
+
     fetchNotifications();
   }, []);
 
   return (
-    <div style={{ padding: "80px 20px" }}>
-      <h2 style={{ fontSize: 22, marginBottom: 20 }}>알림</h2>
-
-      {list.length === 0 && <p>알림이 없습니다.</p>}
-
-      {list.map((n) => (
-        <div
-          key={n.id}
-          onClick={() => markAsRead(n.id)}
-          style={{
-            padding: "16px",
-            borderRadius: 10,
-            marginBottom: 12,
-            cursor: "pointer",
-            background: n.isRead ? "#f5f5f5" : "#fff8d3",
-            border: n.isRead ? "1px solid #ddd" : "1px solid #ffce00",
-          }}
-        >
-          <div style={{ fontWeight: n.isRead ? 500 : 700 }}>
-            {n.title}
-          </div>
-          <div style={{ fontSize: 14, marginTop: 4, opacity: 0.8 }}>
-            {n.message}
-          </div>
-          <div style={{ fontSize: 12, marginTop: 6, opacity: 0.5 }}>
-            {new Date(n.created_at).toLocaleString()}
-          </div>
+    <div className="min-h-screen bg-[#fff9f2]">
+      <div className="mx-auto max-w-3xl px-5 pb-24 pt-6">
+        <div className="mb-3 flex items-center gap-2 text-lg font-bold text-[#404040]">
+          <Megaphone size={20} /> 전체 공지
         </div>
-      ))}
+
+        <div className="space-y-3">
+          {list.map((n) => (
+            <div
+              key={n.id}
+              className="w-full rounded-lg border bg-white p-4 text-left shadow-sm"
+            >
+              <p className="font-semibold text-[#404040]">{n.title}</p>
+              <p className="mt-1 text-sm text-[#7a6f68]">{n.content ?? ""}</p>
+              <p className="mt-2 text-xs text-gray-400">{n.created_at?.slice(0, 10)}</p>
+            </div>
+          ))}
+
+          {list.length === 0 && (
+            <p className="text-sm text-gray-500">등록된 공지가 없습니다.</p>
+          )}
+        </div>
+      </div>
     </div>
   );
 };
