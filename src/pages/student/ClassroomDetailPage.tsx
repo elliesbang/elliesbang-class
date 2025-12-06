@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useParams } from "react-router-dom";
-import NoticesTab from "@/components/classroom/tabs/NoticesTab";
+import NoticesTab from "@/pages/student/tabs/NoticesTab";
 import ClassroomVideosTab from "./tabs/ClassroomVideosTab";
 import ClassroomMaterialsTab from "./tabs/ClassroomMaterialsTab";
 import ClassroomFeedbackTab from "./tabs/ClassroomFeedbackTab";

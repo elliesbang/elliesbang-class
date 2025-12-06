@@ -1,4 +1,4 @@
-// src/page/Home.tsx
+// src/pages/Home.tsx
 import { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Megaphone, PlayCircle, ChevronRight } from "lucide-react";
