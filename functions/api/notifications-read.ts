@@ -7,20 +7,30 @@ export async function onRequest({ request, env }) {
   if (!token)
     return new Response(JSON.stringify({ error: "No token" }), { status: 401 });
 
-  const { data: userData } = await supabase.auth.getUser(token);
-  const userId = userData.user?.id;
+  // ⭐ Cloudflare Functions 안전 인증 방식
+  const { data: userData, error: userError } = await supabase.auth.getUser(token, {
+    auth: {
+      autoRefreshToken: false,
+      persistSession: false,
+    },
+  });
 
-  if (!userId)
+  if (userError || !userData?.user)
     return new Response(JSON.stringify({ error: "Unauthorized" }), { status: 401 });
+
+  const userId = userData.user.id;
 
   const { notificationId } = await request.json();
 
-  // 읽음 기록 생성 (중복 방지: UPSERT)
-  await supabase.from("notification_read").upsert({
-    notification_id: notificationId,
-    user_id: userId,
-    read_at: new Date(),
-  });
+  await supabase
+    .from("notification_read")
+    .upsert({
+      notification_id: notificationId,
+      user_id: userId,
+      read_at: new Date(),
+    });
 
-  return new Response(JSON.stringify({ success: true }));
+  return new Response(JSON.stringify({ success: true }), {
+    headers: { "Content-Type": "application/json" },
+  });
 }
