@@ -5,12 +5,14 @@ import { useAuth } from "../auth/AuthProvider";
 import { useLogout } from "../hooks/useLogout";
 import { getUserNotifications } from "@/lib/supabase/userNotifications";
 import { UserNotification } from "@/types/UserNotification";
+import UserNotificationDropdown from "@/components/notifications/UserNotificationDropdown";  // ⭐ 추가
 
 const Header = ({ onLoginClick }: { onLoginClick: () => void }) => {
   const navigate = useNavigate();
   const { user } = useAuth();
   const logout = useLogout();
   const [list, setList] = useState<UserNotification[]>([]);
+  const [openDropdown, setOpenDropdown] = useState(false); // ⭐ 추가
 
   useEffect(() => {
     if (!user) {
@@ -41,22 +43,33 @@ const Header = ({ onLoginClick }: { onLoginClick: () => void }) => {
         엘리의방 클래스
       </h1>
 
-      <div className="flex items-center gap-4 relative">
+      <div className="flex items-center gap-4 relative"> {/* ⭐ Dropdown이 이 기준으로 위치함 */}
         {user && (
-          <button
-            className="relative"
-            onClick={(e) => {
-              e.stopPropagation();
-              navigate("/user-notifications");
-            }}
-            aria-label="사용자 알림"
-            type="button"
-          >
-            <Bell size={22} />
-            {unreadCount > 0 && (
-              <span className="absolute -top-1 -right-1 w-3 h-3 bg-red-500 rounded-full" />
+          <div className="relative">
+            <button
+              className="relative"
+              onClick={(e) => {
+                e.stopPropagation();
+                setOpenDropdown((prev) => !prev); // ⭐ 페이지 이동 제거 → 드롭다운 열기
+              }}
+              aria-label="사용자 알림"
+              type="button"
+            >
+              <Bell size={22} />
+              {unreadCount > 0 && (
+                <span className="absolute -top-1 -right-1 w-3 h-3 bg-red-500 rounded-full" />
+              )}
+            </button>
+
+            {/* ⭐ 드롭다운 표시 */}
+            {openDropdown && (
+              <UserNotificationDropdown
+                list={list}
+                onClose={() => setOpenDropdown(false)}
+                onRead={(id) => console.log("read", id)}
+              />
             )}
-          </button>
+          </div>
         )}
 
         {!user ? (
