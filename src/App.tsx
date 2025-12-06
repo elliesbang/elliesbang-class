@@ -1,6 +1,6 @@
 // 파일 상단에 추가
-import ClassroomCategoryPage from "./page/student/ClassroomCategoryPage";
-import ClassroomDetailPage from "./page/student/ClassroomDetailPage";
+import ClassroomCategoryPage from "./pages/student/ClassroomCategoryPage";
+import ClassroomDetailPage from "./pages/student/ClassroomDetailPage";
 
 import { useEffect, useState } from "react";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
@@ -8,39 +8,39 @@ import { AuthProvider } from "./auth/AuthProvider";
 import ProtectedRoute from "./auth/ProtectedRoute";
 
 // 역할별 마이페이지
-import AdminMy from "./page/admin/AdminMy";
-import StudentMy from "./page/student/StudentMy";
-import VodMy from "./page/vod/VodMy";
+import AdminMy from "./pages/admin/AdminMy";
+import StudentMy from "./pages/student/StudentMy";
+import VodMy from "./pages/vod/VodMy";
 
 // 홈 & VOD 페이지
-import Home from "./page/Home";
-import VodList from "./page/vod/VodList";
-import VodDetail from "./page/vod/VodDetail";
+import Home from "./pages/Home";
+import VodList from "./pages/vod/VodList";
+import VodDetail from "./pages/vod/VodDetail";
 
 // 관리자 대시보드 페이지
 import AdminLayout from "./components/admin/AdminLayout";
-import AdminHome from "./page/admin/AdminHome";
+import AdminHome from "./pages/admin/AdminHome";
 
-import ClassroomVideos from "./page/admin/classroom/ClassroomVideos";
-import ClassroomMaterials from "./page/admin/classroom/ClassroomMaterials";
-import ClassroomNotices from "./page/admin/classroom/ClassroomNotices";
+import ClassroomVideos from "./pages/admin/classroom/ClassroomVideos";
+import ClassroomMaterials from "./pages/admin/classroom/ClassroomMaterials";
+import ClassroomNotices from "./pages/admin/classroom/ClassroomNotices";
 
-import AssignmentList from "./page/admin/AssignmentList";
-import FeedbackPage from "./page/admin/FeedbackPage";
+import AssignmentList from "./pages/admin/AssignmentList";
+import FeedbackPage from "./pages/admin/FeedbackPage";
 
-import GlobalNotices from "./page/admin/notices/GlobalNotices";
-import VodManager from "./page/admin/vod/VodManager";
+import GlobalNotices from "./pages/admin/notices/GlobalNotices";
+import VodManager from "./pages/admin/vod/VodManager";
 
-import StudentUsers from "./page/admin/users/StudentUsers";
-import VodUsers from "./page/admin/users/VodUsers";
+import StudentUsers from "./pages/admin/users/StudentUsers";
+import VodUsers from "./pages/admin/users/VodUsers";
 
-import ClassManager from "./page/admin/class/ClassManager";
+import ClassManager from "./pages/admin/class/ClassManager";
 
 // 공통 컴포넌트
 import BottomNav from "./components/BottomNav";
 import Header from "./components/Header";
-import Notifications from "./page/notifications/Notifications";
-import UserNotifications from "./page/userNotifications/UserNotifications";
+import Notifications from "./pages/notifications/Notifications";
+import UserNotifications from "./pages/userNotifications/UserNotifications";
 import LoginModal from "./components/LoginModal";
 import SignupModal from "./components/SignupModal";
 import { AuthModalDetail } from "./lib/authModal";
