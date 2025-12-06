@@ -2,7 +2,7 @@
 import ClassroomCategoryPage from "./page/student/ClassroomCategoryPage";
 import ClassroomDetailPage from "./page/student/ClassroomDetailPage";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { AuthProvider } from "./auth/AuthProvider";
 import ProtectedRoute from "./auth/ProtectedRoute";
@@ -42,6 +42,7 @@ import Header from "./components/Header";
 import Notifications from "./page/notifications/Notifications";
 import LoginModal from "./components/LoginModal";
 import SignupModal from "./components/SignupModal";
+import { AuthModalDetail } from "./lib/authModal";
 
 
 // ===========================================================
@@ -54,6 +55,24 @@ const AppContent = () => {
   const [selectedRole, setSelectedRole] = useState<
     "student" | "vod" | "admin" | null
   >(null);
+
+  // 외부에서 로그인/회원가입 모달을 열 수 있도록 이벤트 리스너 등록
+  useEffect(() => {
+    const handler = (event: Event) => {
+      const detail = (event as CustomEvent<AuthModalDetail>).detail;
+      if (!detail) return;
+
+      setModalMode(detail.mode);
+      if (detail.role) setSelectedRole(detail.role);
+
+      if (detail.message) {
+        alert(detail.message);
+      }
+    };
+
+    window.addEventListener("auth-modal", handler);
+    return () => window.removeEventListener("auth-modal", handler);
+  }, []);
 
   return (
     <>
@@ -69,8 +88,22 @@ const AppContent = () => {
           <Route path="/home" element={<Home />} />
 
           {/* ---------------- VOD ---------------- */}
-          <Route path="/vod/list" element={<VodList />} />
-          <Route path="/vod/:id" element={<VodDetail />} />
+          <Route
+            path="/vod/list"
+            element={
+              <ProtectedRoute allow={["admin", "vod"]}>
+                <VodList />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/vod/:id"
+            element={
+              <ProtectedRoute allow={["admin", "vod"]}>
+                <VodDetail />
+              </ProtectedRoute>
+            }
+          />
 
           {/* ---------------- 관리자 마이 ---------------- */}
           <Route

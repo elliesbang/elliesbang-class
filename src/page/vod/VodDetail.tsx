@@ -1,43 +1,160 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { PlayCircle, Lock } from "lucide-react";
+import { supabase } from "../../lib/supabaseClient";
+import { VodVideo } from "../../types/VodVideo";
+import { useAuth } from "../../auth/AuthProvider";
+import { openLoginModal } from "../../lib/authModal";
+
+type UserRole = "student" | "vod" | "admin" | null;
 
 export default function VodDetail() {
   const { id } = useParams();
   const navigate = useNavigate();
+  const { user, role: authRole, loading } = useAuth();
 
-  const [role, setRole] = useState(null);
-  const [vod, setVod] = useState<any>(null);
-  const [related, setRelated] = useState<any[]>([]);
+  const [role, setRole] = useState<UserRole>(null);
+  const [vod, setVod] = useState<VodVideo | null>(null);
+  const [related, setRelated] = useState<VodVideo[]>([]);
+  const [hasPurchase, setHasPurchase] = useState(false);
 
-  // 사용자 역할 불러오기
+  const videoId = useMemo(() => Number(id), [id]);
+
   useEffect(() => {
-    const r = localStorage.getItem("role");
-    setRole(r);
+    const stored = window.localStorage.getItem("role") as UserRole;
+    if (stored) setRole(stored);
   }, []);
 
-  // 로컬 더미 데이터로 VOD 정보 구성
   useEffect(() => {
-    if (!id) return;
+    if (authRole) setRole(authRole as UserRole);
+  }, [authRole]);
 
-    const placeholderVod = {
-      id,
-      title: "VOD 정보를 준비 중입니다",
-      category: "VOD",
-      created_at: new Date().toISOString(),
-      description: "실제 데이터 연동 전까지 임시 정보를 표시합니다.",
-      video_url: "",
-      thumbnail: "",
-    };
+  useEffect(() => {
+    if (loading) return;
 
-    setVod(placeholderVod);
-    setRelated([]);
-  }, [id]);
+    if (!role || !user) {
+      openLoginModal(null, "로그인이 필요한 서비스입니다.");
+      navigate("/", { replace: true });
+      return;
+    }
 
-  // ⛔ 권한 체크
-  function hasVodPermission() {
-    return role === "admin" || role === "vod";
-  }
+    if (role === "student") {
+      alert("해당 메뉴는 VOD 전용 서비스입니다.");
+      navigate("/", { replace: true });
+    }
+  }, [loading, role, user, navigate]);
+
+  useEffect(() => {
+    if (!videoId) return;
+
+    async function loadRelated(categoryId: number) {
+      const { data, error } = await supabase
+        .from("vod_videos")
+        .select(
+          "id, title, thumbnail_url, created_at, vod_category_id, vod_category(id, name)"
+        )
+        .eq("vod_category_id", categoryId)
+        .neq("id", videoId)
+        .order("created_at", { ascending: false })
+        .limit(4);
+
+      if (error) {
+        console.error("관련 VOD 불러오기 오류", error);
+        return;
+      }
+
+      setRelated((data ?? []) as VodVideo[]);
+    }
+    async function loadVodDetail() {
+      const { data, error } = await supabase
+        .from("vod_videos")
+        .select(
+          "id, title, description, created_at, video_url, thumbnail_url, vod_category_id, vod_category(id, name)"
+        )
+        .eq("id", videoId)
+        .maybeSingle();
+
+      if (error) {
+        console.error("VOD 상세 불러오기 오류", error);
+        return;
+      }
+
+      const video = (data as VodVideo) ?? null;
+      setVod(video);
+
+      if (video?.vod_category_id) {
+        void loadRelated(video.vod_category_id);
+      }
+    }
+
+    void loadVodDetail();
+  }, [videoId]);
+
+  useEffect(() => {
+    async function loadPurchaseStatus() {
+      if (!user || !videoId) return;
+
+      if (role === "admin") {
+        setHasPurchase(true);
+        return;
+      }
+
+      const { data, error } = await supabase
+        .from("vod_purchases")
+        .select("id")
+        .eq("user_id", user.id)
+        .eq("vod_id", videoId)
+        .maybeSingle();
+
+      if (error && error.code !== "PGRST116") {
+        console.error("구매 여부 확인 실패", error);
+        return;
+      }
+
+      setHasPurchase(!!data);
+    }
+
+    if (role === "vod" || role === "admin") {
+      void loadPurchaseStatus();
+    }
+  }, [role, user, videoId]);
+
+  const hasVodAccess = role === "admin" || role === "vod";
+  const canPlay = hasVodAccess && (role === "admin" || hasPurchase);
+
+  const handlePlay = async () => {
+    if (!role || !user) {
+      openLoginModal(null, "로그인이 필요한 서비스입니다.");
+      return;
+    }
+
+    if (!hasVodAccess) {
+      alert("해당 메뉴는 VOD 전용 서비스입니다.");
+      return;
+    }
+
+    if (role !== "admin") {
+      const { data, error } = await supabase
+        .from("vod_purchases")
+        .select("id")
+        .eq("user_id", user.id)
+        .eq("vod_id", videoId)
+        .maybeSingle();
+
+      if (error && error.code !== "PGRST116") {
+        alert("권한 확인 중 오류가 발생했습니다.");
+        console.error(error);
+        return;
+      }
+
+      if (!data) {
+        alert("이용권이 필요한 콘텐츠입니다.");
+        return;
+      }
+
+      setHasPurchase(true);
+    }
+  };
 
   if (!vod) {
     return <p className="p-5">불러오는 중...</p>;
@@ -47,7 +164,7 @@ export default function VodDetail() {
     <div className="pb-20">
       {/* 썸네일 + 영상 */}
       <div className="w-full bg-black">
-        {hasVodPermission() ? (
+        {canPlay ? (
           vod.video_url ? (
             <iframe
               src={vod.video_url}
@@ -66,6 +183,12 @@ export default function VodDetail() {
             <Lock size={40} className="mb-3" />
             <p className="text-lg mb-2">이 영상은 VOD 회원 전용입니다</p>
             <p className="text-sm text-gray-300">VOD 이용권을 구매해주세요</p>
+            <button
+              className="mt-4 px-4 py-2 bg-white text-black rounded-lg text-sm"
+              onClick={handlePlay}
+            >
+              재생 권한 확인
+            </button>
           </div>
         )}
       </div>
@@ -75,7 +198,7 @@ export default function VodDetail() {
         <h1 className="text-xl font-bold text-[#404040]">{vod.title}</h1>
 
         <p className="text-sm text-[#7a6f68] mt-2">
-          카테고리: {vod.category}
+          카테고리: {vod.vod_category?.name ?? "기타"}
         </p>
 
         <p className="text-sm text-gray-500 mt-1">
@@ -85,6 +208,18 @@ export default function VodDetail() {
         <p className="mt-4 text-[#404040] whitespace-pre-line leading-6">
           {vod.description}
         </p>
+
+        {hasVodAccess && !canPlay && (
+          <div className="mt-4 text-sm text-[#7a6f68]">
+            이용권이 필요한 콘텐츠입니다.
+          </div>
+        )}
+
+        {canPlay && !vod.video_url && (
+          <div className="mt-4 text-sm text-[#7a6f68]">
+            영상 URL이 아직 연결되지 않았습니다.
+          </div>
+        )}
       </div>
 
       {/* 같은 카테고리의 다른 강의 */}
@@ -102,7 +237,7 @@ export default function VodDetail() {
                 onClick={() => navigate(`/vod/${item.id}`)}
               >
                 <img
-                  src={item.thumbnail}
+                  src={item.thumbnail_url || "/fallback-thumbnail.png"}
                   className="w-full h-28 object-cover rounded-lg"
                 />
 
@@ -120,7 +255,7 @@ export default function VodDetail() {
       )}
 
       {/* 재생 권한이 없는 경우 안내 박스 */}
-      {!hasVodPermission() && (
+      {!canPlay && (
         <div className="p-5 text-center text-sm text-gray-600">
           🔒 이 영상은 로그인한 VOD 회원 또는 관리자만 재생할 수 있어요.
         </div>
