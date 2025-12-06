@@ -5,6 +5,7 @@ import { supabase } from "../../lib/supabaseClient";
 import { VodVideo } from "../../types/VodVideo";
 import { useAuth } from "../../auth/AuthProvider";
 import { openLoginModal } from "../../lib/authModal";
+import { ensureVodThumbnail } from "../../utils/vodThumbnails";
 
 type UserRole = "student" | "vod" | "admin" | null;
 
@@ -51,7 +52,7 @@ export default function VodDetail() {
       const { data, error } = await supabase
         .from("vod_videos")
         .select(
-          "id, title, thumbnail_url, created_at, vod_category_id, vod_category(id, name)"
+          "id, vod_category_id, title, url, thumbnail_url, created_at, vod_category(id, name)"
         )
         .eq("vod_category_id", categoryId)
         .neq("id", videoId)
@@ -63,13 +64,17 @@ export default function VodDetail() {
         return;
       }
 
-      setRelated((data ?? []) as VodVideo[]);
+      const normalized = (data ?? []).map((item) =>
+        ensureVodThumbnail(item)
+      ) as VodVideo[];
+
+      setRelated(normalized);
     }
     async function loadVodDetail() {
       const { data, error } = await supabase
         .from("vod_videos")
         .select(
-          "id, title, description, created_at, video_url, thumbnail_url, vod_category_id, vod_category(id, name)"
+          "id, vod_category_id, title, url, thumbnail_url, created_at, vod_category(id, name)"
         )
         .eq("id", videoId)
         .maybeSingle();
@@ -79,8 +84,8 @@ export default function VodDetail() {
         return;
       }
 
-      const video = (data as VodVideo) ?? null;
-      setVod(video);
+      const video = (data as VodVideo | null) ?? null;
+      setVod(video ? ensureVodThumbnail(video) : null);
 
       if (video?.vod_category_id) {
         void loadRelated(video.vod_category_id);
@@ -165,9 +170,9 @@ export default function VodDetail() {
       {/* 썸네일 + 영상 */}
       <div className="w-full bg-black">
         {canPlay ? (
-          vod.video_url ? (
+          vod.url ? (
             <iframe
-              src={vod.video_url}
+              src={vod.url}
               className="w-full h-60"
               allowFullScreen
               title={vod.title}
@@ -215,7 +220,7 @@ export default function VodDetail() {
           </div>
         )}
 
-        {canPlay && !vod.video_url && (
+        {canPlay && !vod.url && (
           <div className="mt-4 text-sm text-[#7a6f68]">
             영상 URL이 아직 연결되지 않았습니다.
           </div>

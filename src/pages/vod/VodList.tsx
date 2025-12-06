@@ -5,6 +5,9 @@ import { supabase } from "../../lib/supabaseClient";
 import { VodCategory, VodVideo } from "../../types/VodVideo";
 import { useAuth } from "../../auth/AuthProvider";
 import { openLoginModal } from "../../lib/authModal";
+import { ensureVodThumbnail } from "../../utils/vodThumbnails";
+
+const placeholderThumbnail = "/fallback-thumbnail.png";
 
 type UserRole = "student" | "vod" | "admin" | null;
 
@@ -62,7 +65,7 @@ export default function VodList() {
       let query = supabase
         .from("vod_videos")
         .select(
-          "id, title, thumbnail_url, description, created_at, vod_category_id, vod_category(id, name)"
+          "id, vod_category_id, title, url, thumbnail_url, created_at, vod_category(id, name)"
         )
         .order("created_at", { ascending: false });
 
@@ -78,7 +81,11 @@ export default function VodList() {
         return;
       }
 
-      setVods((data ?? []) as VodVideo[]);
+      const normalized = (data ?? []).map((video) =>
+        ensureVodThumbnail(video)
+      ) as VodVideo[];
+
+      setVods(normalized);
     }
 
     void loadVods();
@@ -220,17 +227,14 @@ export default function VodList() {
               className="bg-white border rounded-xl p-2 shadow-sm cursor-pointer flex flex-col"
               onClick={() => handlePlay(v.id)}
             >
-              {v.thumbnail_url ? (
-                <img
-                  src={v.thumbnail_url}
-                  alt={v.title}
-                  className="w-full h-28 object-cover rounded-lg"
-                />
-              ) : (
-                <div className="w-full h-28 bg-gray-200 rounded-lg flex items-center justify-center text-xs text-gray-500">
-                  썸네일 없음
-                </div>
-              )}
+              <img
+                src={v.thumbnail_url || placeholderThumbnail}
+                alt={v.title}
+                onError={(e) => {
+                  e.currentTarget.src = placeholderThumbnail;
+                }}
+                className="w-full h-28 object-cover rounded-lg"
+              />
 
               <p className="mt-2 text-sm font-semibold text-[#404040] line-clamp-2">
                 {v.title}

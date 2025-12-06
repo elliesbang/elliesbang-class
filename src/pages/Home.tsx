@@ -6,6 +6,7 @@ import { supabase } from "../lib/supabaseClient";
 import { useAuth } from "../auth/AuthProvider";
 import { VodVideo } from "../types/VodVideo";
 import { openLoginModal } from "../lib/authModal";
+import { ensureVodThumbnail } from "../utils/vodThumbnails";
 
 type Notice = {
   id: number;
@@ -74,7 +75,7 @@ export default function Home() {
         const { data, error } = await supabase
           .from("vod_videos")
           .select(
-            "id, title, thumbnail_url, vod_category_id, created_at, vod_category(id, name)"
+            "id, vod_category_id, title, url, thumbnail_url, created_at, vod_category(id, name)"
           )
           .order("created_at", { ascending: false });
 
@@ -84,7 +85,9 @@ export default function Home() {
           return;
         }
 
-        const list = (data ?? []) as VodVideo[];
+        const list = ((data ?? []) as VodVideo[]).map((video) =>
+          ensureVodThumbnail(video)
+        );
 
         const grouped = list.reduce<Record<string, VodVideo[]>>((acc, video) => {
           const key = video.vod_category?.name || "기타";
