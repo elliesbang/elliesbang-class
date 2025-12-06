@@ -2,6 +2,7 @@
 import ClassroomCategoryPage from "./page/student/ClassroomCategoryPage";
 import ClassroomDetailPage from "./page/student/ClassroomDetailPage";
 
+import { useState } from "react";
 import { BrowserRouter, Routes, Route, useLocation } from "react-router-dom";
 import { AuthProvider } from "./auth/AuthProvider";
 import ProtectedRoute from "./auth/ProtectedRoute";
@@ -39,12 +40,20 @@ import ClassManager from "./page/admin/class/ClassManager";
 import BottomNav from "./components/BottomNav";
 import Header from "./components/Header";
 import Notifications from "./page/notifications/Notifications";
+import LoginModal from "./components/LoginModal";
+import SignupModal from "./components/SignupModal";
 
 
 // ===========================================================
 // ⭐ BottomNav 조건부 렌더링 Wrapper
 // ===========================================================
 const AppContent = () => {
+  const [modalMode, setModalMode] = useState<null | "login" | "signup">(
+    null
+  );
+  const [selectedRole, setSelectedRole] = useState<
+    "student" | "vod" | "admin" | null
+  >(null);
   const location = useLocation();
   const path = location.pathname;
 
@@ -54,7 +63,7 @@ const AppContent = () => {
   return (
     <>
       {/* 상단 고정 헤더 */}
-      <Header />
+      <Header onLoginClick={() => setModalMode("login")} />
 
       {/* 본문 영역 여백 */}
       <div style={{ paddingTop: 60 }}>
@@ -256,6 +265,24 @@ const AppContent = () => {
 
       {/* auth 라우트는 제거했으므로 항상 BottomNav 표시 */}
       <BottomNav />
+
+      {modalMode === "login" && (
+        <LoginModal
+          role={selectedRole}
+          onClose={() => setModalMode(null)}
+          onChangeMode={(mode) => setModalMode(mode)}
+          onSelectRole={(role) => setSelectedRole(role)}
+        />
+      )}
+
+      {modalMode === "signup" && (
+        <SignupModal
+          role={selectedRole}
+          onClose={() => setModalMode(null)}
+          onChangeMode={(mode) => setModalMode(mode)}
+          onSelectRole={(role) => setSelectedRole(role)}
+        />
+      )}
     </>
   );
 };

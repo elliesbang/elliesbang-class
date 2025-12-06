@@ -1,13 +1,25 @@
-import { useState } from "react";
-import { supabase } from "../../lib/supabaseClient";
+import { useMemo, useState } from "react";
+import { supabase } from "../lib/supabaseClient";
 
 const signupRoles = [
   { key: "student", label: "수강생" },
   { key: "vod", label: "VOD" },
 ];
 
-const SignupModal = ({ role: initialRole, onClose }) => {
-  const [role, setRole] = useState(initialRole || "student");
+type SignupModalProps = {
+  role: "student" | "vod" | "admin" | null;
+  onClose: () => void;
+  onChangeMode: (mode: "login" | "signup") => void;
+  onSelectRole: (role: "student" | "vod" | "admin") => void;
+};
+
+const SignupModal = ({
+  role,
+  onClose,
+  onChangeMode,
+  onSelectRole,
+}: SignupModalProps) => {
+  const activeRole = useMemo(() => role ?? "student", [role]);
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -24,7 +36,7 @@ const SignupModal = ({ role: initialRole, onClose }) => {
       email,
       password,
       options: {
-        data: { role, name },
+        data: { role: activeRole, name },
       },
     });
 
@@ -43,12 +55,14 @@ const SignupModal = ({ role: initialRole, onClose }) => {
     }
 
     // 자동 로그인되었을 때
-    localStorage.setItem("role", role);
+    localStorage.setItem("role", activeRole);
 
-    if (role === "student") window.location.href = "/student/my";
-    else if (role === "vod") window.location.href = "/vod/my";
+    if (activeRole === "student") window.location.href = "/student/my";
+    else if (activeRole === "vod") window.location.href = "/vod/my";
 
     setLoading(false);
+
+    onChangeMode("login");
   };
 
   return (
@@ -74,7 +88,7 @@ const SignupModal = ({ role: initialRole, onClose }) => {
       >
         {/* X 버튼 */}
         <div
-          onClick={onClose}
+          onClick={() => onClose()}
           style={{
             position: "absolute",
             right: 16,
@@ -99,13 +113,13 @@ const SignupModal = ({ role: initialRole, onClose }) => {
           {signupRoles.map((r) => (
             <div
               key={r.key}
-              onClick={() => setRole(r.key)}
+              onClick={() => onSelectRole(r.key)}
               style={{
                 padding: "6px 10px",
                 borderRadius: 6,
                 cursor: "pointer",
-                background: role === r.key ? "#ffd331" : "#f1f1f1",
-                color: role === r.key ? "#000" : "#777",
+                background: activeRole === r.key ? "#ffd331" : "#f1f1f1",
+                color: activeRole === r.key ? "#000" : "#777",
               }}
             >
               {r.label}
@@ -114,7 +128,7 @@ const SignupModal = ({ role: initialRole, onClose }) => {
         </div>
 
         <h3 style={{ fontSize: 20, marginBottom: 20, fontWeight: 700 }}>
-          회원가입 ({role})
+          회원가입 ({activeRole})
         </h3>
 
         {/* 이름 */}
@@ -176,6 +190,22 @@ const SignupModal = ({ role: initialRole, onClose }) => {
           }}
         >
           {loading ? "처리 중..." : "회원가입"}
+        </button>
+
+        <button
+          onClick={() => onChangeMode("login")}
+          style={{
+            marginTop: 12,
+            width: "100%",
+            padding: 12,
+            background: "#f1f1f1",
+            border: "none",
+            borderRadius: 8,
+            fontWeight: 600,
+            cursor: "pointer",
+          }}
+        >
+          로그인으로 돌아가기
         </button>
       </div>
     </div>
