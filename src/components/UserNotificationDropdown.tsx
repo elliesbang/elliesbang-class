@@ -25,7 +25,7 @@ export default function UserNotificationDropdown({
   return (
     <div
       ref={ref}
-      className="absolute right-0 top-12 z-[9999] w-72 bg-white shadow-xl rounded-xl border p-3"
+      className="fixed right-4 top-16 z-40 w-72 bg-white shadow-xl rounded-xl border p-3"
     >
       <h3 className="text-sm font-semibold mb-2">알림</h3>
 
