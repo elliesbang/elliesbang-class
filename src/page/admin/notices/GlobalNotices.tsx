@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { Plus, Trash2, Edit } from "lucide-react";
+import { supabase } from "@/lib/supabaseClient";
 
 export default function GlobalNotices() {
   const [notices, setNotices] = useState([]);
@@ -17,21 +18,23 @@ export default function GlobalNotices() {
   // ----------------------------------------------------
   useEffect(() => {
     async function loadNotices() {
-      // TODO: Supabase에서 실제 데이터 가져오기
-      setNotices([
-        {
-          id: 1,
-          title: "📢 2월 공지 안내",
-          content: "2월 전체 일정 안내드립니다.",
-          order: 1,
-        },
-        {
-          id: 2,
-          title: "📢 설 연휴 휴강 안내",
-          content: "설 연휴 기간에는 강의가 없습니다.",
-          order: 2,
-        },
-      ]);
+      try {
+        const { data, error } = await supabase
+          .from("notifications")
+          .select("*")
+          .order("created_at", { ascending: false });
+
+        if (error) {
+          console.error("공지 불러오기 오류", error);
+          setNotices([]);
+          return;
+        }
+
+        setNotices(data || []);
+      } catch (err) {
+        console.error("공지 불러오기 실패", err);
+        setNotices([]);
+      }
     }
 
     loadNotices();
