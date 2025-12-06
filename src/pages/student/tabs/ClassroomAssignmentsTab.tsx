@@ -20,9 +20,7 @@ const SESSION_COUNT_BY_CLASSROOM: Record<string, number> = {
 
 type AssignmentProfile = {
   id?: string;
-  full_name?: string | null;
-  nickname?: string | null;
-  username?: string | null;
+  name?: string | null;
 };
 
 type Assignment = {
@@ -134,7 +132,7 @@ const ClassroomAssignmentsTab = ({
     let query = supabase
       .from("assignments")
       .select(
-        "id, classroom_id, class_id, student_id, session_no, image_url, link_url, created_at, title, profiles(id, full_name, nickname, username)"
+        "id, classroom_id, class_id, student_id, session_no, image_url, link_url, created_at, title, profiles(id, name)"
       )
       .eq("classroom_id", classroomKey)
       .order("created_at", { ascending: false });
@@ -382,10 +380,7 @@ const ClassroomAssignmentsTab = ({
       <div className="space-y-4">
         {assignments.map((assignment) => {
           const authorName =
-            assignment.profiles?.nickname ||
-            assignment.profiles?.full_name ||
-            assignment.profiles?.username ||
-            assignment.student_id;
+            assignment.profiles?.name || assignment.student_id;
 
           return (
             <div
