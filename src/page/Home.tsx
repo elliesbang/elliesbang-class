@@ -162,9 +162,24 @@ export default function Home() {
         {/* ------------------------------ */}
         {/* VOD 섹션들 */}
         {/* ------------------------------ */}
-        <VodSection title="추천 VOD" list={vodRecommended} onPlay={handlePlay} />
-        <VodSection title="기초 VOD" list={vodBasic} onPlay={handlePlay} />
-        <VodSection title="심화 VOD" list={vodAdvanced} onPlay={handlePlay} />
+        <VodSection
+          title="추천 VOD"
+          list={vodRecommended}
+          onPlay={handlePlay}
+          onSeeAll={() => navigate("/vod/list")}
+        />
+        <VodSection
+          title="기초 VOD"
+          list={vodBasic}
+          onPlay={handlePlay}
+          onSeeAll={() => navigate("/vod/list")}
+        />
+        <VodSection
+          title="심화 VOD"
+          list={vodAdvanced}
+          onPlay={handlePlay}
+          onSeeAll={() => navigate("/vod/list")}
+        />
       </div>
     </div>
   );
@@ -177,46 +192,66 @@ function VodSection({
   title,
   list,
   onPlay,
+  onSeeAll,
 }: {
   title: string;
   list: VodVideo[];
   onPlay: (id: number) => void;
+  onSeeAll: () => void;
 }) {
   return (
     <section className="mb-8">
-      <h2 className="mb-3 text-lg font-bold text-[#404040]">{title}</h2>
+      <div className="mb-3 flex items-center justify-between">
+        <h2 className="text-lg font-bold text-[#404040]">{title}</h2>
+        <button
+          onClick={onSeeAll}
+          className="flex items-center gap-1 text-sm text-[#7a6f68]"
+        >
+          전체보기 <ChevronRight size={14} />
+        </button>
+      </div>
 
-      {list && list.length > 0 ? (
-        <div className="grid grid-cols-2 gap-4">
-          {list.map((v) => (
-            <div
-              key={v.id}
-              className="cursor-pointer rounded-xl border bg-white p-2 shadow-sm"
-              onClick={() => onPlay(v.id)}
-            >
-              <img
-                src={v.thumbnail_url || "/fallback-thumbnail.png"}
-                alt={v.title}
-                className="h-28 w-full rounded-lg object-cover"
-                onError={(e) => {
-                  e.currentTarget.src = "/fallback-thumbnail.png";
-                }}
-              />
+      <div className="rounded-2xl border bg-white p-4 shadow-sm">
+        {list && list.length > 0 ? (
+          <div className="space-y-3">
+            {list.map((v) => (
+              <button
+                key={v.id}
+                type="button"
+                className="flex w-full gap-3 rounded-xl border bg-[#fffbf3] p-3 text-left shadow-sm transition hover:-translate-y-0.5 hover:shadow-md"
+                onClick={() => onPlay(v.id)}
+              >
+                <img
+                  src={v.thumbnail_url || "/fallback-thumbnail.png"}
+                  alt={v.title}
+                  className="h-20 w-28 rounded-lg object-cover"
+                  onError={(e) => {
+                    e.currentTarget.src = "/fallback-thumbnail.png";
+                  }}
+                />
 
-              <p className="mt-2 line-clamp-1 text-sm font-semibold text-[#404040]">
-                {v.title}
-              </p>
+                <div className="flex flex-1 flex-col justify-between">
+                  <div>
+                    <p className="line-clamp-2 text-sm font-semibold text-[#404040]">
+                      {v.title}
+                    </p>
+                    <p className="mt-1 text-xs text-[#7a6f68]">
+                      {v.category} VOD
+                    </p>
+                  </div>
 
-              <div className="mt-1 flex items-center text-xs text-[#7a6f68]">
-                <PlayCircle size={14} className="mr-1" />
-                재생하기
-              </div>
-            </div>
-          ))}
-        </div>
-      ) : (
-        <p className="text-sm text-gray-500">현재 준비된 영상이 없습니다.</p>
-      )}
+                  <div className="flex items-center gap-1 text-xs text-[#7a6f68]">
+                    <PlayCircle size={14} />
+                    재생하기
+                  </div>
+                </div>
+              </button>
+            ))}
+          </div>
+        ) : (
+          <p className="text-sm text-gray-500">현재 준비된 영상이 없습니다.</p>
+        )}
+      </div>
     </section>
   );
 }
