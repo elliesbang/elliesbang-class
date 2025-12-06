@@ -30,8 +30,7 @@ type AssignmentFeedbackRecord = {
 
 type ProfileRecord = {
   id: string;
-  full_name?: string | null;
-  nickname?: string | null;
+  name?: string | null;
 };
 
 export const useAssignmentFeedback = ({
@@ -119,14 +118,14 @@ export const useAssignmentFeedback = ({
       if (instructorIds.length > 0) {
         const { data: instructors, error: instructorsError } = await supabase
           .from("profiles")
-          .select("id, full_name, nickname")
+          .select("id, name")
           .in("id", instructorIds);
 
         if (instructorsError) {
           console.error("Failed to fetch instructor profiles", instructorsError);
         } else if (instructors) {
           (instructors as ProfileRecord[]).forEach((profile) => {
-            const displayName = profile.nickname || profile.full_name || "알 수 없는 강사";
+            const displayName = profile.name || "알 수 없는 강사";
             instructorMap.set(profile.id, displayName);
           });
         }
