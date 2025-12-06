@@ -35,6 +35,7 @@ import FeedbackPage from "./page/admin/FeedbackPage";
 import GlobalNotices from "./page/admin/notices/GlobalNotices";
 import VodManager from "./page/admin/vod/VodManager";
 
+// ⭐ 기존 UserManage 삭제, 학생/VOD 파일 사용
 import StudentUsers from "./page/admin/users/StudentUsers";
 import VodUsers from "./page/admin/users/VodUsers";
 
@@ -46,14 +47,14 @@ import Header from "./components/Header";
 import Notifications from "./page/notifications/Notifications";
 
 
-// -----------------------------------------------
+// ===========================================================
 // ⭐ BottomNav 조건부 렌더링을 위한 Wrapper
-// -----------------------------------------------
+// ===========================================================
 const AppContent = () => {
   const location = useLocation();
   const path = location.pathname;
 
-  // 👉 이제는 auth 쪽에서만 하단 내비 숨김
+  // auth 페이지에서는 BottomNav 숨김
   const hideBottomNav = path.startsWith("/auth");
 
   return (
@@ -86,14 +87,14 @@ const AppContent = () => {
             }
           />
 
-          {/* ---------------- 공용 홈 ---------------- */}
+          {/* ---------------- 홈 ---------------- */}
           <Route path="/home" element={<Home />} />
 
-          {/* ---------------- VOD (공용 리스트 + 상세) ---------------- */}
+          {/* ---------------- VOD ---------------- */}
           <Route path="/vod/list" element={<VodList />} />
           <Route path="/vod/:id" element={<VodDetail />} />
 
-          {/* ---------------- ADMIN (마이) ---------------- */}
+          {/* ---------------- 관리자 마이 ---------------- */}
           <Route
             path="/admin/my"
             element={
@@ -103,7 +104,7 @@ const AppContent = () => {
             }
           />
 
-          {/* ---------------- STUDENT (마이 + 강의실) ---------------- */}
+          {/* ---------------- 학생 마이 + 강의실 ---------------- */}
           <Route
             path="/student/my"
             element={
@@ -131,7 +132,7 @@ const AppContent = () => {
             }
           />
 
-          {/* ---------------- VOD USER (마이) ---------------- */}
+          {/* ---------------- VOD USER 마이 ---------------- */}
           <Route
             path="/vod/my"
             element={
@@ -152,10 +153,10 @@ const AppContent = () => {
           />
 
           {/* ===================================================== */}
-          {/*          ⭐⭐ 관리자 대시보드 라우팅 시작 ⭐⭐          */}
+          {/*                  ⭐ 관리자 대시보드 ⭐                */}
           {/* ===================================================== */}
 
-          {/* 관리자 대시보드 메인 (/admin) */}
+          {/* 관리자 홈 */}
           <Route
             path="/admin"
             element={
@@ -248,18 +249,19 @@ const AppContent = () => {
             }
           />
 
-          {/* --- 사용자 관리 --- */}
+          {/* --- 사용자 관리(학생) --- */}
           <Route
             path="/admin/users/students"
             element={
               <ProtectedRoute allow={["admin"]}>
                 <AdminLayout>
-                  <UserManage />
+                  <StudentUsers />
                 </AdminLayout>
               </ProtectedRoute>
             }
           />
 
+          {/* --- 사용자 관리(VOD) --- */}
           <Route
             path="/admin/users/vod"
             element={
@@ -289,16 +291,16 @@ const AppContent = () => {
         </Routes>
       </div>
 
-      {/* auth 쪽에서는 숨기고, 그 외엔 항상 노출 */}
+      {/* auth에서는 숨기고 그 외에는 항상 노출 */}
       {!hideBottomNav && <BottomNav />}
     </>
   );
 };
 
 
-// -----------------------------------------------
+// ===========================================================
 // ⭐ BrowserRouter + AuthProvider 래핑한 최종 App
-// -----------------------------------------------
+// ===========================================================
 const App = () => {
   return (
     <BrowserRouter>
