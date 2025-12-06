@@ -21,13 +21,24 @@ export default function Home() {
   // 공지사항 불러오기
   useEffect(() => {
     async function loadNotices() {
-      const { data } = await supabase
-        .from("notices")
-        .select("*")
-        .order("created_at", { ascending: false })
-        .limit(3);
+      try {
+        const { data, error } = await supabase
+          .from("notifications")
+          .select("*")
+          .order("created_at", { ascending: false })
+          .limit(3);
 
-      setNotices(data || []);
+        if (error) {
+          console.error("공지 불러오기 오류", error);
+          setNotices([]);
+          return;
+        }
+
+        setNotices(data || []);
+      } catch (err) {
+        console.error("공지 불러오기 실패", err);
+        setNotices([]);
+      }
     }
 
     loadNotices();
@@ -36,13 +47,36 @@ export default function Home() {
   // VOD 불러오기
   useEffect(() => {
     async function loadVod() {
-      const { data } = await supabase.from("vod").select("*");
+      try {
+        const { data, error } = await supabase
+          .from("vod_videos")
+          .select("*")
+          .order("created_at", { ascending: false });
 
-      if (!data) return;
+        if (error) {
+          console.error("VOD 불러오기 오류", error);
+          setVodRecommended([]);
+          setVodBasic([]);
+          setVodAdvanced([]);
+          return;
+        }
 
-      setVodRecommended(data.filter((v) => v.category === "추천"));
-      setVodBasic(data.filter((v) => v.category === "기초"));
-      setVodAdvanced(data.filter((v) => v.category === "심화"));
+        if (!data) {
+          setVodRecommended([]);
+          setVodBasic([]);
+          setVodAdvanced([]);
+          return;
+        }
+
+        setVodRecommended(data.filter((v) => v.category === "추천"));
+        setVodBasic(data.filter((v) => v.category === "기초"));
+        setVodAdvanced(data.filter((v) => v.category === "심화"));
+      } catch (err) {
+        console.error("VOD 불러오기 실패", err);
+        setVodRecommended([]);
+        setVodBasic([]);
+        setVodAdvanced([]);
+      }
     }
 
     loadVod();

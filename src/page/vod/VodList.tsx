@@ -31,17 +31,23 @@ export default function VodList() {
   // ------------------ VOD 목록 불러오기 ------------------
   useEffect(() => {
     async function loadVod() {
-      const { data, error } = await supabase
-        .from("vod")
-        .select("*")
-        .order("created_at", { ascending: false });
+      try {
+        const { data, error } = await supabase
+          .from("vod_videos")
+          .select("*")
+          .order("created_at", { ascending: false });
 
-      if (error) {
-        console.error(error);
-        return;
+        if (error) {
+          console.error(error);
+          setVods([]);
+          return;
+        }
+
+        setVods((data || []) as VodItem[]);
+      } catch (err) {
+        console.error("VOD 목록 불러오기 실패", err);
+        setVods([]);
       }
-
-      setVods((data || []) as VodItem[]);
     }
 
     loadVod();
