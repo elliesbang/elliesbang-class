@@ -68,9 +68,9 @@ export default function AdminLayout({ children }: Props) {
 
               {/* 홈 버튼 */}
               <button
-                onClick={() => navigate("/admin")}
+                onClick={() => navigate("/")}
                 className="p-2 rounded-full hover:bg-[#f3efe4] transition"
-                aria-label="관리자 홈"
+                aria-label="사용자 홈"
               >
                 <Home size={20} className="text-[#404040]" />
               </button>
