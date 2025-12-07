@@ -79,27 +79,22 @@ const ClassroomAssignmentsTab = ({
   );
 
   const sessionCount = useMemo(() => {
-    if (!normalizedClassroomId) return undefined;
+    if (!normalizedClassroomId) return 1;
     return (
       SESSION_COUNT_BY_CLASSROOM[normalizedClassroomId] ??
       SESSION_COUNT_BY_CLASSROOM[classroomKey] ??
-      undefined
+      1
     );
   }, [classroomKey, normalizedClassroomId]);
 
-  const hasSessionSelection = Boolean(sessionCount);
-  const totalSessions = sessionCount ?? 1;
+  const totalSessions = sessionCount;
 
   // 회차 드롭다운 초기값
   useEffect(() => {
     if (editingId !== null) return;
 
-    if (hasSessionSelection && sessionCount) {
-      setSelectedSessionNo("1");
-    } else {
-      setSelectedSessionNo(null);
-    }
-  }, [hasSessionSelection, sessionCount, classroomKey, editingId]);
+    setSelectedSessionNo(FALLBACK_SESSION_NO);
+  }, [sessionCount, classroomKey, editingId]);
 
   // 데드라인 불러오기
   useEffect(() => {
@@ -133,19 +128,13 @@ const ClassroomAssignmentsTab = ({
     setLoading(true);
     setError(null);
 
-    let query = supabase
+    const { data, error: supabaseError } = await supabase
       .from("assignments")
       .select(
         "id, classroom_id, class_id, student_id, session_no, image_url, link_url, created_at, title, profiles(id, name)"
       )
       .eq("classroom_id", classroomKey)
       .order("created_at", { ascending: false });
-
-    if (selectedSessionNo) {
-      query = query.eq("session_no", selectedSessionNo);
-    }
-
-    const { data, error: supabaseError } = await query;
 
     if (supabaseError) {
       console.error("과제 불러오기 실패", supabaseError);
@@ -161,7 +150,7 @@ const ClassroomAssignmentsTab = ({
   useEffect(() => {
     fetchAssignments();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [classroomKey, selectedSessionNo]);
+  }, [classroomKey]);
 
   // 이미지 업로드
   const uploadImage = async (file: File, sessionNo: string) => {
@@ -191,7 +180,7 @@ const ClassroomAssignmentsTab = ({
     setImageFile(null);
     setExistingImageUrl(null);
     setEditingId(null);
-    setSelectedSessionNo(hasSessionSelection ? "1" : null);
+    setSelectedSessionNo(FALLBACK_SESSION_NO);
   };
 
   // 과제 제출/수정
@@ -202,9 +191,7 @@ const ClassroomAssignmentsTab = ({
       return;
     }
 
-    const sessionNo = hasSessionSelection
-      ? selectedSessionNo
-      : FALLBACK_SESSION_NO;
+    const sessionNo = selectedSessionNo ?? FALLBACK_SESSION_NO;
 
     if (!sessionNo) {
       alert("회차를 선택해주세요.");
@@ -293,11 +280,7 @@ const ClassroomAssignmentsTab = ({
     setLinkUrl(assignment.link_url ?? "");
     setExistingImageUrl(assignment.image_url ?? null);
     setImageFile(null);
-    if (hasSessionSelection && assignment.session_no) {
-      setSelectedSessionNo(assignment.session_no);
-    } else if (!hasSessionSelection) {
-      setSelectedSessionNo(FALLBACK_SESSION_NO);
-    }
+    setSelectedSessionNo(assignment.session_no ?? FALLBACK_SESSION_NO);
   };
 
   // 현재 로그인 사용자의 과제만 추출
@@ -311,25 +294,32 @@ const ClassroomAssignmentsTab = ({
     [assignments, user]
   );
 
+  const deadlinesMap = useMemo(() => {
+    const map = new Map<string, string>();
+    deadlines.forEach((deadline) => {
+      map.set(String(deadline.session_no), deadline.assignment_deadline ?? "");
+    });
+    return map;
+  }, [deadlines]);
+
   // 완주 회차 계산
   const completedSessions = useMemo(() => {
     const completed = new Set<string>();
     userAssignments.forEach((assignment) => {
       const sessionNo = assignment.session_no ?? FALLBACK_SESSION_NO;
-      const deadline = deadlines.find((d) => d.session_no === sessionNo);
+      const deadlineText = deadlinesMap.get(String(sessionNo));
 
-      if (deadline?.assignment_deadline) {
-        const submittedAt = new Date(assignment.created_at);
-        const deadlineDate = new Date(deadline.assignment_deadline);
-        if (submittedAt <= deadlineDate) {
-          completed.add(sessionNo);
-        }
-      } else if (!deadlines.length || totalSessions === 1) {
-        completed.add(sessionNo);
+      if (!deadlineText) return;
+
+      const submittedAt = new Date(assignment.created_at);
+      const deadlineDate = new Date(deadlineText);
+
+      if (!Number.isNaN(deadlineDate.getTime()) && submittedAt <= deadlineDate) {
+        completed.add(String(sessionNo));
       }
     });
     return completed;
-  }, [deadlines, totalSessions, userAssignments]);
+  }, [deadlinesMap, userAssignments]);
 
   const progressPercent = Math.min(
     100,
@@ -412,29 +402,31 @@ const ClassroomAssignmentsTab = ({
         {assignmentList.map((assignment) => {
           const authorName =
             assignment.profiles?.name || assignment.student_id;
+          const sessionLabel = assignment.session_no ?? FALLBACK_SESSION_NO;
+          const submittedLabel = new Date(
+            assignment.created_at
+          ).toLocaleDateString();
 
           return (
             <div
               key={assignment.id}
               className="rounded-xl bg_WHITE p-4 shadow-sm border border-[#f1f1f1]"
             >
-              <div className="flex items-center justify-between">
-                <div className="flex flex-col gap-1">
+              <div className="flex items-start justify-between gap-4">
+                <div className="flex flex-col gap-2">
+                  <div className="flex items-center gap-2 text-xs text-gray-500">
+                    <span className="rounded-full bg-[#FFF7D6] px-2 py-0.5 text-[11px] font-semibold text-[#947200]">
+                      {sessionLabel}회차
+                    </span>
+                    <span className="text-[#7a6f68]">제출일 {submittedLabel}</span>
+                  </div>
                   <p className="text-sm font-semibold text-[#404040]">
                     {assignment.title || "제목 없음"}
                   </p>
-                  <div className="text-xs text-gray-500 flex items-center gap-2">
-                    {hasSessionSelection && (
-                      <span className="rounded-full bg-[#FFF7D6] px-2 py-0.5 text-[11px] font-medium text-[#947200]">
-                        {assignment.session_no
-                          ? `${assignment.session_no}회차`
-                          : "회차"}
-                      </span>
-                    )}
+                  <div className="text-xs text-gray-500 flex items-center gap-2 flex-wrap">
                     <span>작성자: {authorName}</span>
-                    <span>
-                      제출일:{" "}
-                      {new Date(assignment.created_at).toLocaleString()}
+                    <span className="text-[#7a6f68]">
+                      제출 시각 {new Date(assignment.created_at).toLocaleString()}
                     </span>
                   </div>
                 </div>
@@ -495,12 +487,12 @@ const ClassroomAssignmentsTab = ({
     );
   };
 
-  const sessionOptions = sessionCount
-    ? Array.from({ length: sessionCount }, (_, idx) => String(idx + 1))
-    : [];
+  const sessionOptions = useMemo(
+    () => Array.from({ length: totalSessions }, (_, idx) => String(idx + 1)),
+    [totalSessions]
+  );
 
-  const disableSubmit =
-    submitting || !hasSubmissionContent || (hasSessionSelection && !selectedSessionNo);
+  const disableSubmit = submitting || !hasSubmissionContent || !selectedSessionNo;
 
   return (
     <div className="bg-[#fffdf6]">
@@ -521,8 +513,12 @@ const ClassroomAssignmentsTab = ({
               />
             </div>
             <p className="text-xs text-[#404040]">
-              완주 현황: {completedSessions.size} / {totalSessions} (
-              {progressPercent}%)
+              완주 회차 {completedSessions.size} / 총 회차 {totalSessions} ({
+                progressPercent
+              }%)
+            </p>
+            <p className="text-xs text-[#7a6f68]">
+              남은 회차 {remainingSessions}개
             </p>
             <div className="flex flex-wrap items-center gap-2">
               <button
@@ -541,8 +537,8 @@ const ClassroomAssignmentsTab = ({
               </button>
               {!canDownloadCertificate && (
                 <span className="text-xs text-[#7a6f68]">
-                  {remainingSessions}회차 남았어요. 모든 회차를 제출하면
-                  다운로드할 수 있어요.
+                  {remainingSessions}회차가 더 필요해요. 회차별 마감 전에
+                  모든 과제를 제출하면 수료증을 받을 수 있어요.
                 </span>
               )}
               {certificateError && (
@@ -555,24 +551,22 @@ const ClassroomAssignmentsTab = ({
         {/* 과제 제출 폼 */}
         <div className="rounded-2xl bg-white p-4 shadow-sm">
           <div className="flex flex-col gap-3">
-            {hasSessionSelection && (
-              <div className="flex flex-col gap-1">
-                <label className="text-sm font-medium text-[#404040]">
-                  회차 선택
-                </label>
-                <select
-                  value={selectedSessionNo ?? ""}
-                  onChange={(e) => setSelectedSessionNo(e.target.value)}
-                  className="w-full rounded-lg border px-3 py-2 text-sm"
-                >
-                  {sessionOptions.map((option) => (
-                    <option key={option} value={option}>
-                      {option}회차
-                    </option>
-                  ))}
-                </select>
-              </div>
-            )}
+            <div className="flex flex-col gap-1">
+              <label className="text-sm font-medium text-[#404040]">
+                회차 선택
+              </label>
+              <select
+                value={selectedSessionNo ?? ""}
+                onChange={(e) => setSelectedSessionNo(e.target.value)}
+                className="w-full rounded-lg border px-3 py-2 text-sm"
+              >
+                {sessionOptions.map((option) => (
+                  <option key={option} value={option}>
+                    {option}회차
+                  </option>
+                ))}
+              </select>
+            </div>
 
             <form onSubmit={handleSubmit} className="space-y-3">
               <div className="flex flex-col gap-1">
