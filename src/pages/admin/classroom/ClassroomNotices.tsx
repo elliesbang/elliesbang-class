@@ -89,19 +89,19 @@ export default function ClassroomNotices() {
   };
 
   return (
-    <div>
-      <h1 className="text-2xl font-bold text-[#404040] mb-6">
+    <div className="space-y-4">
+      <h1 className="text-lg md:text-2xl font-bold text-[#404040] mb-2 whitespace-nowrap break-keep max-w-full overflow-hidden text-ellipsis">
         강의실 공지 관리
       </h1>
 
       {/* ---------------------- 강의실 선택 ---------------------- */}
-      <div className="mb-6">
-        <label className="text-sm font-medium text-[#404040]">
+      <div className="mb-4 md:mb-6 relative flex flex-col md:flex-row md:items-center md:gap-3">
+        <label className="text-sm font-medium text-[#404040] whitespace-nowrap">
           강의실 선택
         </label>
 
         <select
-          className="mt-1 w-full border rounded-lg px-3 py-2 bg-white"
+          className="mt-1 md:mt-0 w-full md:max-w-xs border rounded-lg px-3 py-2 bg-white"
           value={selectedCategory}
           onChange={(e) => setSelectedCategory(e.target.value)}
         >
@@ -117,8 +117,8 @@ export default function ClassroomNotices() {
       {selectedCategory && (
         <>
           {/* ---------------------- 공지 작성 ---------------------- */}
-          <div className="border rounded-xl bg-white p-5 shadow-sm mb-6">
-            <h2 className="text-lg font-semibold text-[#404040] mb-3">
+          <div className="border rounded-xl bg-white p-5 shadow-sm mb-6 admin-card">
+            <h2 className="text-base md:text-lg font-semibold text-[#404040] mb-3 whitespace-nowrap break-keep max-w-full overflow-hidden text-ellipsis">
               새 공지 작성
             </h2>
 
@@ -150,7 +150,7 @@ export default function ClassroomNotices() {
 
             <button
               onClick={handleAddNotice}
-              className="flex items-center gap-2 bg-[#f3efe4] text-[#404040] px-4 py-2 rounded-lg"
+              className="flex items-center gap-2 bg-[#f3efe4] text-[#404040] px-4 py-2 rounded-lg w-full md:w-auto justify-center"
             >
               <Plus size={18} />
               등록하기
@@ -158,8 +158,8 @@ export default function ClassroomNotices() {
           </div>
 
           {/* ---------------------- 공지 리스트 ---------------------- */}
-          <div className="rounded-xl border bg-white p-5 shadow-sm">
-            <h2 className="text-lg font-semibold text-[#404040] mb-4">
+          <div className="rounded-xl border bg-white p-5 shadow-sm admin-card">
+            <h2 className="text-base md:text-lg font-semibold text-[#404040] mb-4 whitespace-nowrap break-keep max-w-full overflow-hidden text-ellipsis">
               등록된 공지 목록
             </h2>
 
@@ -171,18 +171,18 @@ export default function ClassroomNotices() {
               {notices.map((notice) => (
                 <li
                   key={notice.id}
-                  className="border-b pb-4 flex justify-between"
+                  className="border-b pb-4 flex flex-col gap-3 md:flex-row md:justify-between"
                 >
-                  <div>
-                    <p className="font-semibold text-[#404040] text-lg">
+                  <div className="space-y-1">
+                    <p className="font-semibold text-[#404040] text-base md:text-lg whitespace-nowrap break-keep max-w-full overflow-hidden text-ellipsis">
                       {notice.title}
                     </p>
-                    <p className="text-sm text-[#555] whitespace-pre-line">
+                    <p className="text-sm text-[#555] whitespace-pre-line break-keep">
                       {notice.content}
                     </p>
                   </div>
 
-                  <div className="flex items-center gap-3">
+                  <div className="flex items-center gap-3 self-end md:self-auto">
                     <button
                       onClick={() => setEditingNotice(notice)}
                       className="text-gray-600 hover:text-black"

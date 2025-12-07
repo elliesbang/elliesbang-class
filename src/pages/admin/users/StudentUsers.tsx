@@ -45,8 +45,10 @@ export default function StudentUsers() {
   };
 
   return (
-    <div>
-      <h1 className="text-2xl font-bold mb-6">수강생 관리</h1>
+    <div className="space-y-6">
+      <h1 className="text-lg md:text-2xl font-bold mb-2 whitespace-nowrap break-keep max-w-full overflow-hidden text-ellipsis">
+        수강생 관리
+      </h1>
 
       {/* 검색 */}
       <div className="flex items-center border rounded-lg px-3 py-2 bg-white w-full md:max-w-sm mb-6">

@@ -68,38 +68,38 @@ export default function AdminHome() {
   }, []);
 
   return (
-    <div className="pb-10">
-      <h1 className="text-2xl font-bold text-[#404040] mb-6">
+    <div className="pb-10 space-y-6">
+      <h1 className="text-lg md:text-2xl font-bold text-[#404040] mb-2 whitespace-nowrap break-keep max-w-full overflow-hidden text-ellipsis">
         관리자 대시보드
       </h1>
 
       {/* ----------------------------------------------------
           📌 상단 요약 카드 4개
           ---------------------------------------------------- */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-4 md:mb-8">
         {/* 전체 수강생 */}
-        <div className="bg-white border rounded-xl p-4 shadow-sm flex flex-col gap-2">
+        <div className="bg-white border rounded-xl p-4 shadow-sm flex flex-col gap-2 admin-card">
           <Users className="text-[#404040]" size={26} />
           <p className="text-sm text-gray-500">전체 수강생</p>
           <p className="text-2xl font-bold">{stats.totalStudents}</p>
         </div>
 
         {/* VOD 사용자 */}
-        <div className="bg-white border rounded-xl p-4 shadow-sm flex flex-col gap-2">
+        <div className="bg-white border rounded-xl p-4 shadow-sm flex flex-col gap-2 admin-card">
           <Video className="text-[#404040]" size={26} />
           <p className="text-sm text-gray-500">VOD 사용자</p>
           <p className="text-2xl font-bold">{stats.totalVod}</p>
         </div>
 
         {/* 전체 수업 */}
-        <div className="bg-white border rounded-xl p-4 shadow-sm flex flex-col gap-2">
+        <div className="bg-white border rounded-xl p-4 shadow-sm flex flex-col gap-2 admin-card">
           <BookOpen className="text-[#404040]" size={26} />
           <p className="text-sm text-gray-500">전체 수업 수</p>
           <p className="text-2xl font-bold">{stats.totalClasses}</p>
         </div>
 
         {/* 이번달 과제 제출 */}
-        <div className="bg-white border rounded-xl p-4 shadow-sm flex flex-col gap-2">
+        <div className="bg-white border rounded-xl p-4 shadow-sm flex flex-col gap-2 admin-card">
           <ClipboardList className="text-[#404040]" size={26} />
           <p className="text-sm text-gray-500">이번달 과제 제출</p>
           <p className="text-2xl font-bold">{stats.totalAssignmentsThisMonth}</p>
@@ -110,8 +110,8 @@ export default function AdminHome() {
           📌 최신 전체 공지
           ---------------------------------------------------- */}
       {latestNotice && (
-        <div className="bg-white border rounded-xl p-5 shadow-sm mb-10">
-          <h2 className="text-lg font-semibold text-[#404040] mb-2">
+        <div className="bg-white border rounded-xl p-5 shadow-sm mb-6 admin-card">
+          <h2 className="text-base md:text-lg font-semibold text-[#404040] mb-2 whitespace-nowrap break-keep max-w-full overflow-hidden text-ellipsis">
             최신 공지
           </h2>
           <p className="text-gray-700 font-medium">{latestNotice.title}</p>
@@ -125,8 +125,8 @@ export default function AdminHome() {
       {/* ----------------------------------------------------
           📌 최근 제출된 과제 목록
           ---------------------------------------------------- */}
-      <div className="bg-white border rounded-xl p-5 shadow-sm mb-10">
-        <h2 className="text-lg font-semibold text-[#404040] mb-4">
+      <div className="bg-white border rounded-xl p-5 shadow-sm mb-6 admin-card">
+        <h2 className="text-base md:text-lg font-semibold text-[#404040] mb-4 whitespace-nowrap break-keep max-w-full overflow-hidden text-ellipsis">
           최근 제출된 과제
         </h2>
 
@@ -159,8 +159,8 @@ export default function AdminHome() {
       {/* ----------------------------------------------------
           📌 수업별 진행 현황 (막대바 UI)
           ---------------------------------------------------- */}
-      <div className="bg-white border rounded-xl p-5 shadow-sm">
-        <h2 className="text-lg font-semibold text-[#404040] mb-4">
+      <div className="bg-white border rounded-xl p-5 shadow-sm admin-card">
+        <h2 className="text-base md:text-lg font-semibold text-[#404040] mb-4 whitespace-nowrap break-keep max-w-full overflow-hidden text-ellipsis">
           수업별 진행 현황
         </h2>
 

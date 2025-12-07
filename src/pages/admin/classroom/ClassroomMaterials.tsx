@@ -99,14 +99,16 @@ export default function ClassroomMaterials() {
   };
 
   return (
-    <div>
-      <h1 className="text-2xl font-bold text-[#404040] mb-6">강의실 자료 관리</h1>
+    <div className="space-y-6">
+      <h1 className="text-lg md:text-2xl font-bold text-[#404040] mb-2 whitespace-nowrap break-keep max-w-full overflow-hidden text-ellipsis">
+        강의실 자료 관리
+      </h1>
 
       {/* ---------------- 카테고리 선택 ---------------- */}
-      <div className="mb-6">
-        <label className="text-sm font-medium text-[#404040]">강의실 선택</label>
+      <div className="mb-4 md:mb-6 relative flex flex-col md:flex-row md:items-center md:gap-3">
+        <label className="text-sm font-medium text-[#404040] whitespace-nowrap">강의실 선택</label>
         <select
-          className="mt-1 w-full border rounded-lg px-3 py-2 bg-white"
+          className="mt-1 md:mt-0 w-full md:max-w-xs border rounded-lg px-3 py-2 bg-white"
           value={selectedCategory}
           onChange={(e) => setSelectedCategory(e.target.value)}
         >
@@ -122,8 +124,8 @@ export default function ClassroomMaterials() {
       {selectedCategory && (
         <>
           {/* ---------------- 파일 업로드 ---------------- */}
-          <div className="border rounded-xl bg-white p-5 shadow-sm mb-6">
-            <h2 className="text-lg font-semibold text-[#404040] mb-3">
+          <div className="border rounded-xl bg-white p-5 shadow-sm mb-6 admin-card">
+            <h2 className="text-base md:text-lg font-semibold text-[#404040] mb-3 whitespace-nowrap break-keep max-w-full overflow-hidden text-ellipsis">
               파일 업로드
             </h2>
 
@@ -135,7 +137,7 @@ export default function ClassroomMaterials() {
 
             <button
               onClick={handleFileUpload}
-              className="flex items-center gap-2 bg-[#f3efe4] text-[#404040] px-4 py-2 rounded-lg"
+              className="flex items-center gap-2 bg-[#f3efe4] text-[#404040] px-4 py-2 rounded-lg w-full md:w-auto justify-center"
             >
               <FileText size={18} />
               업로드하기
@@ -143,8 +145,8 @@ export default function ClassroomMaterials() {
           </div>
 
           {/* ---------------- 링크 자료 추가 ---------------- */}
-          <div className="border rounded-xl bg-white p-5 shadow-sm mb-6">
-            <h2 className="text-lg font-semibold text-[#404040] mb-3">
+          <div className="border rounded-xl bg-white p-5 shadow-sm mb-6 admin-card">
+            <h2 className="text-base md:text-lg font-semibold text-[#404040] mb-3 whitespace-nowrap break-keep max-w-full overflow-hidden text-ellipsis">
               링크 자료 추가
             </h2>
 
@@ -170,7 +172,7 @@ export default function ClassroomMaterials() {
 
             <button
               onClick={handleAddMaterial}
-              className="flex items-center gap-2 bg-[#f3efe4] text-[#404040] px-4 py-2 rounded-lg"
+              className="flex items-center gap-2 bg-[#f3efe4] text-[#404040] px-4 py-2 rounded-lg w-full md:w-auto justify-center"
             >
               <Plus size={18} />
               추가하기
@@ -178,8 +180,8 @@ export default function ClassroomMaterials() {
           </div>
 
           {/* ---------------- 자료 리스트 ---------------- */}
-          <div className="rounded-xl border bg-white p-5 shadow-sm">
-            <h2 className="text-lg font-semibold text-[#404040] mb-4">
+          <div className="rounded-xl border bg-white p-5 shadow-sm admin-card">
+            <h2 className="text-base md:text-lg font-semibold text-[#404040] mb-4 whitespace-nowrap break-keep max-w-full overflow-hidden text-ellipsis">
               등록된 자료
             </h2>
 
@@ -191,10 +193,10 @@ export default function ClassroomMaterials() {
               {materials.map((m) => (
                 <li
                   key={m.id}
-                  className="flex items-center justify-between border-b pb-3"
+                  className="flex flex-col md:flex-row md:items-center md:justify-between gap-3 border-b pb-3"
                 >
-                  <div>
-                    <p className="font-medium text-[#404040] flex items-center gap-2">
+                  <div className="space-y-1">
+                    <p className="font-medium text-[#404040] flex items-center gap-2 whitespace-nowrap break-keep max-w-full overflow-hidden text-ellipsis">
                       {m.type === "file" ? (
                         <FileText size={18} />
                       ) : (
@@ -206,13 +208,13 @@ export default function ClassroomMaterials() {
                     <a
                       href={m.url}
                       target="_blank"
-                      className="text-sm text-blue-600 underline"
+                      className="text-sm text-blue-600 underline break-keep"
                     >
                       {m.url}
                     </a>
                   </div>
 
-                  <div className="flex items-center gap-3">
+                  <div className="flex items-center gap-3 self-end md:self-auto">
                     {m.type === "link" && (
                       <button
                         onClick={() => setEditingMaterial(m)}

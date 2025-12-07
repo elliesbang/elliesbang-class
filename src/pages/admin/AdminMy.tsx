@@ -26,7 +26,7 @@ const AdminMy = () => {
   ];
 
   return (
-    <div className="pt-20 max-w-xl mx-auto px-4">
+    <div className="w-full max-w-xl mx-auto px-2 md:px-4 space-y-6">
       <div className="rounded-2xl bg-white shadow-sm border border-[#f1f1f1] p-5 flex items-center gap-3">
         <div className="h-12 w-12 rounded-full bg-[#fff3e6] flex items-center justify-center text-lg font-bold text-[#f97316]">
           {displayName?.[0] ?? "A"}

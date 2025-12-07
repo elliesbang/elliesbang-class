@@ -142,3 +142,22 @@ input:focus, textarea:focus, select:focus {
 
 /* rebuild */
 
+/* ---------------------------------------
+   🧭 Admin Theme Namespace
+   --------------------------------------- */
+.admin-page {
+  background-color: #fffdf6;
+  color: #404040;
+}
+
+.admin-page .admin-surface {
+  background: #fffdf6;
+  color: #404040;
+}
+
+.admin-page .admin-card {
+  background: #ffffff;
+  border-radius: 14px;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.05);
+}
+

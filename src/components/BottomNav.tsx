@@ -13,6 +13,10 @@ export default function BottomNav() {
   const currentRole = role ?? storedRole;
   const pathname = location.pathname;
 
+  if (pathname.startsWith("/admin")) {
+    return null;
+  }
+
   // ⭐ VOD active 정확하게 체크
   const isVodActive =
     pathname === "/vod/list" || pathname.startsWith("/vod/");
