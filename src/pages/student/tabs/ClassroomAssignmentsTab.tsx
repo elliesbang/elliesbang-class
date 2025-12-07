@@ -5,21 +5,14 @@ import { supabase } from "@/lib/supabaseClient";
 const ASSIGNMENT_BUCKET = "assignments";
 const FALLBACK_SESSION_NO = "1";
 
-const SESSION_COUNT_BY_CLASSROOM: Record<string, number | null> = {
-  candyma: 10,
-  캔디마: 10,
-  earl_challenge: 12,
-  "이얼챌": 12,
-  michina: 15,
-  미치나: 15,
-  "중캘업": 8,
-  "캔디업": 8,
-  "캔굿즈": 4,
-  "캘굿즈": 4,
-  "에그작": null,
-  "에그작챌": null,
-  "나컬작": null,
-  "나컬작챌": null,
+const SESSION_COUNT_BY_CLASSROOM: Record<string, number | undefined> = {
+  "4": 10,
+  "5": 8,
+  "6": 12,
+  "7": 8,
+  "8": 4,
+  "9": 4,
+  "14": 15,
 };
 
 type AssignmentProfile = {
@@ -77,24 +70,14 @@ const ClassroomAssignmentsTab = ({
     () => String(classroomId ?? ""),
     [classroomId]
   );
-  const normalizedClassroomId = useMemo(
-    () => classroomKey.toLowerCase(),
+
+  const sessionCount = useMemo(
+    () => SESSION_COUNT_BY_CLASSROOM[classroomKey],
     [classroomKey]
   );
 
-  const sessionCount = useMemo(() => {
-    if (!normalizedClassroomId) return null;
-
-    const matchedSessionCount =
-      SESSION_COUNT_BY_CLASSROOM[normalizedClassroomId] ??
-      SESSION_COUNT_BY_CLASSROOM[classroomKey];
-
-    if (matchedSessionCount === undefined) return 1;
-    return matchedSessionCount;
-  }, [classroomKey, normalizedClassroomId]);
-
   const hasSessionSelection = useMemo(
-    () => sessionCount !== null && sessionCount > 0,
+    () => typeof sessionCount === "number" && sessionCount > 0,
     [sessionCount]
   );
 
