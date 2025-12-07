@@ -134,11 +134,8 @@ export async function onRequest({ request, env }: { request: Request; env: any }
   const normalizedClassroomId = classroomId.toLowerCase();
   const sessionCount =
     SESSION_COUNT_BY_CLASSROOM[normalizedClassroomId] ??
-    SESSION_COUNT_BY_CLASSROOM[classroomId];
-
-  if (!sessionCount) {
-    return new Response("유효하지 않은 classroomId 입니다.", { status: 400 });
-  }
+    SESSION_COUNT_BY_CLASSROOM[classroomId] ??
+    1;
 
   const supabase = createClient(env.SUPABASE_URL, env.SUPABASE_SERVICE_ROLE_KEY);
 
@@ -196,19 +193,22 @@ export async function onRequest({ request, env }: { request: Request; env: any }
     return new Response("데드라인 정보를 불러오지 못했습니다.", { status: 400 });
   }
 
+  const deadlineMap = new Map<string, string>();
+  deadlines?.forEach((deadline) => {
+    deadlineMap.set(String(deadline.session_no), deadline.assignment_deadline ?? "");
+  });
+
   const completedSessions = new Set<string>();
   assignments.forEach((assignment) => {
     const sessionNo = assignment.session_no ?? FALLBACK_SESSION_NO;
-    const deadline = deadlines?.find((d) => d.session_no === sessionNo);
+    const deadlineValue = deadlineMap.get(String(sessionNo));
+    if (!deadlineValue) return;
 
-    if (deadline?.assignment_deadline) {
-      const submittedAt = new Date(assignment.created_at);
-      const deadlineDate = new Date(deadline.assignment_deadline);
-      if (submittedAt <= deadlineDate) {
-        completedSessions.add(sessionNo);
-      }
-    } else if (!deadlines?.length || sessionCount === 1) {
-      completedSessions.add(sessionNo);
+    const submittedAt = new Date(assignment.created_at);
+    const deadlineDate = new Date(deadlineValue);
+
+    if (!Number.isNaN(deadlineDate.getTime()) && submittedAt <= deadlineDate) {
+      completedSessions.add(String(sessionNo));
     }
   });
 
@@ -217,6 +217,12 @@ export async function onRequest({ request, env }: { request: Request; env: any }
       status: 400,
     });
   }
+
+  const lastSubmission = assignments.reduce((latest, current) => {
+    return new Date(current.created_at) > new Date(latest.created_at)
+      ? current
+      : latest;
+  });
 
   const periodText = `기간: ${formatDate(classData.start_date)} ~ ${formatDate(
     lastSubmissionData.created_at
