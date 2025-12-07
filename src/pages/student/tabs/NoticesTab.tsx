@@ -7,7 +7,6 @@ type ClassroomNotice = {
   title: string;
   content: string | null;
   created_at: string;
-  is_important: boolean;
 };
 
 type NoticesTabProps = {
@@ -33,7 +32,7 @@ const NoticesTab = ({ classroomId }: NoticesTabProps) => {
 
       const { data, error: supabaseError } = await supabase
         .from("classroom_notices")
-        .select("*")
+        .select("id, classroom_id, title, content, created_at")
         .eq("classroom_id", classroomId)
         .order("created_at", { ascending: false });
 
@@ -71,7 +70,7 @@ const NoticesTab = ({ classroomId }: NoticesTabProps) => {
     if (notices.length === 0) {
       return (
         <div className="rounded-2xl bg-white px-6 py-12 shadow-sm text-center text-sm text-[#7a6f68]">
-          등록된 강의실 공지가 없습니다.
+          등록된 콘텐츠가 없습니다.
         </div>
       );
     }
@@ -88,11 +87,6 @@ const NoticesTab = ({ classroomId }: NoticesTabProps) => {
                 <p className="text-sm font-semibold text-[#404040]">
                   {notice.title}
                 </p>
-                {notice.is_important && (
-                  <span className="rounded-full bg-[#FFD331]/20 px-3 py-1 text-xs font-semibold text-[#c17c00]">
-                    중요
-                  </span>
-                )}
               </div>
               {notice.created_at && (
                 <p className="text-xs text-gray-400">

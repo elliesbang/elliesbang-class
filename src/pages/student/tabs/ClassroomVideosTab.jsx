@@ -21,9 +21,9 @@ const ClassroomVideosTab = ({ classroomId }) => {
 
       const { data, error: supabaseError } = await supabase
         .from("classroom_videos")
-        .select("id, title, url, description, order_num")
+        .select("id, title, video_url, created_at")
         .eq("classroom_id", classroomId)
-        .order("order_num", { ascending: true });
+        .order("created_at", { ascending: false });
 
       if (supabaseError) {
         setError("영상을 불러오는 중 오류가 발생했습니다.");
@@ -50,7 +50,7 @@ const ClassroomVideosTab = ({ classroomId }) => {
 
       {!loading && !error && videos.length === 0 && (
         <div className="text-center py-12 text-gray-400 border rounded-xl bg-white">
-          해당 강의실에 등록된 영상이 없습니다.
+          등록된 콘텐츠가 없습니다.
         </div>
       )}
 
@@ -59,8 +59,8 @@ const ClassroomVideosTab = ({ classroomId }) => {
           <VideoCard
             key={video.id}
             title={video.title}
-            description={video.description}
-            url={video.url}
+            description={""}
+            url={video.video_url}
           />
         ))}
     </div>
