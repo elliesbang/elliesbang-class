@@ -1,70 +1,142 @@
-import { useState, useEffect } from "react";
-import { Plus, Trash2, Edit } from "lucide-react";
+import { useCallback, useEffect, useState } from "react";
+import { Plus, Trash2, Edit, Loader2 } from "lucide-react";
+import { supabase } from "@/lib/supabaseClient";
+
+type Classroom = {
+  id: number;
+  name: string;
+  parent_id?: number | null;
+};
+
+type ClassroomVideo = {
+  id: number;
+  classroom_id: number;
+  title: string;
+  video_url: string;
+  created_at?: string;
+};
 
 export default function ClassroomVideos() {
-  const [categories, setCategories] = useState([]); // 강의실 카테고리 목록
-  const [selectedCategory, setSelectedCategory] = useState(""); // 선택된 강의실
-  const [videos, setVideos] = useState([]); // 선택된 강의실의 영상 리스트
-  const [newVideo, setNewVideo] = useState({ title: "", url: "" });
-  const [editingVideo, setEditingVideo] = useState(null);
+  const [classrooms, setClassrooms] = useState<Classroom[]>([]);
+  const [selectedClassroomId, setSelectedClassroomId] = useState<number | "">("");
+  const [videos, setVideos] = useState<ClassroomVideo[]>([]);
+  const [form, setForm] = useState({ title: "", video_url: "" });
+  const [editingId, setEditingId] = useState<number | null>(null);
+  const [loading, setLoading] = useState(false);
+  const [listLoading, setListLoading] = useState(false);
 
-  // 📌 추후 Supabase에서 카테고리 가져오기
   useEffect(() => {
-    async function loadCategories() {
-      // 예: const { data } = await supabase.from("classroom_category").select("*");
-      setCategories([
-        { id: 1, name: "캔디마 기초반" },
-        { id: 2, name: "AI 일러스트 챌린지" },
-        { id: 3, name: "굿즈 디자인 실전반" },
-      ]);
-    }
-    loadCategories();
-  }, []);
+    const fetchClassrooms = async () => {
+      const { data, error } = await supabase
+        .from("class_category")
+        .select("id, name, parent_id")
+        .order("order_num", { ascending: true });
 
-  // 📌 카테고리 선택 시 영상 목록 가져오기 (목업)
-  useEffect(() => {
-    if (!selectedCategory) return;
+      if (error) {
+        console.error("강의실 목록 불러오기 실패", error);
+        return;
+      }
 
-    async function loadVideos() {
-      // 예: supabase.from("classroom_videos").select("*").eq("category_id", selectedCategory)
-      setVideos([
-        { id: 10, title: "1강: 오리엔테이션", url: "https://youtube.com/xxxx" },
-        { id: 11, title: "2강: 기본 도구 설명", url: "https://youtube.com/yyyy" },
-      ]);
-    }
-
-    loadVideos();
-  }, [selectedCategory]);
-
-  // 새 영상 추가
-  const handleAddVideo = () => {
-    if (!newVideo.title || !newVideo.url) return alert("제목과 링크를 입력하세요!");
-
-    const newItem = {
-      id: Date.now(),
-      title: newVideo.title,
-      url: newVideo.url,
+      setClassrooms(data || []);
     };
 
-    setVideos((prev) => [...prev, newItem]);
-    setNewVideo({ title: "", url: "" });
+    fetchClassrooms();
+  }, []);
+
+  const fetchVideos = useCallback(async () => {
+    if (!selectedClassroomId) {
+      setVideos([]);
+      return;
+    }
+
+    setListLoading(true);
+    const { data, error } = await supabase
+      .from("classroom_videos")
+      .select("id, classroom_id, title, video_url, created_at")
+      .eq("classroom_id", selectedClassroomId)
+      .order("created_at", { ascending: false });
+
+    if (error) {
+      console.error("강의실 영상 불러오기 실패", error);
+      setVideos([]);
+    } else {
+      setVideos((data as ClassroomVideo[]) || []);
+    }
+    setListLoading(false);
+  }, [selectedClassroomId]);
+
+  useEffect(() => {
+    fetchVideos();
+  }, [fetchVideos]);
+
+  const handleSubmit = async () => {
+    if (!selectedClassroomId) {
+      alert("강의실을 먼저 선택해주세요.");
+      return;
+    }
+
+    if (!form.title.trim() || !form.video_url.trim()) {
+      alert("제목과 영상 URL을 모두 입력해주세요.");
+      return;
+    }
+
+    setLoading(true);
+
+    if (editingId) {
+      const { error } = await supabase
+        .from("classroom_videos")
+        .update({
+          title: form.title.trim(),
+          video_url: form.video_url.trim(),
+        })
+        .eq("id", editingId);
+
+      if (error) {
+        console.error("영상 수정 실패", error);
+        alert("영상 수정에 실패했습니다. 다시 시도해주세요.");
+      }
+    } else {
+      const { error } = await supabase.from("classroom_videos").insert({
+        classroom_id: selectedClassroomId,
+        title: form.title.trim(),
+        video_url: form.video_url.trim(),
+      });
+
+      if (error) {
+        console.error("영상 추가 실패", error);
+        alert("영상 추가에 실패했습니다. 다시 시도해주세요.");
+      }
+    }
+
+    setForm({ title: "", video_url: "" });
+    setEditingId(null);
+    setLoading(false);
+    fetchVideos();
   };
 
-  // 영상 삭제
-  const handleDelete = (id: number) => {
-    if (!confirm("삭제할까요?")) return;
-    setVideos((prev) => prev.filter((v) => v.id !== id));
+  const handleEdit = (video: ClassroomVideo) => {
+    setForm({ title: video.title, video_url: video.video_url });
+    setEditingId(video.id);
   };
 
-  // 영상 수정 저장
-  const handleSaveEdit = () => {
-    setVideos((prev) =>
-      prev.map((v) =>
-        v.id === editingVideo.id ? editingVideo : v
-      )
-    );
-    setEditingVideo(null);
+  const handleDelete = async (id: number) => {
+    if (!confirm("정말 삭제하시겠습니까?")) return;
+
+    const { error } = await supabase
+      .from("classroom_videos")
+      .delete()
+      .eq("id", id);
+
+    if (error) {
+      console.error("영상 삭제 실패", error);
+      alert("영상 삭제에 실패했습니다. 다시 시도해주세요.");
+      return;
+    }
+
+    setVideos((prev) => prev.filter((video) => video.id !== id));
   };
+
+  const childClassrooms = classrooms.filter((cls) => cls.parent_id !== null);
 
   return (
     <div className="space-y-6">
@@ -72,18 +144,20 @@ export default function ClassroomVideos() {
         강의실 영상 관리
       </h1>
 
-      {/* ---------------- 카테고리 선택 ---------------- */}
       <div className="mb-2 md:mb-4 flex flex-col md:flex-row md:items-center md:gap-3 relative w-full">
         <label className="text-sm font-medium text-[#404040] whitespace-nowrap">
           강의실 선택
         </label>
         <select
           className="mt-1 md:mt-0 w-full md:max-w-xs border rounded-lg px-3 py-2 bg-white"
-          value={selectedCategory}
-          onChange={(e) => setSelectedCategory(e.target.value)}
+          value={selectedClassroomId}
+          onChange={(e) => {
+            const value = e.target.value ? Number(e.target.value) : "";
+            setSelectedClassroomId(value);
+          }}
         >
           <option value="">강의실을 선택하세요</option>
-          {categories.map((c) => (
+          {childClassrooms.map((c) => (
             <option key={c.id} value={c.id}>
               {c.name}
             </option>
@@ -91,51 +165,60 @@ export default function ClassroomVideos() {
         </select>
       </div>
 
-      {/* ---------------- 영상 추가 폼 ---------------- */}
-      {selectedCategory && (
+      {selectedClassroomId && (
         <div className="border rounded-xl bg-white p-5 shadow-sm mb-2 admin-card">
           <h2 className="text-base md:text-lg font-semibold text-[#404040] mb-3 whitespace-nowrap break-keep max-w-full overflow-hidden text-ellipsis">
-            새 영상 추가
+            {editingId ? "영상 수정" : "새 영상 추가"}
           </h2>
 
           <input
             type="text"
             placeholder="영상 제목"
             className="w-full border rounded-lg px-3 py-2 mb-3"
-            value={newVideo.title}
-            onChange={(e) =>
-              setNewVideo((prev) => ({ ...prev, title: e.target.value }))
-            }
+            value={form.title}
+            onChange={(e) => setForm((prev) => ({ ...prev, title: e.target.value }))}
           />
 
           <input
             type="text"
             placeholder="영상 링크(URL)"
             className="w-full border rounded-lg px-3 py-2 mb-3"
-            value={newVideo.url}
-            onChange={(e) =>
-              setNewVideo((prev) => ({ ...prev, url: e.target.value }))
-            }
+            value={form.video_url}
+            onChange={(e) => setForm((prev) => ({ ...prev, video_url: e.target.value }))}
           />
 
-          <button
-            onClick={handleAddVideo}
-            className="flex items-center gap-2 bg-[#f3efe4] text-[#404040] px-4 py-2 rounded-lg w-full md:w-auto justify-center"
-          >
-            <Plus size={18} />
-            추가하기
-          </button>
+          <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:gap-3">
+            <button
+              onClick={handleSubmit}
+              className="flex items-center gap-2 bg-[#f3efe4] text-[#404040] px-4 py-2 rounded-lg w-full sm:w-auto justify-center disabled:opacity-70"
+              disabled={loading}
+            >
+              {loading ? <Loader2 size={18} className="animate-spin" /> : <Plus size={18} />} {editingId ? "저장하기" : "추가하기"}
+            </button>
+            {editingId && (
+              <button
+                onClick={() => {
+                  setEditingId(null);
+                  setForm({ title: "", video_url: "" });
+                }}
+                className="px-4 py-2 rounded-lg border border-gray-200 text-sm text-gray-700 w-full sm:w-auto"
+              >
+                새 영상 등록으로 전환
+              </button>
+            )}
+          </div>
         </div>
       )}
 
-      {/* ---------------- 영상 리스트 ---------------- */}
-      {selectedCategory && (
+      {selectedClassroomId && (
         <div className="rounded-xl border bg-white p-5 shadow-sm admin-card">
           <h2 className="text-base md:text-lg font-semibold text-[#404040] mb-4 whitespace-nowrap break-keep max-w-full overflow-hidden text-ellipsis">
             등록된 영상
           </h2>
 
-          {videos.length === 0 && (
+          {listLoading && <p className="text-sm text-[#777]">불러오는 중...</p>}
+
+          {!listLoading && videos.length === 0 && (
             <p className="text-sm text-[#777]">등록된 영상이 없습니다.</p>
           )}
 
@@ -150,17 +233,18 @@ export default function ClassroomVideos() {
                     {video.title}
                   </p>
                   <a
-                    href={video.url}
+                    href={video.video_url}
                     target="_blank"
+                    rel="noreferrer"
                     className="text-sm text-blue-600 underline"
                   >
-                    {video.url}
+                    {video.video_url}
                   </a>
                 </div>
 
                 <div className="flex items-center gap-3 self-end md:self-auto">
                   <button
-                    onClick={() => setEditingVideo(video)}
+                    onClick={() => handleEdit(video)}
                     className="text-gray-600 hover:text-black"
                   >
                     <Edit size={18} />
@@ -177,49 +261,6 @@ export default function ClassroomVideos() {
           </ul>
         </div>
       )}
-
-      {/* ---------------- 영상 수정 모달 ---------------- */}
-      {editingVideo && (
-        <div className="fixed inset-0 flex items-center justify-center bg-black/50 z-50">
-          <div className="bg-white p-6 rounded-xl shadow-xl w-full max-w-md">
-            <h2 className="text-lg font-semibold mb-4">영상 수정</h2>
-
-            <input
-              type="text"
-              className="w-full border rounded-lg px-3 py-2 mb-3"
-              value={editingVideo.title}
-              onChange={(e) =>
-                setEditingVideo((prev) => ({ ...prev, title: e.target.value }))
-              }
-            />
-
-            <input
-              type="text"
-              className="w-full border rounded-lg px-3 py-2 mb-3"
-              value={editingVideo.url}
-              onChange={(e) =>
-                setEditingVideo((prev) => ({ ...prev, url: e.target.value }))
-              }
-            />
-
-            <div className="flex justify-end gap-3">
-              <button
-                className="px-4 py-2 bg-gray-200 rounded-lg"
-                onClick={() => setEditingVideo(null)}
-              >
-                취소
-              </button>
-              <button
-                className="px-4 py-2 bg-[#f3efe4] text-[#404040] rounded-lg"
-                onClick={handleSaveEdit}
-              >
-                저장
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
-
     </div>
   );
 }

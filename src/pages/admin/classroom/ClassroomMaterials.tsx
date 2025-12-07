@@ -1,102 +1,142 @@
-import { useState, useEffect } from "react";
-import { Plus, Trash2, Edit, FileText, Link as LinkIcon } from "lucide-react";
+import { useCallback, useEffect, useState } from "react";
+import { Plus, Trash2, Edit, Loader2, Link as LinkIcon } from "lucide-react";
+import { supabase } from "@/lib/supabaseClient";
+
+type Classroom = {
+  id: number;
+  name: string;
+  parent_id?: number | null;
+};
+
+type ClassroomMaterial = {
+  id: number;
+  classroom_id: number;
+  title: string;
+  link_url: string;
+  created_at?: string;
+};
 
 export default function ClassroomMaterials() {
-  const [categories, setCategories] = useState([]);
-  const [selectedCategory, setSelectedCategory] = useState("");
+  const [classrooms, setClassrooms] = useState<Classroom[]>([]);
+  const [selectedClassroomId, setSelectedClassroomId] = useState<number | "">("");
+  const [materials, setMaterials] = useState<ClassroomMaterial[]>([]);
+  const [form, setForm] = useState({ title: "", link_url: "" });
+  const [editingId, setEditingId] = useState<number | null>(null);
+  const [loading, setLoading] = useState(false);
+  const [listLoading, setListLoading] = useState(false);
 
-  const [materials, setMaterials] = useState([]);
-
-  // 새 자료 (링크 자료)
-  const [newMaterial, setNewMaterial] = useState({ title: "", url: "" });
-
-  // 수정 모달용
-  const [editingMaterial, setEditingMaterial] = useState(null);
-
-  // 파일 업로드용
-  const [uploadFile, setUploadFile] = useState<File | null>(null);
-
-  // 📌 강의실 목록 가져오기
   useEffect(() => {
-    async function loadCategories() {
-      setCategories([
-        { id: 1, name: "캔디마 기초반" },
-        { id: 2, name: "AI 일러스트 챌린지" },
-        { id: 3, name: "굿즈 디자인 실전반" },
-      ]);
-    }
-    loadCategories();
+    const fetchClassrooms = async () => {
+      const { data, error } = await supabase
+        .from("class_category")
+        .select("id, name, parent_id")
+        .order("order_num", { ascending: true });
+
+      if (error) {
+        console.error("강의실 목록 불러오기 실패", error);
+        return;
+      }
+
+      setClassrooms(data || []);
+    };
+
+    fetchClassrooms();
   }, []);
 
-  // 📌 선택된 강의실의 자료 가져오기
+  const fetchMaterials = useCallback(async () => {
+    if (!selectedClassroomId) {
+      setMaterials([]);
+      return;
+    }
+
+    setListLoading(true);
+    const { data, error } = await supabase
+      .from("classroom_materials")
+      .select("id, classroom_id, title, link_url, created_at")
+      .eq("classroom_id", selectedClassroomId)
+      .order("created_at", { ascending: false });
+
+    if (error) {
+      console.error("자료 불러오기 실패", error);
+      setMaterials([]);
+    } else {
+      setMaterials((data as ClassroomMaterial[]) || []);
+    }
+    setListLoading(false);
+  }, [selectedClassroomId]);
+
   useEffect(() => {
-    if (!selectedCategory) return;
+    fetchMaterials();
+  }, [fetchMaterials]);
 
-    async function loadMaterials() {
-      setMaterials([
-        { id: 100, type: "file", title: "교안 자료.pdf", url: "https://example.com/file.pdf" },
-        { id: 101, type: "link", title: "참고 노션 페이지", url: "https://notion.so/xxx" },
-      ]);
+  const handleSubmit = async () => {
+    if (!selectedClassroomId) {
+      alert("강의실을 먼저 선택해주세요.");
+      return;
     }
 
-    loadMaterials();
-  }, [selectedCategory]);
-
-  // -------------------------------
-  // 📌 링크 자료 추가
-  // -------------------------------
-  const handleAddMaterial = () => {
-    if (!newMaterial.title || !newMaterial.url) {
-      return alert("제목과 링크를 입력하세요!");
+    if (!form.title.trim() || !form.link_url.trim()) {
+      alert("제목과 링크를 모두 입력해주세요.");
+      return;
     }
 
-    const newItem = {
-      id: Date.now(),
-      type: "link",
-      title: newMaterial.title,
-      url: newMaterial.url,
-    };
+    setLoading(true);
 
-    setMaterials((prev) => [...prev, newItem]);
-    setNewMaterial({ title: "", url: "" });
+    if (editingId) {
+      const { error } = await supabase
+        .from("classroom_materials")
+        .update({
+          title: form.title.trim(),
+          link_url: form.link_url.trim(),
+        })
+        .eq("id", editingId);
+
+      if (error) {
+        console.error("자료 수정 실패", error);
+        alert("자료 수정에 실패했습니다. 다시 시도해주세요.");
+      }
+    } else {
+      const { error } = await supabase.from("classroom_materials").insert({
+        classroom_id: selectedClassroomId,
+        title: form.title.trim(),
+        link_url: form.link_url.trim(),
+      });
+
+      if (error) {
+        console.error("자료 추가 실패", error);
+        alert("자료 추가에 실패했습니다. 다시 시도해주세요.");
+      }
+    }
+
+    setForm({ title: "", link_url: "" });
+    setEditingId(null);
+    setLoading(false);
+    fetchMaterials();
   };
 
-  // -------------------------------
-  // 📌 파일 업로드 (UI만 구현)
-  // 실제 업로드는 Supabase Storage 연결해야 함
-  // -------------------------------
-  const handleFileUpload = () => {
-    if (!uploadFile) return alert("파일을 선택하세요!");
-
-    // 파일명으로 자료 생성
-    const newItem = {
-      id: Date.now(),
-      type: "file",
-      title: uploadFile.name,
-      url: "uploaded-file-url", // TODO: Supabase 업로드 위치
-    };
-
-    setMaterials((prev) => [...prev, newItem]);
-    setUploadFile(null);
+  const handleEdit = (material: ClassroomMaterial) => {
+    setForm({ title: material.title, link_url: material.link_url });
+    setEditingId(material.id);
   };
 
-  // -------------------------------
-  // 📌 삭제
-  // -------------------------------
-  const handleDelete = (id: number) => {
-    if (!confirm("삭제하시겠습니까?")) return;
-    setMaterials((prev) => prev.filter((m) => m.id !== id));
+  const handleDelete = async (id: number) => {
+    if (!confirm("정말 삭제하시겠습니까?")) return;
+
+    const { error } = await supabase
+      .from("classroom_materials")
+      .delete()
+      .eq("id", id);
+
+    if (error) {
+      console.error("자료 삭제 실패", error);
+      alert("자료 삭제에 실패했습니다. 다시 시도해주세요.");
+      return;
+    }
+
+    setMaterials((prev) => prev.filter((material) => material.id !== id));
   };
 
-  // -------------------------------
-  // 📌 수정 저장
-  // -------------------------------
-  const handleSaveEdit = () => {
-    setMaterials((prev) =>
-      prev.map((m) => (m.id === editingMaterial.id ? editingMaterial : m))
-    );
-    setEditingMaterial(null);
-  };
+  const childClassrooms = classrooms.filter((cls) => cls.parent_id !== null);
 
   return (
     <div className="space-y-6">
@@ -104,16 +144,18 @@ export default function ClassroomMaterials() {
         강의실 자료 관리
       </h1>
 
-      {/* ---------------- 카테고리 선택 ---------------- */}
       <div className="mb-4 md:mb-6 relative flex flex-col md:flex-row md:items-center md:gap-3">
         <label className="text-sm font-medium text-[#404040] whitespace-nowrap">강의실 선택</label>
         <select
           className="mt-1 md:mt-0 w-full md:max-w-xs border rounded-lg px-3 py-2 bg-white"
-          value={selectedCategory}
-          onChange={(e) => setSelectedCategory(e.target.value)}
+          value={selectedClassroomId}
+          onChange={(e) => {
+            const value = e.target.value ? Number(e.target.value) : "";
+            setSelectedClassroomId(value);
+          }}
         >
           <option value="">강의실을 선택하세요</option>
-          {categories.map((c) => (
+          {childClassrooms.map((c) => (
             <option key={c.id} value={c.id}>
               {c.name}
             </option>
@@ -121,163 +163,103 @@ export default function ClassroomMaterials() {
         </select>
       </div>
 
-      {selectedCategory && (
-        <>
-          {/* ---------------- 파일 업로드 ---------------- */}
-          <div className="border rounded-xl bg-white p-5 shadow-sm mb-6 admin-card">
-            <h2 className="text-base md:text-lg font-semibold text-[#404040] mb-3 whitespace-nowrap break-keep max-w-full overflow-hidden text-ellipsis">
-              파일 업로드
-            </h2>
+      {selectedClassroomId && (
+        <div className="border rounded-xl bg-white p-5 shadow-sm mb-6 admin-card">
+          <h2 className="text-base md:text-lg font-semibold text-[#404040] mb-3 whitespace-nowrap break-keep max-w-full overflow-hidden text-ellipsis">
+            {editingId ? "자료 수정" : "링크 자료 추가"}
+          </h2>
 
-            <input
-              type="file"
-              className="mb-3"
-              onChange={(e) => setUploadFile(e.target.files?.[0] || null)}
-            />
+          <input
+            type="text"
+            placeholder="자료 제목"
+            className="w-full border rounded-lg px-3 py-2 mb-3"
+            value={form.title}
+            onChange={(e) => setForm((prev) => ({ ...prev, title: e.target.value }))}
+          />
 
+          <input
+            type="text"
+            placeholder="자료 링크(URL)"
+            className="w-full border rounded-lg px-3 py-2 mb-3"
+            value={form.link_url}
+            onChange={(e) => setForm((prev) => ({ ...prev, link_url: e.target.value }))}
+          />
+
+          <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:gap-3">
             <button
-              onClick={handleFileUpload}
-              className="flex items-center gap-2 bg-[#f3efe4] text-[#404040] px-4 py-2 rounded-lg w-full md:w-auto justify-center"
+              onClick={handleSubmit}
+              className="flex items-center gap-2 bg-[#f3efe4] text-[#404040] px-4 py-2 rounded-lg w-full sm:w-auto justify-center disabled:opacity-70"
+              disabled={loading}
             >
-              <FileText size={18} />
-              업로드하기
+              {loading ? <Loader2 size={18} className="animate-spin" /> : <Plus size={18} />} {editingId ? "저장하기" : "추가하기"}
             </button>
-          </div>
-
-          {/* ---------------- 링크 자료 추가 ---------------- */}
-          <div className="border rounded-xl bg-white p-5 shadow-sm mb-6 admin-card">
-            <h2 className="text-base md:text-lg font-semibold text-[#404040] mb-3 whitespace-nowrap break-keep max-w-full overflow-hidden text-ellipsis">
-              링크 자료 추가
-            </h2>
-
-            <input
-              type="text"
-              placeholder="자료 제목"
-              className="w-full border rounded-lg px-3 py-2 mb-3"
-              value={newMaterial.title}
-              onChange={(e) =>
-                setNewMaterial((prev) => ({ ...prev, title: e.target.value }))
-              }
-            />
-
-            <input
-              type="text"
-              placeholder="자료 링크(URL)"
-              className="w-full border rounded-lg px-3 py-2 mb-3"
-              value={newMaterial.url}
-              onChange={(e) =>
-                setNewMaterial((prev) => ({ ...prev, url: e.target.value }))
-              }
-            />
-
-            <button
-              onClick={handleAddMaterial}
-              className="flex items-center gap-2 bg-[#f3efe4] text-[#404040] px-4 py-2 rounded-lg w-full md:w-auto justify-center"
-            >
-              <Plus size={18} />
-              추가하기
-            </button>
-          </div>
-
-          {/* ---------------- 자료 리스트 ---------------- */}
-          <div className="rounded-xl border bg-white p-5 shadow-sm admin-card">
-            <h2 className="text-base md:text-lg font-semibold text-[#404040] mb-4 whitespace-nowrap break-keep max-w-full overflow-hidden text-ellipsis">
-              등록된 자료
-            </h2>
-
-            {materials.length === 0 && (
-              <p className="text-sm text-[#777]">등록된 자료가 없습니다.</p>
+            {editingId && (
+              <button
+                onClick={() => {
+                  setEditingId(null);
+                  setForm({ title: "", link_url: "" });
+                }}
+                className="px-4 py-2 rounded-lg border border-gray-200 text-sm text-gray-700 w-full sm:w-auto"
+              >
+                새 자료 등록으로 전환
+              </button>
             )}
-
-            <ul className="space-y-4">
-              {materials.map((m) => (
-                <li
-                  key={m.id}
-                  className="flex flex-col md:flex-row md:items-center md:justify-between gap-3 border-b pb-3"
-                >
-                  <div className="space-y-1">
-                    <p className="font-medium text-[#404040] flex items-center gap-2 whitespace-nowrap break-keep max-w-full overflow-hidden text-ellipsis">
-                      {m.type === "file" ? (
-                        <FileText size={18} />
-                      ) : (
-                        <LinkIcon size={18} />
-                      )}
-                      {m.title}
-                    </p>
-
-                    <a
-                      href={m.url}
-                      target="_blank"
-                      className="text-sm text-blue-600 underline break-keep"
-                    >
-                      {m.url}
-                    </a>
-                  </div>
-
-                  <div className="flex items-center gap-3 self-end md:self-auto">
-                    {m.type === "link" && (
-                      <button
-                        onClick={() => setEditingMaterial(m)}
-                        className="text-gray-600 hover:text-black"
-                      >
-                        <Edit size={18} />
-                      </button>
-                    )}
-
-                    <button
-                      onClick={() => handleDelete(m.id)}
-                      className="text-red-500 hover:text-red-700"
-                    >
-                      <Trash2 size={18} />
-                    </button>
-                  </div>
-                </li>
-              ))}
-            </ul>
           </div>
-        </>
+        </div>
       )}
 
-      {/* ---------------- 링크 수정 모달 ---------------- */}
-      {editingMaterial && (
-        <div className="fixed inset-0 flex items-center justify-center bg-black/50 z-50">
-          <div className="bg-white p-6 rounded-xl shadow-xl w-full max-w-md">
-            <h2 className="text-lg font-semibold mb-4">자료 수정</h2>
+      {selectedClassroomId && (
+        <div className="rounded-xl border bg-white p-5 shadow-sm admin-card">
+          <h2 className="text-base md:text-lg font-semibold text-[#404040] mb-4 whitespace-nowrap break-keep max-w-full overflow-hidden text-ellipsis">
+            등록된 자료
+          </h2>
 
-            <input
-              type="text"
-              className="w-full border rounded-lg px-3 py-2 mb-3"
-              value={editingMaterial.title}
-              onChange={(e) =>
-                setEditingMaterial((prev) => ({ ...prev, title: e.target.value }))
-              }
-            />
+          {listLoading && <p className="text-sm text-[#777]">불러오는 중...</p>}
 
-            <input
-              type="text"
-              className="w-full border rounded-lg px-3 py-2 mb-3"
-              value={editingMaterial.url}
-              onChange={(e) =>
-                setEditingMaterial((prev) => ({ ...prev, url: e.target.value }))
-              }
-            />
+          {!listLoading && materials.length === 0 && (
+            <p className="text-sm text-[#777]">등록된 자료가 없습니다.</p>
+          )}
 
-            <div className="flex justify-end gap-3">
-              <button
-                className="px-4 py-2 bg-gray-200 rounded-lg"
-                onClick={() => setEditingMaterial(null)}
+          <ul className="space-y-4">
+            {materials.map((material) => (
+              <li
+                key={material.id}
+                className="flex flex-col md:flex-row md:items-center md:justify-between gap-3 border-b pb-3"
               >
-                취소
-              </button>
+                <div className="space-y-1">
+                  <p className="font-medium text-[#404040] flex items-center gap-2 whitespace-nowrap break-keep max-w-full overflow-hidden text-ellipsis">
+                    <LinkIcon size={18} />
+                    {material.title}
+                  </p>
 
-              <button
-                className="px-4 py-2 bg-[#f3efe4] text-[#404040] rounded-lg"
-                onClick={handleSaveEdit}
-              >
-                저장
-              </button>
-            </div>
-          </div>
+                  <a
+                    href={material.link_url}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="text-sm text-blue-600 underline break-keep"
+                  >
+                    {material.link_url}
+                  </a>
+                </div>
+
+                <div className="flex items-center gap-3 self-end md:self-auto">
+                  <button
+                    onClick={() => handleEdit(material)}
+                    className="text-gray-600 hover:text-black"
+                  >
+                    <Edit size={18} />
+                  </button>
+
+                  <button
+                    onClick={() => handleDelete(material.id)}
+                    className="text-red-500 hover:text-red-700"
+                  >
+                    <Trash2 size={18} />
+                  </button>
+                </div>
+              </li>
+            ))}
+          </ul>
         </div>
       )}
     </div>

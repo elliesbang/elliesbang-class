@@ -1,6 +1,6 @@
 import { ReactNode, useState } from "react";
 import AdminSidebar from "./AdminSidebar";
-import { Bell, LogOut, Home, Menu } from "lucide-react";
+import { LogOut, Home, Menu } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/lib/supabaseClient";
 
@@ -55,17 +55,8 @@ export default function AdminLayout({ children }: Props) {
               </h2>
             </div>
 
-            {/* Right: 알림 → 홈 → 로그아웃 */}
+            {/* Right: 홈 → 로그아웃 */}
             <div className="flex items-center gap-3 md:gap-4">
-              {/* 알림 버튼 */}
-              <button
-                onClick={() => navigate("/notifications")}
-                className="relative p-2 rounded-full hover:bg-[#f3efe4] transition"
-                aria-label="알림 보기"
-              >
-                <Bell size={20} className="text-[#404040]" />
-              </button>
-
               {/* 홈 버튼 */}
               <button
                 onClick={() => navigate("/")}
