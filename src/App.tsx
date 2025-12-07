@@ -30,8 +30,7 @@ import AssignmentList from "./pages/admin/AssignmentList";
 import GlobalNotices from "./pages/admin/notices/GlobalNotices";
 import VodManager from "./pages/admin/vod/VodManager";
 
-import StudentUsers from "./pages/admin/users/StudentUsers";
-import VodUsers from "./pages/admin/users/VodUsers";
+import UserManage from "./pages/admin/users/UserManage";
 
 import ClassManager from "./pages/admin/class/ClassManager";
 
@@ -246,11 +245,22 @@ const AppContent = () => {
           />
 
           <Route
+            path="/admin/users"
+            element={
+              <ProtectedRoute allow={["admin"]}>
+                <AdminLayout>
+                  <UserManage />
+                </AdminLayout>
+              </ProtectedRoute>
+            }
+          />
+
+          <Route
             path="/admin/users/students"
             element={
               <ProtectedRoute allow={["admin"]}>
                 <AdminLayout>
-                  <StudentUsers />
+                  <UserManage />
                 </AdminLayout>
               </ProtectedRoute>
             }
@@ -261,7 +271,7 @@ const AppContent = () => {
             element={
               <ProtectedRoute allow={["admin"]}>
                 <AdminLayout>
-                  <VodUsers />
+                  <UserManage />
                 </AdminLayout>
               </ProtectedRoute>
             }
