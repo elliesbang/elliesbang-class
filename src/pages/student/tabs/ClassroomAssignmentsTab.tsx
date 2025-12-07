@@ -363,17 +363,14 @@ const ClassroomAssignmentsTab = ({
         return;
       }
 
-      const blob = await response.blob();
-      const downloadUrl = URL.createObjectURL(blob);
       const anchor = document.createElement("a");
-      anchor.href = downloadUrl;
+      anchor.href = url;
       anchor.download = `certificate-${classroomKey}.pdf`;
       anchor.rel = "noreferrer";
       anchor.target = "_blank";
       document.body.appendChild(anchor);
       anchor.click();
       anchor.remove();
-      URL.revokeObjectURL(downloadUrl);
     } catch (err) {
       console.error("수료증 다운로드 실패", err);
       setCertificateError("수료증 생성 중 오류가 발생했습니다.");
