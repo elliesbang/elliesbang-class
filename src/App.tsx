@@ -26,7 +26,6 @@ import ClassroomMaterials from "./pages/admin/classroom/ClassroomMaterials";
 import ClassroomNotices from "./pages/admin/classroom/ClassroomNotices";
 
 import AssignmentList from "./pages/admin/AssignmentList";
-import FeedbackPage from "./pages/admin/FeedbackPage";
 
 import GlobalNotices from "./pages/admin/notices/GlobalNotices";
 import VodManager from "./pages/admin/vod/VodManager";
@@ -219,17 +218,6 @@ const AppContent = () => {
               <ProtectedRoute allow={["admin"]}>
                 <AdminLayout>
                   <AssignmentList />
-                </AdminLayout>
-              </ProtectedRoute>
-            }
-          />
-
-          <Route
-            path="/admin/feedback"
-            element={
-              <ProtectedRoute allow={["admin"]}>
-                <AdminLayout>
-                  <FeedbackPage />
                 </AdminLayout>
               </ProtectedRoute>
             }

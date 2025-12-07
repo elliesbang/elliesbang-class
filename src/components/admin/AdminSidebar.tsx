@@ -147,16 +147,6 @@ export default function AdminSidebar({ isOpen, onClose }: Props) {
               <FileText size={16} />
               과제 제출 목록
             </NavLink>
-
-            <NavLink
-              to="/admin/feedback"
-              className={({ isActive }) =>
-                `${subMenuStyle} ${isActive ? "bg-[#f3efe4]" : ""}`
-              }
-            >
-              <FileText size={16} />
-              피드백 작성
-            </NavLink>
           </div>
         )}
 
