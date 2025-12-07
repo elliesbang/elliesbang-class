@@ -34,7 +34,7 @@ const formatDate = (value: string | null): string => {
   const year = date.getFullYear();
   const month = String(date.getMonth() + 1).padStart(2, "0");
   const day = String(date.getDate()).padStart(2, "0");
-  return `${year}-${month}-${day}`;
+  return `${year}.${month}.${day}`;
 };
 
 const createPdfBuffer = (options: {
@@ -76,11 +76,14 @@ const createPdfBuffer = (options: {
   streamParts.push("Q");
 
   // 텍스트 렌더링
-  drawText(options.title, 430, 860, { size: 64, color: yellow });
-  drawText(options.body, 200, 740, { size: 28, color: gray });
-  drawText(options.period, 200, 690, { size: 22, color: gray });
-  drawText(options.issuedAt, 200, 650, { size: 22, color: gray });
-  drawText(options.brand, 480, 180, { size: 28, color: yellow });
+  drawText(options.title, 470, 860, { size: 64, color: yellow });
+  const bodyLines = options.body.split("\n");
+  bodyLines.forEach((line, index) => {
+    drawText(line, 220, 740 - index * 36, { size: 28, color: gray });
+  });
+  drawText(options.period, 220, 660, { size: 22, color: gray });
+  drawText(options.issuedAt, 220, 620, { size: 22, color: gray });
+  drawText(options.brand, 500, 180, { size: 28, color: yellow });
 
   const stream = streamParts.join("\n");
   const encoder = new TextEncoder();
@@ -151,6 +154,23 @@ export async function onRequest({ request, env }: { request: Request; env: any }
   }
 
   // 제출물 조회
+  const { data: lastSubmissionData, error: lastSubmissionError } = await supabase
+    .from("assignments")
+    .select("created_at")
+    .eq("class_id", classId)
+    .eq("student_id", userId)
+    .order("created_at", { ascending: false })
+    .limit(1)
+    .maybeSingle();
+
+  if (lastSubmissionError) {
+    return new Response("마지막 제출 정보를 불러오지 못했습니다.", { status: 400 });
+  }
+
+  if (!lastSubmissionData?.created_at) {
+    return new Response("수료증을 발급할 수 없습니다.", { status: 400 });
+  }
+
   const { data: assignments, error: assignmentsError } = await supabase
     .from("assignments")
     .select("session_no, created_at")
@@ -165,8 +185,6 @@ export async function onRequest({ request, env }: { request: Request; env: any }
   if (!assignments || assignments.length === 0) {
     return new Response("수료증을 발급할 수 없습니다.", { status: 400 });
   }
-
-  const lastSubmission = assignments[0];
 
   // 데드라인 조회
   const { data: deadlines, error: deadlinesError } = await supabase
@@ -201,13 +219,13 @@ export async function onRequest({ request, env }: { request: Request; env: any }
   }
 
   const periodText = `기간: ${formatDate(classData.start_date)} ~ ${formatDate(
-    lastSubmission.created_at
+    lastSubmissionData.created_at
   )}`;
-  const issuedText = `발급일: ${formatDate(lastSubmission.created_at)}`;
+  const issuedText = `발급일: ${formatDate(lastSubmissionData.created_at)}`;
 
   const pdfBytes = createPdfBuffer({
     title: "수료증",
-    body: "모든 과제를 성실히 완료하여 본 수료증을 수여합니다.",
+    body: "모든 과제를 성실히 완료하여\n본 수료증을 수여합니다.",
     period: periodText,
     issuedAt: issuedText,
     brand: "엘리의방",
