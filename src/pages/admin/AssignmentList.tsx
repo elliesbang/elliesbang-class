@@ -13,6 +13,13 @@ type Classroom = {
   parent_id?: number | null;
 };
 
+type AssignmentProfile = {
+  id?: string;
+  full_name?: string | null;
+  nickname?: string | null;
+  username?: string | null;
+};
+
 type AssignmentRow = {
   id: number;
   classroom_id: string;
@@ -22,9 +29,7 @@ type AssignmentRow = {
   link_url: string | null;
   created_at: string;
   title: string | null;
-  profiles?: {
-    name?: string | null;
-  } | null;
+  profiles?: AssignmentProfile | null;
 };
 
 type AssignmentWithMeta = {
@@ -32,6 +37,7 @@ type AssignmentWithMeta = {
   classroomId: string;
   classroomName: string;
   studentName: string;
+  profiles?: AssignmentProfile | null;
   sessionNo: string | null;
   imageUrl: string | null;
   linkUrl: string | null;
@@ -48,6 +54,12 @@ const formatDate = (date: string) =>
     hour: "2-digit",
     minute: "2-digit",
   });
+
+const getProfileDisplayName = (profile?: AssignmentProfile | null) =>
+  profile?.nickname ||
+  profile?.full_name ||
+  profile?.username ||
+  "이름 없음";
 
 export default function AssignmentList() {
   const { user } = useAuth();
@@ -136,7 +148,7 @@ export default function AssignmentList() {
     const query = supabase
       .from("assignments")
       .select(
-        "id, classroom_id, student_id, session_no, image_url, link_url, created_at, title, profiles(name)"
+        `id, classroom_id, student_id, session_no, image_url, link_url, created_at, title, profiles:student_id(id, full_name, nickname, username)`
       )
       .order("created_at", { ascending: false });
 
@@ -181,7 +193,8 @@ export default function AssignmentList() {
       classroomId: row.classroom_id,
       classroomName:
         classroomMap.get(String(row.classroom_id)) ?? `강의실 ${row.classroom_id}`,
-      studentName: row.profiles?.name ?? String(row.student_id),
+      studentName: getProfileDisplayName(row.profiles),
+      profiles: row.profiles,
       sessionNo: row.session_no,
       imageUrl: row.image_url,
       linkUrl: row.link_url,

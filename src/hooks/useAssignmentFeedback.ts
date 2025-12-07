@@ -18,6 +18,7 @@ type AssignmentRecord = {
   class_id?: number | null;
   student_id?: string | null;
   created_at?: string;
+  profiles?: StudentProfile | null;
 };
 
 type AssignmentFeedbackRecord = {
@@ -31,6 +32,13 @@ type AssignmentFeedbackRecord = {
 type ProfileRecord = {
   id: string;
   name?: string | null;
+};
+
+type StudentProfile = {
+  id?: string;
+  full_name?: string | null;
+  nickname?: string | null;
+  username?: string | null;
 };
 
 export const useAssignmentFeedback = ({
@@ -57,7 +65,7 @@ export const useAssignmentFeedback = ({
       const assignmentQuery = supabase
         .from("assignments")
         .select(
-          "id, session_no, title, image_url, link_url, classroom_id, class_id, student_id, created_at"
+          `id, session_no, title, image_url, link_url, classroom_id, class_id, student_id, created_at, profiles:student_id(id, full_name, nickname, username)`
         )
         .eq("classroom_id", classroomId)
         .eq("student_id", studentId)
