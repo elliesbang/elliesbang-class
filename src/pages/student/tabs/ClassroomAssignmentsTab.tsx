@@ -17,7 +17,9 @@ const SESSION_COUNT_BY_CLASSROOM: Record<string, number | undefined> = {
 
 type AssignmentProfile = {
   id?: string;
-  name?: string | null;
+  full_name?: string | null;
+  nickname?: string | null;
+  username?: string | null;
 };
 
 type Assignment = {
@@ -64,6 +66,12 @@ const ClassroomAssignmentsTab = ({
   const [deadlines, setDeadlines] = useState<SessionDeadline[]>([]);
   const [downloadingCertificate, setDownloadingCertificate] = useState(false);
   const [certificateError, setCertificateError] = useState<string | null>(null);
+
+  const getProfileDisplayName = (profile?: AssignmentProfile | null) =>
+    profile?.nickname ||
+    profile?.full_name ||
+    profile?.username ||
+    "이름 없음";
 
   // classroomId 가 숫자로 들어와도 문자열로 통일해서 사용
   const classroomKey = useMemo(
@@ -125,7 +133,7 @@ const ClassroomAssignmentsTab = ({
     const { data, error: supabaseError } = await supabase
       .from("assignments")
       .select(
-        "id, classroom_id, class_id, student_id, session_no, image_url, link_url, created_at, title, profiles(id, name)"
+        `id, classroom_id, class_id, student_id, session_no, image_url, link_url, created_at, title, profiles:student_id(id, full_name, nickname, username)`
       )
       .eq("classroom_id", classroomKey)
       .order("created_at", { ascending: false });
@@ -397,8 +405,7 @@ const ClassroomAssignmentsTab = ({
     return (
       <div className="space-y-4">
         {assignmentList.map((assignment) => {
-          const authorName =
-            assignment.profiles?.name || assignment.student_id;
+          const authorName = getProfileDisplayName(assignment.profiles);
           const sessionLabel = assignment.session_no ?? FALLBACK_SESSION_NO;
           const submittedLabel = new Date(
             assignment.created_at
