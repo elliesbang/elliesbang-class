@@ -61,6 +61,7 @@ const ClassroomAssignmentsTab = ({
   const [title, setTitle] = useState("");
   const [linkUrl, setLinkUrl] = useState("");
   const [imageFile, setImageFile] = useState<File | null>(null);
+  const [existingImageUrl, setExistingImageUrl] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
   const [editingId, setEditingId] = useState<number | null>(null);
   const [deadlines, setDeadlines] = useState<SessionDeadline[]>([]);
@@ -179,11 +180,15 @@ const ClassroomAssignmentsTab = ({
     return data.publicUrl;
   };
 
+  const hasSubmissionContent = Boolean(linkUrl || imageFile || existingImageUrl);
+
   const resetForm = () => {
     setTitle("");
     setLinkUrl("");
     setImageFile(null);
+    setExistingImageUrl(null);
     setEditingId(null);
+    setSelectedSessionNo(hasSessionSelection ? "1" : null);
   };
 
   // 과제 제출/수정
@@ -203,7 +208,7 @@ const ClassroomAssignmentsTab = ({
       return;
     }
 
-    if (!linkUrl && !imageFile) {
+    if (!hasSubmissionContent) {
       alert("이미지나 링크 중 하나 이상을 입력해주세요.");
       return;
     }
@@ -211,7 +216,7 @@ const ClassroomAssignmentsTab = ({
     setSubmitting(true);
 
     try {
-      let imageUrl = "";
+      let imageUrl = existingImageUrl ?? "";
 
       if (imageFile) {
         imageUrl = await uploadImage(imageFile, sessionNo);
@@ -227,7 +232,7 @@ const ClassroomAssignmentsTab = ({
         title: title || null,
       };
 
-      if (editingId) {
+      if (editingId !== null) {
         const { error: updateError } = await supabase
           .from("assignments")
           .update(payload)
@@ -283,15 +288,23 @@ const ClassroomAssignmentsTab = ({
     setEditingId(assignment.id);
     setTitle(assignment.title ?? "");
     setLinkUrl(assignment.link_url ?? "");
+    setExistingImageUrl(assignment.image_url ?? null);
     setImageFile(null);
     if (hasSessionSelection && assignment.session_no) {
       setSelectedSessionNo(assignment.session_no);
+    } else if (!hasSessionSelection) {
+      setSelectedSessionNo(FALLBACK_SESSION_NO);
     }
   };
 
   // 현재 로그인 사용자의 과제만 추출
   const userAssignments = useMemo(
     () => assignments.filter((a) => String(a.student_id) === String(user?.id)),
+    [assignments, user]
+  );
+
+  const otherAssignments = useMemo(
+    () => assignments.filter((a) => String(a.student_id) !== String(user?.id)),
     [assignments, user]
   );
 
@@ -351,7 +364,7 @@ const ClassroomAssignmentsTab = ({
     }
   };
 
-  const renderAssignments = () => {
+  const renderAssignments = (assignmentList: Assignment[], emptyMessage: string) => {
     if (loading) {
       return (
         <div className="rounded-xl bg-white p-4 text-center text-sm text-gray-600 shadow-sm">
@@ -368,17 +381,17 @@ const ClassroomAssignmentsTab = ({
       );
     }
 
-    if (assignments.length === 0) {
+    if (assignmentList.length === 0) {
       return (
         <div className="rounded-xl border border-dashed border-gray-200 bg-white p-6 text-center text-sm text-gray-500">
-          아직 제출된 과제가 없어요.
+          {emptyMessage}
         </div>
       );
     }
 
     return (
       <div className="space-y-4">
-        {assignments.map((assignment) => {
+        {assignmentList.map((assignment) => {
           const authorName =
             assignment.profiles?.name || assignment.student_id;
 
@@ -461,9 +474,7 @@ const ClassroomAssignmentsTab = ({
     : [];
 
   const disableSubmit =
-    submitting ||
-    (!linkUrl && !imageFile) ||
-    (hasSessionSelection && !selectedSessionNo);
+    submitting || !hasSubmissionContent || (hasSessionSelection && !selectedSessionNo);
 
   return (
     <div className="bg-[#fffdf6]">
@@ -614,7 +625,20 @@ const ClassroomAssignmentsTab = ({
           <h3 className="text-base font-semibold text-[#404040]">
             제출된 과제
           </h3>
-          {renderAssignments()}
+          {renderAssignments(
+            userAssignments,
+            "아직 제출된 과제가 없어요."
+          )}
+        </div>
+
+        <div className="space-y-2 mt-6">
+          <h3 className="text-base font-semibold text-[#404040]">
+            같은 강의실 친구들의 과제
+          </h3>
+          {renderAssignments(
+            otherAssignments,
+            "아직 제출한 친구가 없어요."
+          )}
         </div>
       </div>
     </div>
