@@ -55,8 +55,8 @@ export default function VodUsers() {
   };
 
   return (
-    <div>
-      <h1 className="text-2xl font-bold text-[#404040] mb-6">
+    <div className="space-y-6">
+      <h1 className="text-lg md:text-2xl font-bold text-[#404040] mb-2 whitespace-nowrap break-keep max-w-full overflow-hidden text-ellipsis">
         VOD 사용자 관리
       </h1>
 

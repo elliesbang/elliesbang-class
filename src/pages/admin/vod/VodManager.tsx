@@ -153,15 +153,17 @@ export default function VodManage() {
   };
 
   return (
-    <div>
-      <h1 className="text-2xl font-bold text-[#404040] mb-6">VOD 관리</h1>
+    <div className="space-y-6">
+      <h1 className="text-lg md:text-2xl font-bold text-[#404040] mb-2 whitespace-nowrap break-keep max-w-full overflow-hidden text-ellipsis">
+        VOD 관리
+      </h1>
 
       {/* ---------------- 카테고리 선택 ---------------- */}
-      <div className="mb-6">
-        <label className="text-sm font-medium text-[#404040]">카테고리 선택</label>
+      <div className="mb-4 md:mb-6 relative flex flex-col md:flex-row md:items-center md:gap-3 w-full">
+        <label className="text-sm font-medium text-[#404040] whitespace-nowrap">카테고리 선택</label>
 
         <select
-          className="mt-1 w-full border rounded-lg px-3 py-2 bg-white"
+          className="mt-1 md:mt-0 w-full md:max-w-xs border rounded-lg px-3 py-2 bg-white"
           value={selectedCategory}
           onChange={(e) => setSelectedCategory(e.target.value)}
         >
@@ -177,8 +179,8 @@ export default function VodManage() {
       {/* ---------------- VOD 작성 영역 ---------------- */}
       {selectedCategoryId && (
         <>
-          <div className="border rounded-xl bg-white p-5 shadow-sm mb-6">
-            <h2 className="text-lg font-semibold text-[#404040] mb-3">새 VOD 등록</h2>
+          <div className="border rounded-xl bg-white p-5 shadow-sm mb-4 admin-card">
+            <h2 className="text-base md:text-lg font-semibold text-[#404040] mb-3 whitespace-nowrap break-keep max-w-full overflow-hidden text-ellipsis">새 VOD 등록</h2>
 
             <p className="text-xs text-[#7a6f68] mb-2">
               유튜브 영상 URL을 입력하면 썸네일이 자동으로 생성됩니다.
@@ -206,7 +208,7 @@ export default function VodManage() {
 
             <button
               onClick={handleAddVod}
-              className="flex items-center gap-2 bg-[#f3efe4] text-[#404040] px-4 py-2 rounded-lg"
+              className="flex items-center gap-2 bg-[#f3efe4] text-[#404040] px-4 py-2 rounded-lg w-full md:w-auto justify-center"
             >
               <Plus size={18} />
               등록하기
@@ -214,8 +216,8 @@ export default function VodManage() {
           </div>
 
           {/* ---------------- VOD 리스트 ---------------- */}
-          <div className="rounded-xl border bg-white p-5 shadow-sm">
-            <h2 className="text-lg font-semibold text-[#404040] mb-4">
+          <div className="rounded-xl border bg-white p-5 shadow-sm admin-card">
+            <h2 className="text-base md:text-lg font-semibold text-[#404040] mb-4 whitespace-nowrap break-keep max-w-full overflow-hidden text-ellipsis">
               등록된 VOD 목록
             </h2>
 
@@ -231,39 +233,39 @@ export default function VodManage() {
               {vodList.map((v) => (
                 <li
                   key={v.id}
-                  className="border-b pb-4 flex justify-between items-start gap-3"
+                  className="border-b pb-4 flex flex-col gap-4 md:flex-row md:justify-between md:items-start"
                 >
-                  <div className="flex items-start gap-3">
+                  <div className="flex items-start gap-3 w-full">
                     <img
                       src={v.thumbnail_url || placeholderThumbnail}
                       onError={(e) => {
                         e.currentTarget.src = placeholderThumbnail;
                       }}
-                      className="w-24 h-16 object-cover rounded-lg border"
+                      className="w-24 h-16 object-cover rounded-lg border flex-shrink-0"
                       alt={v.title}
                     />
 
-                    <div>
-                      <p className="font-semibold text-[#404040] text-lg">
+                    <div className="min-w-0 space-y-1">
+                      <p className="font-semibold text-[#404040] text-base md:text-lg whitespace-nowrap break-keep max-w-full overflow-hidden text-ellipsis">
                         {v.title}
                       </p>
 
                       <a
                         href={v.url}
                         target="_blank"
-                        className="text-blue-600 underline text-sm"
+                        className="text-blue-600 underline text-sm break-keep"
                         rel="noreferrer"
                       >
                         영상 링크 열기
                       </a>
 
-                      <p className="text-xs text-[#888] mt-1">
+                      <p className="text-xs text-[#888] mt-1 whitespace-nowrap">
                         업로드일: {v.created_at?.slice(0, 10) ?? "-"}
                       </p>
                     </div>
                   </div>
 
-                  <div className="flex items-center gap-3">
+                  <div className="flex items-center gap-3 self-end md:self-start">
                     <button
                       onClick={() => setEditingVod(v)}
                       className="text-gray-600 hover:text-black"

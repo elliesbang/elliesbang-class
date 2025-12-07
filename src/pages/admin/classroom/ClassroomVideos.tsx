@@ -67,14 +67,18 @@ export default function ClassroomVideos() {
   };
 
   return (
-    <div>
-      <h1 className="text-2xl font-bold text-[#404040] mb-6">강의실 영상 관리</h1>
+    <div className="space-y-6">
+      <h1 className="text-lg md:text-2xl font-bold text-[#404040] mb-2 whitespace-nowrap break-keep max-w-full overflow-hidden text-ellipsis">
+        강의실 영상 관리
+      </h1>
 
       {/* ---------------- 카테고리 선택 ---------------- */}
-      <div className="mb-6">
-        <label className="text-sm font-medium text-[#404040]">강의실 선택</label>
+      <div className="mb-2 md:mb-4 flex flex-col md:flex-row md:items-center md:gap-3 relative w-full">
+        <label className="text-sm font-medium text-[#404040] whitespace-nowrap">
+          강의실 선택
+        </label>
         <select
-          className="mt-1 w-full border rounded-lg px-3 py-2 bg-white"
+          className="mt-1 md:mt-0 w-full md:max-w-xs border rounded-lg px-3 py-2 bg-white"
           value={selectedCategory}
           onChange={(e) => setSelectedCategory(e.target.value)}
         >
@@ -89,8 +93,8 @@ export default function ClassroomVideos() {
 
       {/* ---------------- 영상 추가 폼 ---------------- */}
       {selectedCategory && (
-        <div className="border rounded-xl bg-white p-5 shadow-sm mb-6">
-          <h2 className="text-lg font-semibold text-[#404040] mb-3">
+        <div className="border rounded-xl bg-white p-5 shadow-sm mb-2 admin-card">
+          <h2 className="text-base md:text-lg font-semibold text-[#404040] mb-3 whitespace-nowrap break-keep max-w-full overflow-hidden text-ellipsis">
             새 영상 추가
           </h2>
 
@@ -116,7 +120,7 @@ export default function ClassroomVideos() {
 
           <button
             onClick={handleAddVideo}
-            className="flex items-center gap-2 bg-[#f3efe4] text-[#404040] px-4 py-2 rounded-lg"
+            className="flex items-center gap-2 bg-[#f3efe4] text-[#404040] px-4 py-2 rounded-lg w-full md:w-auto justify-center"
           >
             <Plus size={18} />
             추가하기
@@ -126,8 +130,8 @@ export default function ClassroomVideos() {
 
       {/* ---------------- 영상 리스트 ---------------- */}
       {selectedCategory && (
-        <div className="rounded-xl border bg-white p-5 shadow-sm">
-          <h2 className="text-lg font-semibold text-[#404040] mb-4">
+        <div className="rounded-xl border bg-white p-5 shadow-sm admin-card">
+          <h2 className="text-base md:text-lg font-semibold text-[#404040] mb-4 whitespace-nowrap break-keep max-w-full overflow-hidden text-ellipsis">
             등록된 영상
           </h2>
 
@@ -139,10 +143,12 @@ export default function ClassroomVideos() {
             {videos.map((video) => (
               <li
                 key={video.id}
-                className="flex items-center justify-between border-b pb-3"
+                className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between border-b pb-3"
               >
                 <div>
-                  <p className="font-medium text-[#404040]">{video.title}</p>
+                  <p className="font-medium text-[#404040] whitespace-nowrap break-keep max-w-full overflow-hidden text-ellipsis">
+                    {video.title}
+                  </p>
                   <a
                     href={video.url}
                     target="_blank"
@@ -152,7 +158,7 @@ export default function ClassroomVideos() {
                   </a>
                 </div>
 
-                <div className="flex items-center gap-3">
+                <div className="flex items-center gap-3 self-end md:self-auto">
                   <button
                     onClick={() => setEditingVideo(video)}
                     className="text-gray-600 hover:text-black"

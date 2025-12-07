@@ -81,8 +81,10 @@ export default function GlobalNotices() {
   };
 
   return (
-    <div>
-      <h1 className="text-2xl font-bold text-[#404040] mb-6">전체 공지 관리</h1>
+    <div className="space-y-6">
+      <h1 className="text-lg md:text-2xl font-bold text-[#404040] mb-2 whitespace-nowrap break-keep max-w-full overflow-hidden text-ellipsis">
+        전체 공지 관리
+      </h1>
 
       {/* ---------------------- 새 공지 작성 ---------------------- */}
       <div className="border rounded-xl bg-white p-5 shadow-sm mb-6">

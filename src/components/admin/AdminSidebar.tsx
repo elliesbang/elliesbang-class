@@ -14,7 +14,12 @@ import {
   PlaySquare,
 } from "lucide-react";
 
-export default function AdminSidebar() {
+type Props = {
+  isOpen: boolean;
+  onClose: () => void;
+};
+
+export default function AdminSidebar({ isOpen, onClose }: Props) {
   const [openMenu, setOpenMenu] = useState<string | null>(null);
 
   const toggleMenu = (menu: string) => {
@@ -27,12 +32,24 @@ export default function AdminSidebar() {
     "flex items-center gap-2 pl-10 pr-4 py-2 text-sm text-[#5a554e] hover:bg-[#f3efe4] rounded-md transition";
 
   return (
-    <aside className="w-64 min-h-screen border-r bg-[#fffdf6] px-4 py-6">
+    <aside
+      className={`fixed inset-y-0 left-0 w-64 bg-[#fffdf6] px-4 py-6 border-r shadow-sm z-30 transform transition-transform duration-300 ease-in-out overflow-y-auto md:static md:translate-x-0 md:shadow-none ${
+        isOpen ? "translate-x-0" : "-translate-x-full"
+      }`}
+    >
       {/* 상단 로고/타이틀 */}
-      <div className="mb-6 px-2">
-        <h1 className="text-lg font-bold text-[#404040]">
+      <div className="mb-6 px-2 flex items-center justify-between gap-2">
+        <h1 className="text-lg font-bold text-[#404040] whitespace-nowrap">
           엘리의방 관리자
         </h1>
+        <button
+          type="button"
+          className="md:hidden p-2 rounded-lg hover:bg-[#f3efe4]"
+          onClick={onClose}
+          aria-label="사이드바 닫기"
+        >
+          ✕
+        </button>
       </div>
 
       {/* 메뉴 리스트 */}

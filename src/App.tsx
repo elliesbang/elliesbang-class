@@ -3,7 +3,7 @@ import ClassroomCategoryPage from "./pages/student/ClassroomCategoryPage";
 import ClassroomDetailPage from "./pages/student/ClassroomDetailPage";
 
 import { useEffect, useState } from "react";
-import { BrowserRouter, Routes, Route } from "react-router-dom";
+import { BrowserRouter, Routes, Route, useLocation } from "react-router-dom";
 import { AuthProvider } from "./auth/AuthProvider";
 import ProtectedRoute from "./auth/ProtectedRoute";
 
@@ -54,6 +54,9 @@ const AppContent = () => {
   const [selectedRole, setSelectedRole] = useState<
     "student" | "vod" | "admin" | null
   >(null);
+  const location = useLocation();
+
+  const isAdminRoute = location.pathname.startsWith("/admin");
 
   // 외부에서 로그인/회원가입 모달을 열 수 있도록 이벤트 리스너 등록
   useEffect(() => {
@@ -75,8 +78,10 @@ const AppContent = () => {
 
   return (
     <>
-      {/* 상단 고정 헤더 */}
-      <Header onLoginClick={() => setModalMode("login")} />
+      {/* 상단 고정 헤더 (관리자 페이지에서는 숨김) */}
+      {!isAdminRoute && (
+        <Header onLoginClick={() => setModalMode("login")} />
+      )}
 
       {/* 본문 영역 여백 */}
       <div className="min-h-screen pt-16 pb-20 bg-[#fffdf6]">
@@ -288,8 +293,8 @@ const AppContent = () => {
         </Routes>
       </div>
 
-      {/* auth 라우트는 제거했으므로 항상 BottomNav 표시 */}
-      <BottomNav />
+      {/* auth 라우트는 제거했으므로 항상 BottomNav 표시 (관리자 페이지 제외) */}
+      {!isAdminRoute && <BottomNav />}
 
       {modalMode === "login" && (
         <LoginModal
