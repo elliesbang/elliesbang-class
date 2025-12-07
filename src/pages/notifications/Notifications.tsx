@@ -14,18 +14,28 @@ const Notifications = () => {
 
   useEffect(() => {
     async function fetchNotifications() {
-      const { data, error } = await supabase
-        .from("notifications")
-        .select("id, title, content, created_at")
-        .order("created_at", { ascending: false });
+      const buildQuery = () =>
+        supabase
+          .from("notifications")
+          .select("id, title, content, created_at, is_deleted")
+          .order("created_at", { ascending: false });
+
+      let { data, error } = await buildQuery().eq("is_deleted", false);
 
       if (error) {
-        console.error("공지 불러오기 실패", error);
-        setList([]);
-        return;
+        if (error.code === "42703" || error.message?.includes("is_deleted")) {
+          ({ data, error } = await buildQuery());
+        }
+
+        if (error) {
+          console.error("공지 불러오기 실패", error);
+          setList([]);
+          return;
+        }
       }
 
-      setList((data ?? []) as Notification[]);
+      const filtered = (data ?? []).filter((item) => item.is_deleted !== true);
+      setList(filtered as Notification[]);
     }
 
     fetchNotifications();
