@@ -66,6 +66,7 @@ const ClassroomAssignmentsTab = ({
   const [editingId, setEditingId] = useState<number | null>(null);
   const [deadlines, setDeadlines] = useState<SessionDeadline[]>([]);
   const [downloadingCertificate, setDownloadingCertificate] = useState(false);
+  const [certificateError, setCertificateError] = useState<string | null>(null);
 
   // classroomId 가 숫자로 들어와도 문자열로 통일해서 사용
   const classroomKey = useMemo(
@@ -91,12 +92,14 @@ const ClassroomAssignmentsTab = ({
 
   // 회차 드롭다운 초기값
   useEffect(() => {
+    if (editingId !== null) return;
+
     if (hasSessionSelection && sessionCount) {
       setSelectedSessionNo("1");
     } else {
       setSelectedSessionNo(null);
     }
-  }, [hasSessionSelection, sessionCount, classroomKey]);
+  }, [hasSessionSelection, sessionCount, classroomKey, editingId]);
 
   // 데드라인 불러오기
   useEffect(() => {
@@ -343,22 +346,37 @@ const ClassroomAssignmentsTab = ({
   // 수료증 다운로드
   const handleCertificateDownload = async () => {
     if (!user || !classId) return;
+    setCertificateError(null);
     setDownloadingCertificate(true);
     try {
       const params = new URLSearchParams({
         classId: String(classId),
         userId: String(user.id),
+        classroomId: classroomKey,
       });
 
       const url = `/functions/certificate?${params.toString()}`;
+      const response = await fetch(url);
+      if (!response.ok) {
+        const message = await response.text();
+        setCertificateError(message || "수료증 생성에 실패했습니다.");
+        return;
+      }
+
+      const blob = await response.blob();
+      const downloadUrl = URL.createObjectURL(blob);
       const anchor = document.createElement("a");
-      anchor.href = url;
+      anchor.href = downloadUrl;
       anchor.download = `certificate-${classroomKey}.pdf`;
       anchor.rel = "noreferrer";
       anchor.target = "_blank";
       document.body.appendChild(anchor);
       anchor.click();
       anchor.remove();
+      URL.revokeObjectURL(downloadUrl);
+    } catch (err) {
+      console.error("수료증 다운로드 실패", err);
+      setCertificateError("수료증 생성 중 오류가 발생했습니다.");
     } finally {
       setDownloadingCertificate(false);
     }
@@ -424,13 +442,21 @@ const ClassroomAssignmentsTab = ({
                 {String(assignment.student_id) === String(user?.id) && (
                   <div className="flex items-center gap-2">
                     <button
-                      onClick={() => handleEdit(assignment)}
+                      type="button"
+                      onClick={(event) => {
+                        event.stopPropagation();
+                        handleEdit(assignment);
+                      }}
                       className="rounded-full border px-3 py-1 text-xs font-medium text-[#404040] hover:bg-gray-50"
                     >
                       수정
                     </button>
                     <button
-                      onClick={() => handleDelete(assignment.id)}
+                      type="button"
+                      onClick={(event) => {
+                        event.stopPropagation();
+                        handleDelete(assignment.id);
+                      }}
                       className="rounded-full border px-3 py-1 text-xs font-medium text-red-500 hover:bg-red-50"
                     >
                       삭제
@@ -518,6 +544,9 @@ const ClassroomAssignmentsTab = ({
                   {remainingSessions}회차 남았어요. 모든 회차를 제출하면
                   다운로드할 수 있어요.
                 </span>
+              )}
+              {certificateError && (
+                <span className="text-xs text-red-500">{certificateError}</span>
               )}
             </div>
           </div>
