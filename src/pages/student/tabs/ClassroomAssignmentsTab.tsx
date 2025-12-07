@@ -5,17 +5,21 @@ import { supabase } from "@/lib/supabaseClient";
 const ASSIGNMENT_BUCKET = "assignments";
 const FALLBACK_SESSION_NO = "1";
 
-const SESSION_COUNT_BY_CLASSROOM: Record<string, number> = {
+const SESSION_COUNT_BY_CLASSROOM: Record<string, number | null> = {
   candyma: 10,
   캔디마: 10,
-  earl_challenge: 10,
-  "이얼챌": 10,
-  michina: 45,
-  미치나: 45,
+  earl_challenge: 12,
+  "이얼챌": 12,
+  michina: 15,
+  미치나: 15,
   "중캘업": 8,
   "캔디업": 8,
   "캔굿즈": 4,
   "캘굿즈": 4,
+  "에그작": null,
+  "에그작챌": null,
+  "나컬작": null,
+  "나컬작챌": null,
 };
 
 type AssignmentProfile = {
@@ -79,22 +83,29 @@ const ClassroomAssignmentsTab = ({
   );
 
   const sessionCount = useMemo(() => {
-    if (!normalizedClassroomId) return 1;
-    return (
+    if (!normalizedClassroomId) return null;
+
+    const matchedSessionCount =
       SESSION_COUNT_BY_CLASSROOM[normalizedClassroomId] ??
-      SESSION_COUNT_BY_CLASSROOM[classroomKey] ??
-      1
-    );
+      SESSION_COUNT_BY_CLASSROOM[classroomKey];
+
+    if (matchedSessionCount === undefined) return 1;
+    return matchedSessionCount;
   }, [classroomKey, normalizedClassroomId]);
 
-  const totalSessions = sessionCount;
+  const hasSessionSelection = useMemo(
+    () => sessionCount !== null && sessionCount > 0,
+    [sessionCount]
+  );
+
+  const totalSessions = hasSessionSelection ? sessionCount ?? 0 : 0;
 
   // 회차 드롭다운 초기값
   useEffect(() => {
     if (editingId !== null) return;
 
-    setSelectedSessionNo(FALLBACK_SESSION_NO);
-  }, [sessionCount, classroomKey, editingId]);
+    setSelectedSessionNo(hasSessionSelection ? FALLBACK_SESSION_NO : null);
+  }, [classroomKey, editingId, hasSessionSelection]);
 
   // 데드라인 불러오기
   useEffect(() => {
@@ -153,9 +164,10 @@ const ClassroomAssignmentsTab = ({
   }, [classroomKey]);
 
   // 이미지 업로드
-  const uploadImage = async (file: File, sessionNo: string) => {
+  const uploadImage = async (file: File, sessionNo: string | null) => {
+    const safeSessionNo = sessionNo ?? FALLBACK_SESSION_NO;
     const fileExt = file.name.split(".").pop();
-    const filePath = `${classroomKey}/${user?.id ?? "guest"}/${sessionNo}/${Date.now()}.${fileExt}`;
+    const filePath = `${classroomKey}/${user?.id ?? "guest"}/${safeSessionNo}/${Date.now()}.${fileExt}`;
 
     const { error: uploadError } = await supabase.storage
       .from(ASSIGNMENT_BUCKET)
@@ -180,7 +192,7 @@ const ClassroomAssignmentsTab = ({
     setImageFile(null);
     setExistingImageUrl(null);
     setEditingId(null);
-    setSelectedSessionNo(FALLBACK_SESSION_NO);
+    setSelectedSessionNo(hasSessionSelection ? FALLBACK_SESSION_NO : null);
   };
 
   // 과제 제출/수정
@@ -191,12 +203,9 @@ const ClassroomAssignmentsTab = ({
       return;
     }
 
-    const sessionNo = selectedSessionNo ?? FALLBACK_SESSION_NO;
-
-    if (!sessionNo) {
-      alert("회차를 선택해주세요.");
-      return;
-    }
+    const sessionNo = hasSessionSelection
+      ? selectedSessionNo ?? FALLBACK_SESSION_NO
+      : selectedSessionNo ?? null;
 
     if (!hasSubmissionContent) {
       alert("이미지나 링크 중 하나 이상을 입력해주세요.");
@@ -280,7 +289,9 @@ const ClassroomAssignmentsTab = ({
     setLinkUrl(assignment.link_url ?? "");
     setExistingImageUrl(assignment.image_url ?? null);
     setImageFile(null);
-    setSelectedSessionNo(assignment.session_no ?? FALLBACK_SESSION_NO);
+    setSelectedSessionNo(
+      assignment.session_no ?? (hasSessionSelection ? FALLBACK_SESSION_NO : null)
+    );
   };
 
   // 현재 로그인 사용자의 과제만 추출
@@ -304,6 +315,8 @@ const ClassroomAssignmentsTab = ({
 
   // 완주 회차 계산
   const completedSessions = useMemo(() => {
+    if (!hasSessionSelection) return new Set<string>();
+
     const completed = new Set<string>();
     userAssignments.forEach((assignment) => {
       const sessionNo = assignment.session_no ?? FALLBACK_SESSION_NO;
@@ -319,19 +332,23 @@ const ClassroomAssignmentsTab = ({
       }
     });
     return completed;
-  }, [deadlinesMap, userAssignments]);
+  }, [deadlinesMap, hasSessionSelection, userAssignments]);
 
-  const progressPercent = Math.min(
-    100,
-    Math.round((completedSessions.size / totalSessions) * 100)
-  );
+  const progressPercent = useMemo(() => {
+    if (!hasSessionSelection || totalSessions === 0) return 0;
+    return Math.min(
+      100,
+      Math.round((completedSessions.size / totalSessions) * 100)
+    );
+  }, [completedSessions.size, hasSessionSelection, totalSessions]);
 
-  const remainingSessions = Math.max(
-    totalSessions - completedSessions.size,
-    0
-  );
+  const remainingSessions = useMemo(() => {
+    if (!hasSessionSelection) return 0;
+    return Math.max(totalSessions - completedSessions.size, 0);
+  }, [completedSessions.size, hasSessionSelection, totalSessions]);
+
   const canDownloadCertificate =
-    remainingSessions === 0 && totalSessions > 0;
+    hasSessionSelection && remainingSessions === 0 && totalSessions > 0;
 
   // 수료증 다운로드
   const handleCertificateDownload = async () => {
@@ -485,85 +502,94 @@ const ClassroomAssignmentsTab = ({
   };
 
   const sessionOptions = useMemo(
-    () => Array.from({ length: totalSessions }, (_, idx) => String(idx + 1)),
-    [totalSessions]
+    () =>
+      hasSessionSelection
+        ? Array.from({ length: totalSessions }, (_, idx) => String(idx + 1))
+        : [],
+    [hasSessionSelection, totalSessions]
   );
 
-  const disableSubmit = submitting || !hasSubmissionContent || !selectedSessionNo;
+  const disableSubmit =
+    submitting ||
+    !hasSubmissionContent ||
+    (hasSessionSelection && !selectedSessionNo);
 
   return (
     <div className="bg-[#fffdf6]">
       <div className="mx-auto w-full max-w-4xl px-4 py-6 space-y-4">
-        {/* 완주 현황 */}
-        <div className="rounded-2xl bg-white p-4 shadow-sm">
-          <div className="flex flex-col gap-2">
-            <h2 className="text-base font-semibold text-[#404040]">
-              완주 현황
-            </h2>
-            <p className="text-xs text-[#7a6f68]">
-              회차별 마감 시간 안에 제출된 과제로 완주 현황을 확인하세요.
-            </p>
-            <div className="w-full rounded-full bg-gray-200 h-3">
-              <div
-                className="h-3 rounded-full bg-[#f3efe4] transition-all"
-                style={{ width: `${progressPercent}%` }}
-              />
-            </div>
-            <p className="text-xs text-[#404040]">
-              완주 회차 {completedSessions.size} / 총 회차 {totalSessions} ({
-                progressPercent
-              }%)
-            </p>
-            <p className="text-xs text-[#7a6f68]">
-              남은 회차 {remainingSessions}개
-            </p>
-            <div className="flex flex-wrap items-center gap-2">
-              <button
-                type="button"
-                disabled={!canDownloadCertificate || downloadingCertificate}
-                onClick={handleCertificateDownload}
-                className={`rounded-lg px-4 py-2 text-xs font-medium shadow-sm ${
-                  canDownloadCertificate
-                    ? "bg-[#FFD331] text-[#404040] hover:bg-[#ffcd24]"
-                    : "bg-gray-200 text-gray-500"
-                }`}
-              >
-                {downloadingCertificate
-                  ? "다운로드 준비 중..."
-                  : "수료증 다운로드"}
-              </button>
-              {!canDownloadCertificate && (
-                <span className="text-xs text-[#7a6f68]">
-                  {remainingSessions}회차가 더 필요해요. 회차별 마감 전에
-                  모든 과제를 제출하면 수료증을 받을 수 있어요.
-                </span>
-              )}
-              {certificateError && (
-                <span className="text-xs text-red-500">{certificateError}</span>
-              )}
+        {hasSessionSelection && (
+          <div className="rounded-2xl bg-white p-4 shadow-sm">
+            <div className="flex flex-col gap-2">
+              <h2 className="text-base font-semibold text-[#404040]">
+                완주 현황
+              </h2>
+              <p className="text-xs text-[#7a6f68]">
+                회차별 마감 시간 안에 제출된 과제로 완주 현황을 확인하세요.
+              </p>
+              <div className="w-full rounded-full bg-gray-200 h-3">
+                <div
+                  className="h-3 rounded-full bg-[#f3efe4] transition-all"
+                  style={{ width: `${progressPercent}%` }}
+                />
+              </div>
+              <p className="text-xs text-[#404040]">
+                완주 회차 {completedSessions.size} / 총 회차 {totalSessions} ({
+                  progressPercent
+                }%)
+              </p>
+              <p className="text-xs text-[#7a6f68]">
+                남은 회차 {remainingSessions}개
+              </p>
+              <div className="flex flex-wrap items-center gap-2">
+                <button
+                  type="button"
+                  disabled={!canDownloadCertificate || downloadingCertificate}
+                  onClick={handleCertificateDownload}
+                  className={`rounded-lg px-4 py-2 text-xs font-medium shadow-sm ${
+                    canDownloadCertificate
+                      ? "bg-[#FFD331] text-[#404040] hover:bg-[#ffcd24]"
+                      : "bg-gray-200 text-gray-500"
+                  }`}
+                >
+                  {downloadingCertificate
+                    ? "다운로드 준비 중..."
+                    : "수료증 다운로드"}
+                </button>
+                {!canDownloadCertificate && (
+                  <span className="text-xs text-[#7a6f68]">
+                    {remainingSessions}회차가 더 필요해요. 회차별 마감 전에
+                    모든 과제를 제출하면 수료증을 받을 수 있어요.
+                  </span>
+                )}
+                {certificateError && (
+                  <span className="text-xs text-red-500">{certificateError}</span>
+                )}
+              </div>
             </div>
           </div>
-        </div>
+        )}
 
         {/* 과제 제출 폼 */}
         <div className="rounded-2xl bg-white p-4 shadow-sm">
           <div className="flex flex-col gap-3">
-            <div className="flex flex-col gap-1">
-              <label className="text-sm font-medium text-[#404040]">
-                회차 선택
-              </label>
-              <select
-                value={selectedSessionNo ?? ""}
-                onChange={(e) => setSelectedSessionNo(e.target.value)}
-                className="w-full rounded-lg border px-3 py-2 text-sm"
-              >
-                {sessionOptions.map((option) => (
-                  <option key={option} value={option}>
-                    {option}회차
-                  </option>
-                ))}
-              </select>
-            </div>
+            {hasSessionSelection && (
+              <div className="flex flex-col gap-1">
+                <label className="text-sm font-medium text-[#404040]">
+                  회차 선택
+                </label>
+                <select
+                  value={selectedSessionNo ?? ""}
+                  onChange={(e) => setSelectedSessionNo(e.target.value)}
+                  className="w-full rounded-lg border px-3 py-2 text-sm"
+                >
+                  {sessionOptions.map((option) => (
+                    <option key={option} value={option}>
+                      {option}회차
+                    </option>
+                  ))}
+                </select>
+              </div>
+            )}
 
             <form onSubmit={handleSubmit} className="space-y-3">
               <div className="flex flex-col gap-1">
