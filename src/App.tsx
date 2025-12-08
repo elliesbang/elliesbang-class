@@ -14,8 +14,12 @@ import VodMy from "./pages/vod/VodMy";
 
 // 홈 & VOD 페이지
 import Home from "./pages/Home";
-import VodList from "./pages/vod/VodList";
+import VodHome from "./pages/vod/VodHome";
 import VodDetail from "./pages/vod/VodDetail";
+import VodProgramPage from "./pages/vod/VodProgram";
+import VodTopicPage from "./pages/vod/VodTopic";
+
+
 
 // 관리자 대시보드 페이지
 import AdminLayout from "./components/admin/AdminLayout";
@@ -92,17 +96,21 @@ const AppContent = () => {
           {/* ---------------- VOD ---------------- */}
 
           {/* ✅ VOD 목록은 누구나 접근 가능 (ProtectedRoute 제거) */}
-          <Route path="/vod/list" element={<VodList />} />
+          <Route path="/vod" element={<VodHome />} />
+          <Route path="/vod/program/:programId" element={<VodProgramPage />} />
+          <Route path="/vod/topic/:topicId" element={<VodTopicPage />} />
+
 
           {/* ✅ VOD 영상 재생만 로그인 + 권한 필요 */}
-          <Route
-            path="/vod/:id"
-            element={
-              <ProtectedRoute allow={["admin", "vod"]}>
-                <VodDetail />
-              </ProtectedRoute>
-            }
-          />
+         <Route
+  path="/vod/video/:videoId"
+  element={
+    <ProtectedRoute allow={["admin", "vod"]}>
+      <VodDetail />
+    </ProtectedRoute>
+  }
+/>
+
 
           {/* ---------------- 관리자 마이 ---------------- */}
           <Route
