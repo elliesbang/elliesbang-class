@@ -12,7 +12,9 @@ type ClassroomVideo = {
   id: number;
   classroom_id: number;
   title: string;
-  video_url: string;
+  url: string;          // ← 수정
+  description?: string; // 테이블에 있으므로 포함 가능
+  order_num?: number;
   created_at?: string;
 };
 
@@ -20,7 +22,7 @@ export default function ClassroomVideos() {
   const [classrooms, setClassrooms] = useState<Classroom[]>([]);
   const [selectedClassroomId, setSelectedClassroomId] = useState<number | "">("");
   const [videos, setVideos] = useState<ClassroomVideo[]>([]);
-  const [form, setForm] = useState({ title: "", video_url: "" });
+  const [form, setForm] = useState({ title: "", url: "" });  // ← 수정
   const [editingId, setEditingId] = useState<number | null>(null);
   const [loading, setLoading] = useState(false);
   const [listLoading, setListLoading] = useState(false);
@@ -52,8 +54,9 @@ export default function ClassroomVideos() {
     setListLoading(true);
     const { data, error } = await supabase
       .from("classroom_videos")
-      .select("id, classroom_id, title, video_url, created_at")
+      .select("id, classroom_id, title, url, description, order_num, created_at")
       .eq("classroom_id", selectedClassroomId)
+      .order("order_num", { ascending: true })
       .order("created_at", { ascending: false });
 
     if (error) {
@@ -75,7 +78,7 @@ export default function ClassroomVideos() {
       return;
     }
 
-    if (!form.title.trim() || !form.video_url.trim()) {
+    if (!form.title.trim() || !form.url.trim()) {
       alert("제목과 영상 URL을 모두 입력해주세요.");
       return;
     }
@@ -87,7 +90,7 @@ export default function ClassroomVideos() {
         .from("classroom_videos")
         .update({
           title: form.title.trim(),
-          video_url: form.video_url.trim(),
+          url: form.url.trim(),  // ← 수정
         })
         .eq("id", editingId);
 
@@ -99,7 +102,7 @@ export default function ClassroomVideos() {
       const { error } = await supabase.from("classroom_videos").insert({
         classroom_id: selectedClassroomId,
         title: form.title.trim(),
-        video_url: form.video_url.trim(),
+        url: form.url.trim(),  // ← 수정
       });
 
       if (error) {
@@ -108,14 +111,14 @@ export default function ClassroomVideos() {
       }
     }
 
-    setForm({ title: "", video_url: "" });
+    setForm({ title: "", url: "" });
     setEditingId(null);
     setLoading(false);
     fetchVideos();
   };
 
   const handleEdit = (video: ClassroomVideo) => {
-    setForm({ title: video.title, video_url: video.video_url });
+    setForm({ title: video.title, url: video.url }); // ← 수정
     setEditingId(video.id);
   };
 
@@ -140,14 +143,12 @@ export default function ClassroomVideos() {
 
   return (
     <div className="space-y-6">
-      <h1 className="text-lg md:text-2xl font-bold text-[#404040] mb-2 whitespace-nowrap break-keep max-w-full overflow-hidden text-ellipsis">
+      <h1 className="text-lg md:text-2xl font-bold text-[#404040] mb-2">
         강의실 영상 관리
       </h1>
 
-      <div className="mb-2 md:mb-4 flex flex-col md:flex-row md:items-center md:gap-3 relative w-full">
-        <label className="text-sm font-medium text-[#404040] whitespace-nowrap">
-          강의실 선택
-        </label>
+      <div className="mb-2 md:mb-4 flex flex-col md:flex-row md:items-center md:gap-3">
+        <label className="text-sm font-medium text-[#404040]">강의실 선택</label>
         <select
           className="mt-1 md:mt-0 w-full md:max-w-xs border rounded-lg px-3 py-2 bg-white"
           value={selectedClassroomId}
@@ -166,8 +167,8 @@ export default function ClassroomVideos() {
       </div>
 
       {selectedClassroomId && (
-        <div className="border rounded-xl bg-white p-5 shadow-sm mb-2 admin-card">
-          <h2 className="text-base md:text-lg font-semibold text-[#404040] mb-3 whitespace-nowrap break-keep max-w-full overflow-hidden text-ellipsis">
+        <div className="border rounded-xl bg-white p-5 shadow-sm mb-2">
+          <h2 className="text-base md:text-lg font-semibold text-[#404040] mb-3">
             {editingId ? "영상 수정" : "새 영상 추가"}
           </h2>
 
@@ -183,8 +184,8 @@ export default function ClassroomVideos() {
             type="text"
             placeholder="영상 링크(URL)"
             className="w-full border rounded-lg px-3 py-2 mb-3"
-            value={form.video_url}
-            onChange={(e) => setForm((prev) => ({ ...prev, video_url: e.target.value }))}
+            value={form.url}
+            onChange={(e) => setForm((prev) => ({ ...prev, url: e.target.value }))}
           />
 
           <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:gap-3">
@@ -193,13 +194,15 @@ export default function ClassroomVideos() {
               className="flex items-center gap-2 bg-[#f3efe4] text-[#404040] px-4 py-2 rounded-lg w-full sm:w-auto justify-center disabled:opacity-70"
               disabled={loading}
             >
-              {loading ? <Loader2 size={18} className="animate-spin" /> : <Plus size={18} />} {editingId ? "저장하기" : "추가하기"}
+              {loading ? <Loader2 size={18} className="animate-spin" /> : <Plus size={18} />}
+              {editingId ? "저장하기" : "추가하기"}
             </button>
+
             {editingId && (
               <button
                 onClick={() => {
                   setEditingId(null);
-                  setForm({ title: "", video_url: "" });
+                  setForm({ title: "", url: "" });
                 }}
                 className="px-4 py-2 rounded-lg border border-gray-200 text-sm text-gray-700 w-full sm:w-auto"
               >
@@ -211,8 +214,8 @@ export default function ClassroomVideos() {
       )}
 
       {selectedClassroomId && (
-        <div className="rounded-xl border bg-white p-5 shadow-sm admin-card">
-          <h2 className="text-base md:text-lg font-semibold text-[#404040] mb-4 whitespace-nowrap break-keep max-w-full overflow-hidden text-ellipsis">
+        <div className="rounded-xl border bg-white p-5 shadow-sm">
+          <h2 className="text-base md:text-lg font-semibold text-[#404040] mb-4">
             등록된 영상
           </h2>
 
@@ -229,16 +232,16 @@ export default function ClassroomVideos() {
                 className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between border-b pb-3"
               >
                 <div>
-                  <p className="font-medium text-[#404040] whitespace-nowrap break-keep max-w-full overflow-hidden text-ellipsis">
+                  <p className="font-medium text-[#404040]">
                     {video.title}
                   </p>
                   <a
-                    href={video.video_url}
+                    href={video.url}
                     target="_blank"
                     rel="noreferrer"
-                    className="text-sm text-blue-600 underline"
+                    className="text-sm text-blue-600 underline break-all"
                   >
-                    {video.video_url}
+                    {video.url}
                   </a>
                 </div>
 
