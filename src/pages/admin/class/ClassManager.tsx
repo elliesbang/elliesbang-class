@@ -5,6 +5,24 @@ import { Plus, Edit, Trash2, RefreshCcw } from "lucide-react";
 export default function ClassManage() {
   const [categories, setCategories] = useState([]);
 
+   // ⬇️⬇️⬇️ 여기 아래에 바로 넣어 ⬇️⬇️⬇️
+  const [classList, setClassList] = useState([]);
+
+  const [newClass, setNewClass] = useState({
+    name: "",
+    categoryId: "",
+    code: "",
+    startDate: "",
+    endDate: "",
+    assignmentDeadline: "all_day",
+    days: [],
+  });
+
+  const [editingClass, setEditingClass] = useState(null);
+
+  const dayOptions = ["월", "화", "수", "목", "금", "토", "일"];
+
+
   useEffect(() => {
     async function loadCategories() {
       const { data, error } = await supabase
