@@ -189,19 +189,23 @@ export default function AssignmentList() {
     }
 
     const mapped = assignmentRows.map<AssignmentWithMeta>((row) => ({
-      id: row.id,
-      classroomId: row.classroom_id,
-      classroomName:
-        classroomMap.get(String(row.classroom_id)) ?? `강의실 ${row.classroom_id}`,
-      studentName: getProfileDisplayName(row.profiles),
-      profiles: row.profiles,
-      sessionNo: row.session_no,
-      imageUrl: row.image_url,
-      linkUrl: row.link_url,
-      createdAt: row.created_at,
-      title: row.title,
-      feedback: feedbackMap.get(row.id),
-    }));
+  id: row.id,
+  classroomId: row.classroom_id,
+  classroomName:
+    classroomMap.get(String(row.classroom_id)) ?? `강의실 ${row.classroom_id}`,
+  studentName: getProfileDisplayName(row.profiles),
+  profiles: row.profiles,
+  sessionNo: row.session_no,
+
+  // 🔥 이미지 깨짐 해결 핵심 라인 (안전하게 매핑)
+  imageUrl: row.image_url ?? row.imageUrl ?? null,
+
+  linkUrl: row.link_url ?? row.linkUrl ?? null,
+  createdAt: row.created_at,
+  title: row.title,
+  feedback: feedbackMap.get(row.id),
+}));
+
 
     setAssignments(mapped);
     setLoading(false);
