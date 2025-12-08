@@ -21,11 +21,13 @@ const ClassroomVideosTab = ({ classroomId }) => {
 
       const { data, error: supabaseError } = await supabase
         .from("classroom_videos")
-        .select("id, title, video_url, created_at")
+        .select("id, title, url, description, created_at, order_num")
         .eq("classroom_id", classroomId)
+        .order("order_num", { ascending: true })
         .order("created_at", { ascending: false });
 
       if (supabaseError) {
+        console.error(supabaseError);
         setError("영상을 불러오는 중 오류가 발생했습니다.");
         setVideos([]);
       } else {
@@ -59,8 +61,8 @@ const ClassroomVideosTab = ({ classroomId }) => {
           <VideoCard
             key={video.id}
             title={video.title}
-            description={""}
-            url={video.video_url}
+            description={video.description ?? ""}
+            url={video.url}   {/* ← 올바른 필드 사용 */}
           />
         ))}
     </div>
