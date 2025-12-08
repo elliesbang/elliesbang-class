@@ -13,11 +13,11 @@ type Classroom = {
   parent_id?: number | null;
 };
 
+// ✅ profiles 테이블 컬럼과 맞춤: id, full_name, name
 type AssignmentProfile = {
   id?: string;
   full_name?: string | null;
-  nickname?: string | null;
-  username?: string | null;
+  name?: string | null;
 };
 
 type AssignmentRow = {
@@ -55,11 +55,9 @@ const formatDate = (date: string) =>
     minute: "2-digit",
   });
 
+// ✅ full_name → name 순으로 표시
 const getProfileDisplayName = (profile?: AssignmentProfile | null) =>
-  profile?.nickname ||
-  profile?.full_name ||
-  profile?.username ||
-  "이름 없음";
+  profile?.full_name || profile?.name || "이름 없음";
 
 export default function AssignmentList() {
   const { user } = useAuth();
@@ -148,7 +146,9 @@ export default function AssignmentList() {
     const query = supabase
       .from("assignments")
       .select(
-        `id, classroom_id, student_id, session_no, image_url, link_url, created_at, title, profiles:student_id(id, full_name, nickname, username)`
+        // ✅ profiles 조인 부분 컬럼명 수정 (nickname, username 제거 / name 추가)
+        `id, classroom_id, student_id, session_no, image_url, link_url, created_at, title,
+         profiles:student_id(id, full_name, name)`
       )
       .order("created_at", { ascending: false });
 
@@ -316,6 +316,7 @@ export default function AssignmentList() {
         </div>
       ) : (
         <>
+          {/* 데스크톱 테이블 */}
           <div className="hidden md:block">
             <div className="overflow-x-auto rounded-lg border bg-white">
               <table className="min-w-full text-sm">
@@ -334,16 +335,24 @@ export default function AssignmentList() {
                   {filteredAssignments.map((assignment) => (
                     <tr key={assignment.id} className="hover:bg-[#fffaf3]">
                       <td className="px-4 py-3 text-[#404040]">
-                        <div className="font-semibold">{assignment.studentName}</div>
-                        <div className="text-xs text-gray-500">#{assignment.id}</div>
+                        <div className="font-semibold">
+                          {assignment.studentName}
+                        </div>
+                        <div className="text-xs text-gray-500">
+                          #{assignment.id}
+                        </div>
                       </td>
                       <td className="px-4 py-3 text-[#404040]">
                         {assignment.classroomName}
                       </td>
                       <td className="px-4 py-3 text-[#404040]">
-                        {assignment.sessionNo ? `${assignment.sessionNo}회차` : "-"}
+                        {assignment.sessionNo
+                          ? `${assignment.sessionNo}회차`
+                          : "-"}
                       </td>
-                      <td className="px-4 py-3">{renderThumbnail(assignment)}</td>
+                      <td className="px-4 py-3">
+                        {renderThumbnail(assignment)}
+                      </td>
                       <td className="px-4 py-3 text-gray-500">
                         {formatDate(assignment.createdAt)}
                       </td>
@@ -373,6 +382,7 @@ export default function AssignmentList() {
             </div>
           </div>
 
+          {/* 모바일 카드 */}
           <div className="grid gap-3 md:hidden">
             {filteredAssignments.map((assignment) => (
               <div
@@ -384,7 +394,9 @@ export default function AssignmentList() {
                     <p className="text-sm font-semibold text-[#404040]">
                       {assignment.studentName}
                     </p>
-                    <p className="text-xs text-gray-500">ID #{assignment.id}</p>
+                    <p className="text-xs text-gray-500">
+                      ID #{assignment.id}
+                    </p>
                   </div>
                   {assignment.feedback ? (
                     <span className="inline-flex items-center gap-1 rounded-full bg-green-50 px-2 py-1 text-[11px] font-medium text-green-700">
@@ -400,7 +412,9 @@ export default function AssignmentList() {
                 <div className="mt-2 text-xs text-gray-500">
                   <p>{assignment.classroomName}</p>
                   <p>
-                    {assignment.sessionNo ? `${assignment.sessionNo}회차` : "회차 미정"}
+                    {assignment.sessionNo
+                      ? `${assignment.sessionNo}회차`
+                      : "회차 미정"}
                   </p>
                   <p>{formatDate(assignment.createdAt)}</p>
                 </div>
