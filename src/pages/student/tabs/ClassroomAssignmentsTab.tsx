@@ -18,8 +18,7 @@ const SESSION_COUNT_BY_CLASSROOM: Record<string, number | undefined> = {
 type AssignmentProfile = {
   id?: string;
   full_name?: string | null;
-  nickname?: string | null;
-  username?: string | null;
+  name?: string | null;
 };
 
 type Assignment = {
@@ -51,9 +50,11 @@ const ClassroomAssignmentsTab = ({
   classId,
 }: ClassroomAssignmentsTabProps) => {
   const { user } = useAuth();
+
   const [assignments, setAssignments] = useState<Assignment[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
   const [selectedSessionNo, setSelectedSessionNo] = useState<string | null>(
     null
   );
@@ -63,17 +64,15 @@ const ClassroomAssignmentsTab = ({
   const [existingImageUrl, setExistingImageUrl] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
   const [editingId, setEditingId] = useState<number | null>(null);
+
   const [deadlines, setDeadlines] = useState<SessionDeadline[]>([]);
   const [downloadingCertificate, setDownloadingCertificate] = useState(false);
   const [certificateError, setCertificateError] = useState<string | null>(null);
 
   const getProfileDisplayName = (profile?: AssignmentProfile | null) =>
-    profile?.nickname ||
-    profile?.full_name ||
-    profile?.username ||
-    "이름 없음";
+    profile?.full_name || profile?.name || "이름 없음";
 
-  // classroomId 가 숫자로 들어와도 문자열로 통일해서 사용
+  // classroomId 를 문자열로 통일해서 사용
   const classroomKey = useMemo(
     () => String(classroomId ?? ""),
     [classroomId]
@@ -94,7 +93,6 @@ const ClassroomAssignmentsTab = ({
   // 회차 드롭다운 초기값
   useEffect(() => {
     if (editingId !== null) return;
-
     setSelectedSessionNo(hasSessionSelection ? FALLBACK_SESSION_NO : null);
   }, [classroomKey, editingId, hasSessionSelection]);
 
@@ -133,7 +131,8 @@ const ClassroomAssignmentsTab = ({
     const { data, error: supabaseError } = await supabase
       .from("assignments")
       .select(
-        `id, classroom_id, class_id, student_id, session_no, image_url, link_url, created_at, title, profiles:student_id(id, full_name, nickname, username)`
+        `id, classroom_id, class_id, student_id, session_no, image_url, link_url, created_at, title,
+         profiles:student_id (id, full_name, name)`
       )
       .eq("classroom_id", classroomKey)
       .order("created_at", { ascending: false });
@@ -172,6 +171,7 @@ const ClassroomAssignmentsTab = ({
     const { data } = supabase.storage
       .from(ASSIGNMENT_BUCKET)
       .getPublicUrl(filePath);
+
     return data.publicUrl;
   };
 
@@ -377,7 +377,10 @@ const ClassroomAssignmentsTab = ({
     }
   };
 
-  const renderAssignments = (assignmentList: Assignment[], emptyMessage: string) => {
+  const renderAssignments = (
+    assignmentList: Assignment[],
+    emptyMessage: string
+  ) => {
     if (loading) {
       return (
         <div className="rounded-xl bg-white p-4 text-center text-sm text-gray-600 shadow-sm">
@@ -430,7 +433,8 @@ const ClassroomAssignmentsTab = ({
                   <div className="text-xs text-gray-500 flex items-center gap-2 flex-wrap">
                     <span>작성자: {authorName}</span>
                     <span className="text-[#7a6f68]">
-                      제출 시각 {new Date(assignment.created_at).toLocaleString()}
+                      제출 시각{" "}
+                      {new Date(assignment.created_at).toLocaleString()}
                     </span>
                   </div>
                 </div>
@@ -523,9 +527,9 @@ const ClassroomAssignmentsTab = ({
                 />
               </div>
               <p className="text-xs text-[#404040]">
-                완주 회차 {completedSessions.size} / 총 회차 {totalSessions} ({
-                  progressPercent
-                }%)
+                완주 회차 {completedSessions.size} / 총 회차 {totalSessions} (
+                {progressPercent}
+                %)
               </p>
               <p className="text-xs text-[#7a6f68]">
                 남은 회차 {remainingSessions}개
@@ -552,7 +556,9 @@ const ClassroomAssignmentsTab = ({
                   </span>
                 )}
                 {certificateError && (
-                  <span className="text-xs text-red-500">{certificateError}</span>
+                  <span className="text-xs text-red-500">
+                    {certificateError}
+                  </span>
                 )}
               </div>
             </div>
@@ -602,9 +608,7 @@ const ClassroomAssignmentsTab = ({
                 <input
                   type="file"
                   accept="image/*"
-                  onChange={(e) =>
-                    setImageFile(e.target.files?.[0] ?? null)
-                  }
+                  onChange={(e) => setImageFile(e.target.files?.[0] ?? null)}
                   className="w-full text-sm"
                 />
               </div>
@@ -661,10 +665,7 @@ const ClassroomAssignmentsTab = ({
           <h3 className="text-base font-semibold text-[#404040]">
             제출된 과제
           </h3>
-          {renderAssignments(
-            userAssignments,
-            "아직 제출된 과제가 없어요."
-          )}
+          {renderAssignments(userAssignments, "아직 제출된 과제가 없어요.")}
         </div>
 
         <div className="space-y-2 mt-6">
