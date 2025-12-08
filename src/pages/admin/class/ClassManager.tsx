@@ -25,13 +25,26 @@ export default function ClassManage() {
   // 📌 하위 카테고리 불러오기 (강의실 카테고리)
   // ------------------------------------------
   useEffect(() => {
-    // TODO: Supabase categories 가져오기
-    setCategories([
-      { id: 1, name: "캔디마 기초반" },
-      { id: 2, name: "AI 일러스트 챌린지" },
-      { id: 3, name: "굿즈 디자인 실전반" },
-    ]);
-  }, []);
+  async function loadCategories() {
+    const { data, error } = await supabase
+      .from("class_category")
+      .select("id, name, depth, parent_id")
+      .order("order_index", { ascending: true });
+
+    if (error) {
+      console.error("카테고리 불러오기 오류", error);
+      return;
+    }
+
+    // depth = 2만 수업 카테고리로 사용
+    const subCategories = (data ?? []).filter(cat => cat.depth === 2);
+
+    setCategories(subCategories);
+  }
+
+  loadCategories();
+}, []);
+
 
   // ------------------------------------------
   // 📌 기존 수업 목록 불러오기
