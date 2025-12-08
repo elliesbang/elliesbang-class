@@ -65,7 +65,7 @@ export const useAssignmentFeedback = ({
       const assignmentQuery = supabase
         .from("assignments")
         .select(
-          `id, session_no, title, image_url, link_url, classroom_id, class_id, student_id, created_at, profiles:student_id(id, full_name, nickname, username)`
+          `id, session_no, title, image_url, link_url, classroom_id, class_id, student_id, created_at, profiles:student_id(id, full_name)`
         )
         .eq("classroom_id", classroomId)
         .eq("student_id", studentId)
