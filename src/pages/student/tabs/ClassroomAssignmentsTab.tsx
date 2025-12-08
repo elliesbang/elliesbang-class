@@ -154,26 +154,31 @@ const ClassroomAssignmentsTab = ({
   }, [classroomKey]);
 
   // 이미지 업로드
-  const uploadImage = async (file: File, sessionNo: string | null) => {
-    const safeSessionNo = sessionNo ?? FALLBACK_SESSION_NO;
-    const fileExt = file.name.split(".").pop();
-    const filePath = `${classroomKey}/${user?.id ?? "guest"}/${safeSessionNo}/${Date.now()}.${fileExt}`;
+ const uploadImage = async (file: File) => {
+  const fileExt = file.name.split(".").pop();
+  const fileName = `${crypto.randomUUID()}.${fileExt}`;
 
-    const { error: uploadError } = await supabase.storage
-      .from(ASSIGNMENT_BUCKET)
-      .upload(filePath, file);
+  // 폴더 구조 단순화
+  const filePath = `${classroomKey}/${user?.id}/${fileName}`;
 
-    if (uploadError) {
-      console.error("이미지 업로드 실패", uploadError);
-      throw new Error("이미지 업로드에 실패했습니다.");
-    }
+  const { error: uploadError } = await supabase.storage
+    .from(ASSIGNMENT_BUCKET)
+    .upload(filePath, file, {
+      upsert: false,
+    });
 
-    const { data } = supabase.storage
-      .from(ASSIGNMENT_BUCKET)
-      .getPublicUrl(filePath);
+  if (uploadError) {
+    console.error("이미지 업로드 실패", uploadError);
+    throw new Error("이미지 업로드에 실패했습니다.");
+  }
 
-    return data.publicUrl;
-  };
+  // Public URL 생성
+  const { data } = supabase.storage
+    .from(ASSIGNMENT_BUCKET)
+    .getPublicUrl(filePath);
+
+  return data.publicUrl;
+};
 
   const hasSubmissionContent = Boolean(linkUrl || imageFile || existingImageUrl);
 
