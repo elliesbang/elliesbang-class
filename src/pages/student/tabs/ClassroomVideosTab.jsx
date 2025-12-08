@@ -62,7 +62,7 @@ const ClassroomVideosTab = ({ classroomId }) => {
             key={video.id}
             title={video.title}
             description={video.description ?? ""}
-            url={video.url}   {/* ← 올바른 필드 사용 */}
+           url={video.url}
           />
         ))}
     </div>
