@@ -5,7 +5,9 @@ type ClassroomMaterial = {
   id: number;
   classroom_id: number;
   title: string;
-  link_url: string;
+  file_url: string;
+  file_name?: string;
+  file_type?: string;
   created_at: string;
 };
 
@@ -32,7 +34,7 @@ const ClassroomMaterialsTab = ({ classroomId }: ClassroomMaterialsTabProps) => {
 
       const { data, error: supabaseError } = await supabase
         .from("classroom_materials")
-        .select("id, classroom_id, title, link_url, created_at")
+        .select("id, classroom_id, title, file_url, file_name, file_type, created_at")
         .eq("classroom_id", classroomId)
         .order("created_at", { ascending: false });
 
@@ -81,11 +83,10 @@ const ClassroomMaterialsTab = ({ classroomId }: ClassroomMaterialsTabProps) => {
         className="bg-white rounded-xl shadow-sm border border-[#f1f1f1] p-4 mb-3 flex items-center justify-between gap-4"
       >
         <div className="flex-1 min-w-0">
-          <div className="flex items-center gap-2">
-            <p className="text-base font-semibold text-[#404040] truncate">
-              {material.title}
-            </p>
-          </div>
+          <p className="text-base font-semibold text-[#404040] truncate">
+            {material.title}
+          </p>
+
           {material.created_at && (
             <p className="text-xs text-gray-400 mt-1">
               {new Date(material.created_at).toLocaleString()}
@@ -96,7 +97,7 @@ const ClassroomMaterialsTab = ({ classroomId }: ClassroomMaterialsTabProps) => {
         <button
           type="button"
           className="bg-[#FFD331] text-[#404040] px-3 py-2 rounded-full text-sm font-medium shrink-0 hover:bg-[#ffcd24] transition"
-          onClick={() => window.open(material.link_url, "_blank")}
+          onClick={() => window.open(material.file_url, "_blank")}
         >
           자료 열기
         </button>
@@ -110,6 +111,7 @@ const ClassroomMaterialsTab = ({ classroomId }: ClassroomMaterialsTabProps) => {
       <p className="text-sm text-gray-500 mb-4">
         수업에 필요한 파일과 링크를 확인하세요.
       </p>
+
       {renderContent()}
     </div>
   );
