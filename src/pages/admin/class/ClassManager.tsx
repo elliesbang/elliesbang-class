@@ -23,13 +23,13 @@ export default function ClassManage() {
   const dayOptions = ["월", "화", "수", "목", "금", "토", "일"];
 
 
-  useEffect(() => {
+  // 📌 카테고리 불러오기
+useEffect(() => {
   async function loadCategories() {
     const { data, error } = await supabase
       .from("class_category")
-     .select("id, name, depth, parent_id")
-.order("id", { ascending: true });
-      .eq("depth", 2)                   // ← 하위 카테고리만 가져오기
+      .select("id, name, depth, parent_id, order_index")
+      .eq("depth", 2) // depth=2만 가져오기
       .order("order_index", { ascending: true });
 
     if (error) {
@@ -37,7 +37,7 @@ export default function ClassManage() {
       return;
     }
 
-    setCategories(data ?? []);
+    setCategories(data || []);
   }
 
   loadCategories();
