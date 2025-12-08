@@ -24,34 +24,24 @@ export default function ClassManage() {
 
 
   useEffect(() => {
-  async function loadClasses() {
+  async function loadCategories() {
     const { data, error } = await supabase
-      .from("classes")
-      .select("*")
-      .order("id", { ascending: false });
+      .from("class_category")
+      .select("id, name, depth, parent_id, order_index")
+      .eq("depth", 2)                   // ← 하위 카테고리만 가져오기
+      .order("order_index", { ascending: true });
 
     if (error) {
-      console.error("수업 불러오기 오류", error);
+      console.error("카테고리 불러오기 오류", error);
       return;
     }
 
-    // React에서 쓰기 좋게 mapping
-    const mapped = data.map((item) => ({
-      id: item.id,
-      name: item.name,
-      code: item.code,
-      category: item.category,   // categoryId 아님
-      startDate: item.start_date,
-      endDate: item.end_date,
-      days: item.assignment_days ?? [],
-      assignmentDeadline: item.assignment_rule_type,
-    }));
-
-    setClassList(mapped);
+    setCategories(data ?? []);
   }
 
-  loadClasses();
+  loadCategories();
 }, []);
+
 
 
   // ------------------------------------------
