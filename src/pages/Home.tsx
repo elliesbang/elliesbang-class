@@ -43,40 +43,31 @@ export default function Home() {
   }, [authRole]);
 
   // 🔔 전체 공지 불러오기 (notifications 테이블)
-  useEffect(() => {
-    async function loadNotices() {
-      try {
-        const buildQuery = () =>
-          supabase
-            .from("notifications")
-            .select("id, title, content, created_at, is_deleted")
-            .order("created_at", { ascending: false })
-            .limit(3);
+useEffect(() => {
+  async function loadNotices() {
+    try {
+      const { data, error } = await supabase
+        .from("notifications")
+        .select("id, title, content, created_at, is_visible")
+        .eq("is_visible", true)
+        .order("created_at", { ascending: false })
+        .limit(3);
 
-        let { data, error } = await buildQuery().eq("is_deleted", false);
-
-        if (error) {
-          if (error.code === "42703" || error.message?.includes("is_deleted")) {
-            ({ data, error } = await buildQuery());
-          }
-
-          if (error) {
-            console.error("공지 불러오기 오류", error);
-            setNotices([]);
-            return;
-          }
-        }
-
-        const filtered = (data ?? []).filter((item) => item.is_deleted !== true);
-        setNotices(filtered as Notice[]);
-      } catch (err) {
-        console.error("공지 불러오기 실패", err);
+      if (error) {
+        console.error("공지 불러오기 오류", error);
         setNotices([]);
+        return;
       }
-    }
 
-    loadNotices();
-  }, []);
+      setNotices(data ?? []);
+    } catch (err) {
+      console.error("공지 불러오기 실패", err);
+      setNotices([]);
+    }
+  }
+
+  loadNotices();
+}, []);
 
   // 🎬 VOD 목록 불러오기 (vod_videos 테이블)
   useEffect(() => {
