@@ -96,9 +96,10 @@ const AppContent = () => {
           {/* ---------------- VOD ---------------- */}
 
           {/* ✅ VOD 목록은 누구나 접근 가능 (ProtectedRoute 제거) */}
-          <Route path="/vod" element={<VodHome />} />
-          <Route path="/vod/program/:programId" element={<VodProgramPage />} />
-          <Route path="/vod/topic/:topicId" element={<VodTopicPage />} />
+         <Route path="/vod" element={<VodHome />} />
+<Route path="/vod/program/:programId" element={<VodProgramPage />} />
+<Route path="/vod/topic/:topicId" element={<VodTopicPage />} />
+
 
 
           {/* ✅ VOD 영상 재생만 로그인 + 권한 필요 */}
