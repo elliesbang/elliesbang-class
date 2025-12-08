@@ -65,12 +65,15 @@ export async function onRequest({ request, env }) {
 
   const userIds = userList?.users?.map((u) => u.id) ?? [];
 
-  const { data: profiles, error: profileError } = userIds.length
-    ? await supabaseAdmin
-        .from("profiles")
-        .select("id, full_name, nickname, role, classes")
-        .in("id", userIds)
-    : { data: [], error: null };
+  // 기존: nickname, classes, last_login 까지 select 했다면 전부 빼고
+const { data: profiles, error: profileError } = userIds.length
+  ? await supabaseAdmin
+      .from("profiles")
+      // ✅ 실제 존재하는 컬럼만 선택
+      .select("id, role, full_name, name")
+      .in("id", userIds)
+  : { data: [], error: null };
+
 
   if (profileError) {
     return new Response(JSON.stringify({ error: profileError.message }), {
