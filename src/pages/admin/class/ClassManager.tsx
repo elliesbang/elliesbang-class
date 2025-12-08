@@ -27,7 +27,8 @@ export default function ClassManage() {
   async function loadCategories() {
     const { data, error } = await supabase
       .from("class_category")
-      .select("id, name, depth, parent_id, order_index")
+     .select("id, name, depth, parent_id")
+.order("id", { ascending: true });
       .eq("depth", 2)                   // ← 하위 카테고리만 가져오기
       .order("order_index", { ascending: true });
 
