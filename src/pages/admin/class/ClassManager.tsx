@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { supabase } from "../../lib/supabaseClient";
+import { supabase } from "../../../lib/supabaseClient";
 import { Plus, Edit, Trash2, RefreshCcw } from "lucide-react";
 
 export default function ClassManage() {
