@@ -1,49 +1,31 @@
 import { useEffect, useState } from "react";
+import { supabase } from "../../lib/supabaseClient";
 import { Plus, Edit, Trash2, RefreshCcw } from "lucide-react";
 
 export default function ClassManage() {
   const [categories, setCategories] = useState([]);
 
-  const [classList, setClassList] = useState([]);
-
-  const [newClass, setNewClass] = useState({
-    name: "",
-    categoryId: "",
-    code: "",
-    startDate: "",
-    endDate: "",
-    assignmentDeadline: "all_day",
-    days: [],
-  });
-
-  const [editingClass, setEditingClass] = useState(null);
-
-  // 요일 리스트
-  const dayOptions = ["월", "화", "수", "목", "금", "토", "일"];
-
-  // ------------------------------------------
-  // 📌 하위 카테고리 불러오기 (강의실 카테고리)
-  // ------------------------------------------
   useEffect(() => {
-  async function loadCategories() {
-    const { data, error } = await supabase
-      .from("class_category")
-      .select("id, name, depth, parent_id")
-      .order("order_index", { ascending: true });
+    async function loadCategories() {
+      const { data, error } = await supabase
+        .from("class_category")
+        .select("id, name, depth, parent_id")
+        .order("order_index", { ascending: true });
 
-    if (error) {
-      console.error("카테고리 불러오기 오류", error);
-      return;
+      if (error) {
+        console.error("카테고리 불러오기 오류", error);
+        return;
+      }
+
+      // depth = 2만 실제 수업 분류
+      const subCategories = (data ?? []).filter((cat) => cat.depth === 2);
+
+      setCategories(subCategories);
     }
 
-    // depth = 2만 수업 카테고리로 사용
-    const subCategories = (data ?? []).filter(cat => cat.depth === 2);
+    loadCategories();
+  }, []);
 
-    setCategories(subCategories);
-  }
-
-  loadCategories();
-}, []);
 
 
   // ------------------------------------------
