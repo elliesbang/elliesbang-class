@@ -12,7 +12,7 @@ const SESSION_COUNT_BY_CLASSROOM: Record<string, number | undefined> = {
   "7": 8,
   "8": 4,
   "9": 4,
-  "14": 15,
+  "14": 45,
 };
 
 type AssignmentProfile = {
