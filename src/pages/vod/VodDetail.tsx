@@ -1,29 +1,48 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useState, useMemo } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { PlayCircle, Lock } from "lucide-react";
 import { supabase } from "../../lib/supabaseClient";
-import { VodVideo } from "../../types/VodVideo";
 import { useAuth } from "../../auth/AuthProvider";
 import { openLoginModal } from "../../lib/authModal";
-import { ensureVodThumbnail } from "../../utils/vodThumbnails";
 
 type UserRole = "student" | "vod" | "admin" | null;
 
+type VodVideo = {
+  id: number;
+  title: string;
+  description?: string | null;
+  thumbnail_url?: string | null;
+  video_url?: string | null;
+  level?: string | null;
+  created_at?: string | null;
+  topic_id: number;
+};
+
+type VodTopic = {
+  id: number;
+  title: string;
+  program_id: number;
+};
+
 export default function VodDetail() {
-  const { id } = useParams();
+  const { videoId } = useParams<{ videoId: string }>();
   const navigate = useNavigate();
   const { user, role: authRole, loading } = useAuth();
 
   const [role, setRole] = useState<UserRole>(null);
-  const [vod, setVod] = useState<VodVideo | null>(null);
+  const [video, setVideo] = useState<VodVideo | null>(null);
+  const [topic, setTopic] = useState<VodTopic | null>(null);
   const [related, setRelated] = useState<VodVideo[]>([]);
   const [hasPurchase, setHasPurchase] = useState(false);
 
-  const videoId = useMemo(() => Number(id), [id]);
+  const numericVideoId = Number(videoId);
 
+  // ------------------------------
+  // 로그인 / 역할 체크
+  // ------------------------------
   useEffect(() => {
-    const stored = window.localStorage.getItem("role") as UserRole;
-    if (stored) setRole(stored);
+    const localRole = window.localStorage.getItem("role") as UserRole;
+    if (localRole) setRole(localRole);
   }, []);
 
   useEffect(() => {
@@ -33,7 +52,7 @@ export default function VodDetail() {
   useEffect(() => {
     if (loading) return;
 
-    if (!role || !user) {
+    if (!user) {
       openLoginModal(null, "로그인이 필요한 서비스입니다.");
       navigate("/", { replace: true });
       return;
@@ -45,59 +64,67 @@ export default function VodDetail() {
     }
   }, [loading, role, user, navigate]);
 
+  // ------------------------------
+  // 영상 상세 + 토픽 + 관련 영상 로드
+  // ------------------------------
   useEffect(() => {
-    if (!videoId) return;
+    if (!numericVideoId) return;
 
-    async function loadRelated(categoryId: number) {
-      const { data, error } = await supabase
+    async function loadVideoDetail() {
+      // 1) 영상 정보
+      const { data: videoData, error: videoError } = await supabase
         .from("vod_videos")
-        .select(
-          "id, vod_category_id, title, url, thumbnail_url, created_at, vod_category(id, name)"
-        )
-        .eq("vod_category_id", categoryId)
-        .neq("id", videoId)
-        .order("created_at", { ascending: false })
-        .limit(4);
-
-      if (error) {
-        console.error("관련 VOD 불러오기 오류", error);
-        return;
-      }
-
-      const normalized = (data ?? []).map((item) =>
-        ensureVodThumbnail(item)
-      ) as VodVideo[];
-
-      setRelated(normalized);
-    }
-    async function loadVodDetail() {
-      const { data, error } = await supabase
-        .from("vod_videos")
-        .select(
-          "id, vod_category_id, title, url, thumbnail_url, created_at, vod_category(id, name)"
-        )
-        .eq("id", videoId)
+        .select("*")
+        .eq("id", numericVideoId)
         .maybeSingle();
 
-      if (error) {
-        console.error("VOD 상세 불러오기 오류", error);
+      if (videoError) {
+        console.error("영상 상세 불러오기 오류:", videoError);
         return;
       }
 
-      const video = (data as VodVideo | null) ?? null;
-      setVod(video ? ensureVodThumbnail(video) : null);
+      if (!videoData) return;
 
-      if (video?.vod_category_id) {
-        void loadRelated(video.vod_category_id);
+      setVideo(videoData as VodVideo);
+
+      // 2) 토픽 정보
+      const { data: topicData, error: topicError } = await supabase
+        .from("vod_topics")
+        .select("id, title, program_id")
+        .eq("id", videoData.topic_id)
+        .maybeSingle();
+
+      if (topicError) {
+        console.error("토픽 정보 불러오기 오류:", topicError);
       }
+
+      setTopic(topicData as VodTopic);
+
+      // 3) 같은 토픽의 관련 영상
+      const { data: relatedData, error: relatedError } = await supabase
+        .from("vod_videos")
+        .select("id, title, thumbnail_url, level")
+        .eq("topic_id", videoData.topic_id)
+        .neq("id", numericVideoId)
+        .order("order", { ascending: true })
+        .limit(10);
+
+      if (relatedError) {
+        console.error("관련 영상 불러오기 오류:", relatedError);
+      }
+
+      setRelated(relatedData as VodVideo[]);
     }
 
-    void loadVodDetail();
-  }, [videoId]);
+    void loadVideoDetail();
+  }, [numericVideoId]);
 
+  // ------------------------------
+  // 구매권한 / 재생권한 체크
+  // ------------------------------
   useEffect(() => {
     async function loadPurchaseStatus() {
-      if (!user || !videoId) return;
+      if (!user || !numericVideoId) return;
 
       if (role === "admin") {
         setHasPurchase(true);
@@ -108,7 +135,6 @@ export default function VodDetail() {
         .from("vod_purchases")
         .select("id")
         .eq("user_id", user.id)
-        .eq("vod_id", videoId)
         .maybeSingle();
 
       if (error && error.code !== "PGRST116") {
@@ -122,75 +148,43 @@ export default function VodDetail() {
     if (role === "vod" || role === "admin") {
       void loadPurchaseStatus();
     }
-  }, [role, user, videoId]);
+  }, [role, user, numericVideoId]);
 
-  const hasVodAccess = role === "admin" || role === "vod";
-  const canPlay = hasVodAccess && (role === "admin" || hasPurchase);
+  const canPlay =
+    role === "admin" || (role === "vod" && hasPurchase && video?.video_url);
 
-  const handlePlay = async () => {
-    if (!role || !user) {
-      openLoginModal(null, "로그인이 필요한 서비스입니다.");
+  // ------------------------------
+  // 재생 버튼 클릭
+  // ------------------------------
+  const handlePlayPermission = () => {
+    if (!hasPurchase && role !== "admin") {
+      alert("VOD 이용권이 필요합니다.");
       return;
-    }
-
-    if (!hasVodAccess) {
-      alert("해당 메뉴는 VOD 전용 서비스입니다.");
-      return;
-    }
-
-    if (role !== "admin") {
-      const { data, error } = await supabase
-        .from("vod_purchases")
-        .select("id")
-        .eq("user_id", user.id)
-        .eq("vod_id", videoId)
-        .maybeSingle();
-
-      if (error && error.code !== "PGRST116") {
-        alert("권한 확인 중 오류가 발생했습니다.");
-        console.error(error);
-        return;
-      }
-
-      if (!data) {
-        alert("이용권이 필요한 콘텐츠입니다.");
-        return;
-      }
-
-      setHasPurchase(true);
     }
   };
 
-  if (!vod) {
-    return <p className="p-5">불러오는 중...</p>;
-  }
+  if (!video) return <div className="p-5">불러오는 중...</div>;
 
   return (
     <div className="pb-20">
-      {/* 썸네일 + 영상 */}
+      {/* ------------------------------
+          영상 플레이어 영역
+      ------------------------------ */}
       <div className="w-full bg-black">
         {canPlay ? (
-          vod.url ? (
-            <iframe
-              src={vod.url}
-              className="w-full h-60"
-              allowFullScreen
-              title={vod.title}
-            ></iframe>
-          ) : (
-            <div className="w-full h-60 flex flex-col items-center justify-center text-white">
-              <p className="text-lg mb-2">재생 가능한 영상이 아직 없습니다.</p>
-              <p className="text-sm text-gray-300">영상 업로드 후 시청할 수 있습니다.</p>
-            </div>
-          )
+          <iframe
+            src={video.video_url ?? ""}
+            className="w-full h-60"
+            allowFullScreen
+            title={video.title}
+          ></iframe>
         ) : (
           <div className="w-full h-60 flex flex-col items-center justify-center text-white">
             <Lock size={40} className="mb-3" />
-            <p className="text-lg mb-2">이 영상은 VOD 회원 전용입니다</p>
-            <p className="text-sm text-gray-300">VOD 이용권을 구매해주세요</p>
+            <p className="text-lg mb-1">VOD 회원 전용 영상입니다</p>
             <button
-              className="mt-4 px-4 py-2 bg-white text-black rounded-lg text-sm"
-              onClick={handlePlay}
+              onClick={handlePlayPermission}
+              className="mt-3 px-4 py-2 bg-white text-black rounded-lg"
             >
               재생 권한 확인
             </button>
@@ -198,71 +192,77 @@ export default function VodDetail() {
         )}
       </div>
 
-      {/* 상세 정보 */}
+      {/* ------------------------------
+          상세 정보
+      ------------------------------ */}
       <div className="p-5">
-        <h1 className="text-xl font-bold text-[#404040]">{vod.title}</h1>
+        <h1 className="text-xl font-bold text-[#404040]">{video.title}</h1>
 
-        <p className="text-sm text-[#7a6f68] mt-2">
-          카테고리: {vod.vod_category?.name ?? "기타"}
-        </p>
+        {topic && (
+          <p className="text-sm mt-1 text-[#7a6f68]">
+            주제: {topic.title}
+          </p>
+        )}
 
-        <p className="text-sm text-gray-500 mt-1">
-          업로드일: {vod.created_at?.slice(0, 10)}
-        </p>
+        {video.level && (
+          <p className="text-xs inline-block mt-2 px-2 py-1 bg-yellow-200 rounded-full text-[#404040]">
+            {video.level}
+          </p>
+        )}
 
         <p className="mt-4 text-[#404040] whitespace-pre-line leading-6">
-          {vod.description}
+          {video.description}
         </p>
 
-        {hasVodAccess && !canPlay && (
-          <div className="mt-4 text-sm text-[#7a6f68]">
-            이용권이 필요한 콘텐츠입니다.
-          </div>
-        )}
-
-        {canPlay && !vod.url && (
-          <div className="mt-4 text-sm text-[#7a6f68]">
-            영상 URL이 아직 연결되지 않았습니다.
-          </div>
-        )}
+        <p className="text-xs text-gray-500 mt-3">
+          업로드일: {video.created_at?.slice(0, 10)}
+        </p>
       </div>
 
-      {/* 같은 카테고리의 다른 강의 */}
+      {/* ------------------------------
+          관련 영상
+      ------------------------------ */}
       {related.length > 0 && (
         <div className="p-5">
           <h2 className="text-lg font-bold text-[#404040] mb-3">
-            같은 카테고리의 다른 영상
+            같은 주제의 다른 영상
           </h2>
 
-          <div className="grid grid-cols-2 gap-4">
+          <div className="flex flex-col gap-3">
             {related.map((item) => (
               <div
                 key={item.id}
-                className="border rounded-xl bg-white shadow-sm p-2 cursor-pointer"
-                onClick={() => navigate(`/vod/${item.id}`)}
+                className="flex gap-3 bg-white p-2 rounded-lg border border-[#f0f0f0] cursor-pointer hover:bg-[#fafafa]"
+                onClick={() => navigate(`/vod/video/${item.id}`)}
               >
-                <img
-                  src={item.thumbnail_url || "/fallback-thumbnail.png"}
-                  className="w-full h-28 object-cover rounded-lg"
-                />
+                <div className="w-28 h-20 bg-gray-200 rounded-lg overflow-hidden">
+                  <img
+                    src={
+                      item.thumbnail_url && item.thumbnail_url.length > 0
+                        ? item.thumbnail_url
+                        : "/fallback-thumbnail.png"
+                    }
+                    className="w-full h-full object-cover"
+                  />
+                </div>
 
-                <p className="text-sm mt-2 font-semibold text-[#404040] line-clamp-1">
-                  {item.title}
-                </p>
+                <div className="flex flex-col justify-center flex-1">
+                  {item.level && (
+                    <span className="text-xs px-2 py-1 bg-yellow-200 rounded-full text-[#404040] w-fit">
+                      {item.level}
+                    </span>
+                  )}
+                  <p className="text-sm font-medium line-clamp-2">
+                    {item.title}
+                  </p>
 
-                <div className="flex items-center gap-1 text-xs text-[#7a6f68] mt-1">
-                  <PlayCircle size={12} /> 재생
+                  <div className="flex items-center gap-1 text-xs text-gray-600 mt-1">
+                    <PlayCircle size={12} /> 재생
+                  </div>
                 </div>
               </div>
             ))}
           </div>
-        </div>
-      )}
-
-      {/* 재생 권한이 없는 경우 안내 박스 */}
-      {!canPlay && (
-        <div className="p-5 text-center text-sm text-gray-600">
-          🔒 이 영상은 로그인한 VOD 회원 또는 관리자만 재생할 수 있어요.
         </div>
       )}
     </div>
