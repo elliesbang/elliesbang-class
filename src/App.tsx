@@ -17,7 +17,7 @@ import Home from "./pages/Home";
 import VodHome from "./pages/vod/VodHome";
 import VodDetail from "./pages/vod/VodDetail";
 import VodProgramPage from "./pages/vod/VodProgram";
-import VodTopicPage from "./pages/vod/VodTopic";
+import VodTopic from "./pages/vod/VodTopic";
 
 
 
@@ -98,7 +98,7 @@ const AppContent = () => {
           {/* ✅ VOD 목록은 누구나 접근 가능 (ProtectedRoute 제거) */}
          <Route path="/vod" element={<VodHome />} />
 <Route path="/vod/program/:programId" element={<VodProgramPage />} />
-<Route path="/vod/topic/:topicId" element={<VodTopicPage />} />
+<Route path="/vod/topic/:topicId" element={<VodTopic />} />
 
 
 
