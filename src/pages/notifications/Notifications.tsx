@@ -17,10 +17,10 @@ const Notifications = () => {
       const buildQuery = () =>
         supabase
           .from("notifications")
-          .select("id, title, content, created_at, is_deleted")
+          .select("id, title, content, created_at, is_visible")
           .order("created_at", { ascending: false });
 
-      let { data, error } = await buildQuery().eq("is_deleted", false);
+     let { data, error } = await buildQuery().eq("is_visible", true);
 
       if (error) {
         if (error.code === "42703" || error.message?.includes("is_deleted")) {
@@ -34,7 +34,7 @@ const Notifications = () => {
         }
       }
 
-      const filtered = (data ?? []).filter((item) => item.is_deleted !== true);
+      const filtered = data ?? [];
       setList(filtered as Notification[]);
     }
 
