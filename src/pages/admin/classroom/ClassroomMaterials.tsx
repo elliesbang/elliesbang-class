@@ -12,7 +12,7 @@ type ClassroomMaterial = {
   id: number;
   classroom_id: number;
   title: string;
-  link_url: string;
+  file_url: string;  // ← 수정됨
   created_at?: string;
 };
 
@@ -20,7 +20,7 @@ export default function ClassroomMaterials() {
   const [classrooms, setClassrooms] = useState<Classroom[]>([]);
   const [selectedClassroomId, setSelectedClassroomId] = useState<number | "">("");
   const [materials, setMaterials] = useState<ClassroomMaterial[]>([]);
-  const [form, setForm] = useState({ title: "", link_url: "" });
+  const [form, setForm] = useState({ title: "", file_url: "" });  // ← 수정됨
   const [editingId, setEditingId] = useState<number | null>(null);
   const [loading, setLoading] = useState(false);
   const [listLoading, setListLoading] = useState(false);
@@ -52,7 +52,7 @@ export default function ClassroomMaterials() {
     setListLoading(true);
     const { data, error } = await supabase
       .from("classroom_materials")
-      .select("id, classroom_id, title, link_url, created_at")
+      .select("id, classroom_id, title, file_url, created_at")  // ← 수정됨
       .eq("classroom_id", selectedClassroomId)
       .order("created_at", { ascending: false });
 
@@ -75,7 +75,7 @@ export default function ClassroomMaterials() {
       return;
     }
 
-    if (!form.title.trim() || !form.link_url.trim()) {
+    if (!form.title.trim() || !form.file_url.trim()) {   // ← 수정됨
       alert("제목과 링크를 모두 입력해주세요.");
       return;
     }
@@ -87,7 +87,7 @@ export default function ClassroomMaterials() {
         .from("classroom_materials")
         .update({
           title: form.title.trim(),
-          link_url: form.link_url.trim(),
+          file_url: form.file_url.trim(),  // ← 수정됨
         })
         .eq("id", editingId);
 
@@ -99,7 +99,7 @@ export default function ClassroomMaterials() {
       const { error } = await supabase.from("classroom_materials").insert({
         classroom_id: selectedClassroomId,
         title: form.title.trim(),
-        link_url: form.link_url.trim(),
+        file_url: form.file_url.trim(),  // ← 수정됨
       });
 
       if (error) {
@@ -108,14 +108,14 @@ export default function ClassroomMaterials() {
       }
     }
 
-    setForm({ title: "", link_url: "" });
+    setForm({ title: "", file_url: "" }); // ← 수정됨
     setEditingId(null);
     setLoading(false);
     fetchMaterials();
   };
 
   const handleEdit = (material: ClassroomMaterial) => {
-    setForm({ title: material.title, link_url: material.link_url });
+    setForm({ title: material.title, file_url: material.file_url });  // ← 수정됨
     setEditingId(material.id);
   };
 
@@ -140,19 +140,18 @@ export default function ClassroomMaterials() {
 
   return (
     <div className="space-y-6">
-      <h1 className="text-lg md:text-2xl font-bold text-[#404040] mb-2 whitespace-nowrap break-keep max-w-full overflow-hidden text-ellipsis">
+      <h1 className="text-lg md:text-2xl font-bold text-[#404040] mb-2">
         강의실 자료 관리
       </h1>
 
-      <div className="mb-4 md:mb-6 relative flex flex-col md:flex-row md:items-center md:gap-3">
-        <label className="text-sm font-medium text-[#404040] whitespace-nowrap">강의실 선택</label>
+      <div className="mb-4 md:mb-6 flex flex-col md:flex-row md:items-center md:gap-3">
+        <label className="text-sm font-medium text-[#404040]">강의실 선택</label>
         <select
           className="mt-1 md:mt-0 w-full md:max-w-xs border rounded-lg px-3 py-2 bg-white"
           value={selectedClassroomId}
-          onChange={(e) => {
-            const value = e.target.value ? Number(e.target.value) : "";
-            setSelectedClassroomId(value);
-          }}
+          onChange={(e) =>
+            setSelectedClassroomId(e.target.value ? Number(e.target.value) : "")
+          }
         >
           <option value="">강의실을 선택하세요</option>
           {childClassrooms.map((c) => (
@@ -165,7 +164,7 @@ export default function ClassroomMaterials() {
 
       {selectedClassroomId && (
         <div className="border rounded-xl bg-white p-5 shadow-sm mb-6 admin-card">
-          <h2 className="text-base md:text-lg font-semibold text-[#404040] mb-3 whitespace-nowrap break-keep max-w-full overflow-hidden text-ellipsis">
+          <h2 className="text-base md:text-lg font-semibold text-[#404040] mb-3">
             {editingId ? "자료 수정" : "링크 자료 추가"}
           </h2>
 
@@ -174,32 +173,34 @@ export default function ClassroomMaterials() {
             placeholder="자료 제목"
             className="w-full border rounded-lg px-3 py-2 mb-3"
             value={form.title}
-            onChange={(e) => setForm((prev) => ({ ...prev, title: e.target.value }))}
+            onChange={(e) => setForm({ ...form, title: e.target.value })}
           />
 
           <input
             type="text"
             placeholder="자료 링크(URL)"
             className="w-full border rounded-lg px-3 py-2 mb-3"
-            value={form.link_url}
-            onChange={(e) => setForm((prev) => ({ ...prev, link_url: e.target.value }))}
+            value={form.file_url}   // ← 수정됨
+            onChange={(e) => setForm({ ...form, file_url: e.target.value })}
           />
 
-          <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:gap-3">
+          <div className="flex gap-2">
             <button
               onClick={handleSubmit}
-              className="flex items-center gap-2 bg-[#f3efe4] text-[#404040] px-4 py-2 rounded-lg w-full sm:w-auto justify-center disabled:opacity-70"
+              className="flex items-center gap-2 bg-[#f3efe4] text-[#404040] px-4 py-2 rounded-lg disabled:opacity-70"
               disabled={loading}
             >
-              {loading ? <Loader2 size={18} className="animate-spin" /> : <Plus size={18} />} {editingId ? "저장하기" : "추가하기"}
+              {loading ? <Loader2 size={18} className="animate-spin" /> : <Plus size={18} />}{" "}
+              {editingId ? "저장하기" : "추가하기"}
             </button>
+
             {editingId && (
               <button
                 onClick={() => {
                   setEditingId(null);
-                  setForm({ title: "", link_url: "" });
+                  setForm({ title: "", file_url: "" }); // ← 수정됨
                 }}
-                className="px-4 py-2 rounded-lg border border-gray-200 text-sm text-gray-700 w-full sm:w-auto"
+                className="px-4 py-2 rounded-lg border border-gray-200 text-sm"
               >
                 새 자료 등록으로 전환
               </button>
@@ -210,7 +211,7 @@ export default function ClassroomMaterials() {
 
       {selectedClassroomId && (
         <div className="rounded-xl border bg-white p-5 shadow-sm admin-card">
-          <h2 className="text-base md:text-lg font-semibold text-[#404040] mb-4 whitespace-nowrap break-keep max-w-full overflow-hidden text-ellipsis">
+          <h2 className="text-base md:text-lg font-semibold text-[#404040] mb-4">
             등록된 자료
           </h2>
 
@@ -227,22 +228,22 @@ export default function ClassroomMaterials() {
                 className="flex flex-col md:flex-row md:items-center md:justify-between gap-3 border-b pb-3"
               >
                 <div className="space-y-1">
-                  <p className="font-medium text-[#404040] flex items-center gap-2 whitespace-nowrap break-keep max-w-full overflow-hidden text-ellipsis">
+                  <p className="font-medium text-[#404040] flex items-center gap-2">
                     <LinkIcon size={18} />
                     {material.title}
                   </p>
 
                   <a
-                    href={material.link_url}
+                    href={material.file_url}  // ← 수정됨
                     target="_blank"
                     rel="noreferrer"
-                    className="text-sm text-blue-600 underline break-keep"
+                    className="text-sm text-blue-600 underline"
                   >
-                    {material.link_url}
+                    {material.file_url}
                   </a>
                 </div>
 
-                <div className="flex items-center gap-3 self-end md:self-auto">
+                <div className="flex items-center gap-3">
                   <button
                     onClick={() => handleEdit(material)}
                     className="text-gray-600 hover:text-black"
