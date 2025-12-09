@@ -265,28 +265,6 @@ const AppContent = () => {
           />
 
           <Route
-            path="/admin/users/students"
-            element={
-              <ProtectedRoute allow={["admin"]}>
-                <AdminLayout>
-                  <UserManage />
-                </AdminLayout>
-              </ProtectedRoute>
-            }
-          />
-
-          <Route
-            path="/admin/users/vod"
-            element={
-              <ProtectedRoute allow={["admin"]}>
-                <AdminLayout>
-                  <UserManage />
-                </AdminLayout>
-              </ProtectedRoute>
-            }
-          />
-
-          <Route
             path="/admin/classes"
             element={
               <ProtectedRoute allow={["admin"]}>
