@@ -1,1 +1,1 @@
-export { default } from "./UserManage";
+fetch("/api/admin-users?role=student")
