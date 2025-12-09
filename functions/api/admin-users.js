@@ -71,7 +71,7 @@ export async function onRequest({ request, env }) {
   const { data: profiles, error: profileError } = userIds.length
     ? await supabaseAdmin
         .from("profiles")
-        .select("id, role, full_name, nickname, classes")
+        .select("id, role, full_name")
         .in("id", userIds)
     : { data: [], error: null };
 
