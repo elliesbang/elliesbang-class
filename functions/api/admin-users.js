@@ -10,9 +10,7 @@ export async function onRequest({ request, env }) {
   // 0. role 파라미터 받아오기
   // ----------------------------------------
   const url = new URL(request.url);
-  const requestedRole = url.searchParams.get("role") ?? "all"; 
-  // all | student | vod
-  // ----------------------------------------
+  const requestedRole = url.searchParams.get("role") ?? "all";
 
   const token = request.headers.get("Authorization")?.replace("Bearer ", "");
   if (!token) {
@@ -67,11 +65,11 @@ export async function onRequest({ request, env }) {
 
   const userIds = userList?.users?.map((u) => u.id) ?? [];
 
-  // 3. profiles 불러오기 (role 포함)
+  // 3. profiles 로부터 역할/이름 가져오기
   const { data: profiles, error: profileError } = userIds.length
     ? await supabaseAdmin
         .from("profiles")
-        .select("id, role, full_name")
+        .select("id, role, name")   // ← 여기를 수정!
         .in("id", userIds)
     : { data: [], error: null };
 
@@ -84,7 +82,7 @@ export async function onRequest({ request, env }) {
 
   const profileMap = new Map((profiles ?? []).map((p) => [p.id, p]));
 
-  // 4. 역할 포함하여 user 리스트 구성
+  // 4. 사용자 리스트 구성
   let users = (userList?.users ?? []).map((user) => {
     const profile = profileMap.get(user.id);
 
@@ -96,22 +94,18 @@ export async function onRequest({ request, env }) {
       created_at: user.created_at,
       last_sign_in_at: user.last_sign_in_at,
       role: finalRole,
-      full_name: profile?.full_name ?? null,
-      nickname: profile?.nickname ?? null,
-      classes: profile?.classes ?? null,
+
+      // 🎉 이름 정상 출력
+      full_name: profile?.name ?? user.user_metadata?.name ?? null,
     };
   });
 
-  // ----------------------------------------
-  // 5. 역할별 필터링 적용
-  // ----------------------------------------
-  // admin은 항상 제외
+  // 5. 역할별 필터 적용
   users = users.filter((u) => u.role !== "admin");
 
   if (requestedRole !== "all") {
     users = users.filter((u) => u.role === requestedRole);
   }
-  // ----------------------------------------
 
   return new Response(JSON.stringify({ users }), {
     headers: { "Content-Type": "application/json" },
