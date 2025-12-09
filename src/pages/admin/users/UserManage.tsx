@@ -61,11 +61,12 @@ export default function UserManage() {
         return;
       }
 
-      const response = await fetch("/api/admin-users", {
-        headers: {
-          Authorization: `Bearer ${accessToken}`,
-        },
-      });
+      const response = await fetch("/api/admin-users?role=all", {
+  headers: {
+    Authorization: `Bearer ${accessToken}`,
+  },
+});
+
 
       if (!response.ok) {
         const message = await response.text();
