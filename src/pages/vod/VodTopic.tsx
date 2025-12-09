@@ -55,7 +55,8 @@ export default function VodTopicPage() {
           <div
             key={v.id}
             className="flex gap-3 bg-white p-3 rounded-xl shadow cursor-pointer"
-            onClick={() => navigate(`/vod/${v.id}`)}
+           onClick={() => navigate(`/vod/video/${v.id}`)}
+
           >
             <img
               src={v.thumbnail_url || "/fallback-thumbnail.png"}
