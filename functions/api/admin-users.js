@@ -6,6 +6,14 @@ export async function onRequest({ request, env }) {
     env.SUPABASE_SERVICE_ROLE_KEY
   );
 
+  // ----------------------------------------
+  // 0. role 파라미터 받아오기
+  // ----------------------------------------
+  const url = new URL(request.url);
+  const requestedRole = url.searchParams.get("role") ?? "all"; 
+  // all | student | vod
+  // ----------------------------------------
+
   const token = request.headers.get("Authorization")?.replace("Bearer ", "");
   if (!token) {
     return new Response(JSON.stringify({ error: "No token" }), {
@@ -14,14 +22,9 @@ export async function onRequest({ request, env }) {
     });
   }
 
-  // 1. 토큰으로 현재 유저 확인
+  // 1. 관리자 인증
   const { data: authResult, error: authError } =
-    await supabaseAdmin.auth.getUser(token, {
-      auth: {
-        autoRefreshToken: false,
-        persistSession: false,
-      },
-    });
+    await supabaseAdmin.auth.getUser(token);
 
   if (authError || !authResult?.user) {
     return new Response(JSON.stringify({ error: "Invalid user" }), {
@@ -32,11 +35,10 @@ export async function onRequest({ request, env }) {
 
   const adminUserId = authResult.user.id;
 
-  // 2. profiles 에서 role 확인 (컬럼 이름 id 로!)
   const { data: adminProfile } = await supabaseAdmin
     .from("profiles")
     .select("role")
-    .eq("id", adminUserId)      // ✅ 여기 수정
+    .eq("id", adminUserId)
     .maybeSingle();
 
   const adminRole =
@@ -49,7 +51,7 @@ export async function onRequest({ request, env }) {
     });
   }
 
-  // 3. 전체 유저 목록 가져오기
+  // 2. 전체 auth.user 목록
   const { data: userList, error: listError } =
     await supabaseAdmin.auth.admin.listUsers({
       page: 1,
@@ -65,15 +67,13 @@ export async function onRequest({ request, env }) {
 
   const userIds = userList?.users?.map((u) => u.id) ?? [];
 
-  // 기존: nickname, classes, last_login 까지 select 했다면 전부 빼고
-const { data: profiles, error: profileError } = userIds.length
-  ? await supabaseAdmin
-      .from("profiles")
-      // ✅ 실제 존재하는 컬럼만 선택
-      .select("id, role, full_name, name")
-      .in("id", userIds)
-  : { data: [], error: null };
-
+  // 3. profiles 불러오기 (role 포함)
+  const { data: profiles, error: profileError } = userIds.length
+    ? await supabaseAdmin
+        .from("profiles")
+        .select("id, role, full_name, nickname, classes")
+        .in("id", userIds)
+    : { data: [], error: null };
 
   if (profileError) {
     return new Response(JSON.stringify({ error: profileError.message }), {
@@ -82,23 +82,36 @@ const { data: profiles, error: profileError } = userIds.length
     });
   }
 
-  const profileMap = new Map(
-    (profiles ?? []).map((p) => [p.id, p])
-  );
+  const profileMap = new Map((profiles ?? []).map((p) => [p.id, p]));
 
-  const users = (userList?.users ?? []).map((user) => {
+  // 4. 역할 포함하여 user 리스트 구성
+  let users = (userList?.users ?? []).map((user) => {
     const profile = profileMap.get(user.id);
+
+    const finalRole = profile?.role ?? user.user_metadata?.role ?? null;
+
     return {
       id: user.id,
       email: user.email,
       created_at: user.created_at,
       last_sign_in_at: user.last_sign_in_at,
-      role: profile?.role ?? user.user_metadata?.role ?? null,
-      full_name: profile?.full_name ?? user.user_metadata?.name ?? null,
-      nickname: profile?.nickname ?? user.user_metadata?.nickname ?? null,
+      role: finalRole,
+      full_name: profile?.full_name ?? null,
+      nickname: profile?.nickname ?? null,
       classes: profile?.classes ?? null,
     };
   });
+
+  // ----------------------------------------
+  // 5. 역할별 필터링 적용
+  // ----------------------------------------
+  // admin은 항상 제외
+  users = users.filter((u) => u.role !== "admin");
+
+  if (requestedRole !== "all") {
+    users = users.filter((u) => u.role === requestedRole);
+  }
+  // ----------------------------------------
 
   return new Response(JSON.stringify({ users }), {
     headers: { "Content-Type": "application/json" },
