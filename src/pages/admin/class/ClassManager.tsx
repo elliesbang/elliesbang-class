@@ -97,53 +97,109 @@ useEffect(() => {
   // ------------------------------------------
   // 📌 수업 생성
   // ------------------------------------------
-  const handleCreate = () => {
-    if (!newClass.name || !newClass.categoryId || !newClass.startDate) {
-      return alert("필수 항목을 입력해주세요!");
-    }
+  // 📌 수업 생성 (Supabase INSERT)
+const handleCreate = async () => {
+  if (!newClass.name || !newClass.categoryId || !newClass.startDate) {
+    return alert("필수 항목을 입력해주세요!");
+  }
 
-    setClassList((prev) => [
-      ...prev,
-      {
-        id: Date.now(),
-        ...newClass,
-      },
-    ]);
-
-    // 초기화
-    setNewClass({
-      name: "",
-      categoryId: "",
-      code: "",
-      startDate: "",
-      endDate: "",
-      assignmentDeadline: "all_day",
-      days: [],
-    });
-
-    alert("수업이 생성되었습니다!");
+  const payload = {
+    name: newClass.name,
+    category: newClass.categoryId, // categoryId → category 컬럼에 저장
+    code: newClass.code,
+    start_date: newClass.startDate,
+    end_date: newClass.endDate,
+    assignment_rule_type: newClass.assignmentDeadline,
+    assignment_days: newClass.days,
   };
+
+  const { data, error } = await supabase
+    .from("classes")
+    .insert([payload])
+    .select();
+
+  if (error) {
+    console.error("수업 생성 실패", error);
+    return alert("수업 생성 중 오류가 발생했습니다.");
+  }
+
+  // 화면 반영
+  setClassList((prev) => [
+    { ...data[0] },
+    ...prev,
+  ]);
+
+  // 입력 폼 초기화
+  setNewClass({
+    name: "",
+    categoryId: "",
+    code: "",
+    startDate: "",
+    endDate: "",
+    assignmentDeadline: "all_day",
+    days: [],
+  });
+
+  alert("수업이 생성되었습니다!");
+};
+
 
   // ------------------------------------------
   // 📌 삭제
   // ------------------------------------------
-  const handleDelete = (id) => {
-    if (!confirm("이 수업을 삭제하시겠습니까?")) return;
-    setClassList((prev) => prev.filter((c) => c.id !== id));
-  };
+ // 📌 수업 삭제
+const handleDelete = async (id) => {
+  if (!confirm("이 수업을 삭제하시겠습니까?")) return;
+
+  const { error } = await supabase
+    .from("classes")
+    .delete()
+    .eq("id", id);
+
+  if (error) {
+    console.error("수업 삭제 실패", error);
+    return alert("삭제 중 오류가 발생했습니다.");
+  }
+
+  // 화면 반영
+  setClassList((prev) => prev.filter((cls) => cls.id !== id));
+};
+
 
   // ------------------------------------------
-  // 📌 수정 저장
+  // 📌 수정 수정
   // ------------------------------------------
-  const handleSaveEdit = () => {
-    setClassList((prev) =>
-      prev.map((c) =>
-        c.id === editingClass.id ? editingClass : c
-      )
-    );
-
-    setEditingClass(null);
+  // 📌 수업 수정
+const handleSaveEdit = async () => {
+  const payload = {
+    name: editingClass.name,
+    code: editingClass.code,
+    start_date: editingClass.startDate,
+    end_date: editingClass.endDate,
+    assignment_days: editingClass.days,
   };
+
+  const { error } = await supabase
+    .from("classes")
+    .update(payload)
+    .eq("id", editingClass.id);
+
+  if (error) {
+    console.error("수업 수정 실패", error);
+    return alert("수업 수정 중 오류가 발생했습니다.");
+  }
+
+  // UI 반영
+  setClassList((prev) =>
+    prev.map((c) =>
+      c.id === editingClass.id ? editingClass : c
+    )
+  );
+
+  setEditingClass(null);
+  alert("수업이 수정되었습니다!");
+};
+
 
   // 요일 토글
   const toggleDay = (day, stateSetter, currentObj) => {
