@@ -139,10 +139,13 @@ const FeedbackCard = ({ item }: { item: AssignmentFeedbackItem }) => {
                 aria-label="과제 링크 새 창 열기"
               >
                 🔗 과제 링크 열기
-              </a>
+             </a>
             )}
           </div>
         )}
-
+      </div>
+    </div>
+  );
+};
 
 export default ClassroomFeedbackTab;
