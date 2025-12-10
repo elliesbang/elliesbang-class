@@ -519,6 +519,7 @@ const sessionNo = hasSessionSelection
     })}
   </div>
 );   // ✅ 이 한 줄이 반드시 있어야 한다!
+};
 
 
   const sessionOptions = useMemo(
