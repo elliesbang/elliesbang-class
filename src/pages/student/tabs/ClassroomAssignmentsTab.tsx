@@ -421,95 +421,105 @@ const sessionNo = hasSessionSelection
       );
     }
 
-    return (
-      <div className="space-y-4">
-        {assignmentList.map((assignment) => {
-          const authorName = getProfileDisplayName(assignment.profiles);
-          const sessionLabel = assignment.session_no ?? FALLBACK_SESSION_NO;
-          const submittedLabel = new Date(
-            assignment.created_at
-          ).toLocaleDateString();
+   return (
+  <div className="space-y-3">
+    {assignmentList.map((assignment) => {
+      const authorName = getProfileDisplayName(assignment.profiles);
+      const sessionLabel = assignment.session_no ?? FALLBACK_SESSION_NO;
+      const submittedLabel = new Date(
+        assignment.created_at
+      ).toLocaleDateString();
 
-          return (
-            <div
-              key={assignment.id}
-              className="rounded-xl bg_WHITE p-4 shadow-sm border border-[#f1f1f1]"
-            >
-              <div className="flex items-start justify-between gap-4">
-                <div className="flex flex-col gap-2">
-                  <div className="flex items-center gap-2 text-xs text-gray-500">
-                    <span className="rounded-full bg-[#FFF7D6] px-2 py-0.5 text-[11px] font-semibold text-[#947200]">
-                      {sessionLabel}회차
-                    </span>
-                    <span className="text-[#7a6f68]">제출일 {submittedLabel}</span>
-                  </div>
-                  <p className="text-sm font-semibold text-[#404040]">
-                    {assignment.title || "제목 없음"}
-                  </p>
-                  <div className="text-xs text-gray-500 flex items-center gap-2 flex-wrap">
-                    <span>작성자: {authorName}</span>
-                    <span className="text-[#7a6f68]">
-                      제출 시각{" "}
-                      {new Date(assignment.created_at).toLocaleString()}
-                    </span>
-                  </div>
-                </div>
+      const isMyAssignment =
+        String(assignment.student_id) === String(user?.id);
 
-                {String(assignment.student_id) === String(user?.id) && (
-                  <div className="flex items-center gap-2">
-                    <button
-                      type="button"
-                      onClick={(event) => {
-                        event.stopPropagation();
-                        handleEdit(assignment);
-                      }}
-                      className="rounded-full border px-3 py-1 text-xs font-medium text-[#404040] hover:bg-gray-50"
-                    >
-                      수정
-                    </button>
-                    <button
-                      type="button"
-                      onClick={(event) => {
-                        event.stopPropagation();
-                        handleDelete(assignment.id);
-                      }}
-                      className="rounded-full border px-3 py-1 text-xs font-medium text-red-500 hover:bg-red-50"
-                    >
-                      삭제
-                    </button>
-                  </div>
-                )}
+      return (
+        <div
+          key={assignment.id}
+          className="flex items-center gap-4 rounded-xl border border-[#f1f1f1] bg-white p-3 shadow-sm"
+        >
+          {/* 🔹 썸네일 영역 */}
+          <div className="h-20 w-20 overflow-hidden rounded-lg border bg-[#f9f7f2] flex-shrink-0">
+            {assignment.image_url ? (
+              <img
+                src={assignment.image_url}
+                alt={assignment.title || "과제 이미지"}
+                className="h-full w-full object-cover"
+              />
+            ) : assignment.link_url ? (
+              <div className="flex h-full w-full items-center justify-center px-1 text-[11px] text-[#c17c00] text-center">
+                링크 제출
               </div>
-
-              <div className="mt-3 flex flex-col gap-2">
-                {assignment.image_url && (
-                  <img
-                    src={assignment.image_url}
-                    alt={assignment.title || "과제 이미지"}
-                    className="max-h-60 w-full rounded-lg object-cover cursor-pointer"
-                    onClick={() =>
-                      window.open(assignment.image_url ?? "", "_blank")
-                    }
-                  />
-                )}
-
-                {assignment.link_url && (
-                  <a
-                    href={assignment.link_url}
-                    target="_blank"
-                    rel="noreferrer"
-                    className="text-sm font-medium text-[#c17c00] hover:underline"
-                  >
-                    링크 열기
-                  </a>
-                )}
+            ) : (
+              <div className="flex h-full w-full items-center justify-center text-[11px] text-gray-400">
+                미리보기 없음
               </div>
+            )}
+          </div>
+
+          {/* 🔹 텍스트 정보 */}
+          <div className="flex min-w-0 flex-1 flex-col gap-1">
+            <div className="flex flex-wrap items-center gap-2 text-xs text-gray-500">
+              <span className="rounded-full bg-[#FFF7D6] px-2 py-0.5 text-[11px] font-semibold text-[#947200]">
+                {sessionLabel}회차
+              </span>
+              <span className="text-[#7a6f68]">제출일 {submittedLabel}</span>
             </div>
-          );
-        })}
-      </div>
-    );
-  };
+
+            <p className="truncate text-sm font-semibold text-[#404040]">
+              {assignment.title || "제목 없음"}
+            </p>
+
+            <div className="flex flex-wrap items-center gap-2 text-xs text-gray-500">
+              <span>작성자: {authorName}</span>
+              <span className="text-[#7a6f68]">
+                제출 시각 {new Date(assignment.created_at).toLocaleString()}
+              </span>
+            </div>
+
+            {assignment.link_url && (
+              <a
+                href={assignment.link_url}
+                target="_blank"
+                rel="noreferrer"
+                className="text-xs font-medium text-[#c17c00] hover:underline"
+              >
+                제출 링크 열기
+              </a>
+            )}
+          </div>
+
+          {/* 🔹 내 과제인 경우에만 우측 액션 버튼 */}
+          {isMyAssignment && (
+            <div className="flex flex-col items-end gap-2">
+              <button
+                type="button"
+                onClick={(event) => {
+                  event.stopPropagation();
+                  handleEdit(assignment);
+                }}
+                className="rounded-full border px-3 py-1 text-xs font-medium text-[#404040] hover:bg-gray-50"
+              >
+                수정
+              </button>
+              <button
+                type="button"
+                onClick={(event) => {
+                  event.stopPropagation();
+                  handleDelete(assignment.id);
+                }}
+                className="rounded-full border px-3 py-1 text-xs font-medium text-red-500 hover:bg-red-50"
+              >
+                삭제
+              </button>
+            </div>
+          )}
+        </div>
+      );
+    })}
+  </div>
+);
+
 
   const sessionOptions = useMemo(
     () =>
