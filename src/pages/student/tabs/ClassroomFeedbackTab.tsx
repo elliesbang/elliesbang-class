@@ -117,22 +117,17 @@ const FeedbackCard = ({ item }: { item: AssignmentFeedbackItem }) => {
       <div className="flex flex-col gap-2 mt-3">
         <p className="text-xs text-gray-500">피드백 작성: {item.instructorName}</p>
 
-        {(item.imageUrl || item.linkUrl) && (
+                {(item.imageUrl || item.linkUrl) && (
           <div className="flex flex-wrap items-center gap-3 text-sm">
             {item.imageUrl && (
-              <button
-                type="button"
-                onClick={() => window.open(item.imageUrl as string, "_blank")}
-                className="flex items-center gap-2 rounded-lg border px-3 py-2 bg-white hover:bg-[#fff7e3] transition"
-                aria-label={`${hasSession ? `${item.sessionNo}회차` : "과제"} 이미지 새 창 열기`}
-              >
+              <div className="flex items-center gap-2">
                 <img
                   src={item.imageUrl}
                   alt={`${hasSession ? `${item.sessionNo}회차` : "과제"} 이미지`}
                   className="w-12 h-12 rounded object-cover border"
                 />
-                <span className="text-xs text-[#404040]">이미지 크게 보기</span>
-              </button>
+                <span className="text-xs text-gray-500">이미지 첨부됨</span>
+              </div>
             )}
 
             {item.linkUrl && (
@@ -148,9 +143,6 @@ const FeedbackCard = ({ item }: { item: AssignmentFeedbackItem }) => {
             )}
           </div>
         )}
-      </div>
-    </div>
-  );
-};
+
 
 export default ClassroomFeedbackTab;
