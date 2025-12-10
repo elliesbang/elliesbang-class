@@ -199,9 +199,11 @@ const ClassroomAssignmentsTab = ({
       return;
     }
 
-    const sessionNo = hasSessionSelection
-      ? selectedSessionNo ?? FALLBACK_SESSION_NO
-      : selectedSessionNo ?? null;
+   // 🔥 session_no를 항상 문자열로 저장
+const sessionNo = hasSessionSelection
+  ? String(selectedSessionNo ?? FALLBACK_SESSION_NO)
+  : selectedSessionNo ? String(selectedSessionNo) : null;
+
 
     if (!hasSubmissionContent) {
       alert("이미지나 링크 중 하나 이상을 입력해주세요.");
@@ -221,7 +223,7 @@ const ClassroomAssignmentsTab = ({
         classroom_id: classroomKey,
         class_id: classId,
         student_id: user.id,
-        session_no: sessionNo,
+        session_no: sessionNo ? String(sessionNo) : null,
         image_url: imageUrl || null,
         link_url: linkUrl || null,
         title: title || null,
@@ -302,33 +304,42 @@ const ClassroomAssignmentsTab = ({
   );
 
   const deadlinesMap = useMemo(() => {
-    const map = new Map<string, string>();
-    deadlines.forEach((deadline) => {
-      map.set(String(deadline.session_no), deadline.assignment_deadline ?? "");
-    });
-    return map;
-  }, [deadlines]);
+  const map = new Map<string, string>();
+  deadlines.forEach((deadline) => {
+    const key = String(deadline.session_no ?? "");
+    map.set(key, deadline.assignment_deadline ?? "");
+  });
+  return map;
+}, [deadlines]);
 
   // 완주 회차 계산
-  const completedSessions = useMemo(() => {
-    if (!hasSessionSelection) return new Set<string>();
+ const completedSessions = useMemo(() => {
+  if (!hasSessionSelection) return new Set<string>();
 
-    const completed = new Set<string>();
-    userAssignments.forEach((assignment) => {
-      const sessionNo = assignment.session_no ?? FALLBACK_SESSION_NO;
-      const deadlineText = deadlinesMap.get(String(sessionNo));
+  const completed = new Set<string>();
 
-      if (!deadlineText) return;
+  userAssignments.forEach((assignment) => {
+    const sessionNo = String(assignment.session_no ?? FALLBACK_SESSION_NO);
 
-      const submittedAt = new Date(assignment.created_at);
-      const deadlineDate = new Date(deadlineText);
+    const deadlineText = deadlinesMap.get(sessionNo);
+    const submittedAt = new Date(assignment.created_at);
 
-      if (!Number.isNaN(deadlineDate.getTime()) && submittedAt <= deadlineDate) {
-        completed.add(String(sessionNo));
-      }
-    });
-    return completed;
-  }, [deadlinesMap, hasSessionSelection, userAssignments]);
+    // 🔥 데드라인 없음 → 제출한 순간 완주 인정
+    if (!deadlineText) {
+      completed.add(sessionNo);
+      return;
+    }
+
+    const deadlineDate = new Date(deadlineText);
+
+    // 🔥 데드라인 기준 완주 판정
+    if (!Number.isNaN(deadlineDate.getTime()) && submittedAt <= deadlineDate) {
+      completed.add(sessionNo);
+    }
+  });
+
+  return completed;
+}, [deadlinesMap, hasSessionSelection, userAssignments]);
 
   const progressPercent = useMemo(() => {
     if (!hasSessionSelection || totalSessions === 0) return 0;
