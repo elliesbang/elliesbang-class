@@ -64,16 +64,20 @@ export default function AssignmentList() {
   const instructorId = (user?.id as string | undefined) ?? null;
 
   const [classrooms, setClassrooms] = useState<Classroom[]>([]);
-  const [assignments, setAssignments] = useState<AssignmentWithMeta[]>([]);
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+const [assignments, setAssignments] = useState<AssignmentWithMeta[]>([]);
+const [loading, setLoading] = useState(false);
+const [error, setError] = useState<string | null>(null);
 
-  const [selectedClassroom, setSelectedClassroom] = useState<string>("");
-  const [selectedSession, setSelectedSession] = useState<string>("");
+const [selectedClassroom, setSelectedClassroom] = useState<string>("");
+const [selectedSession, setSelectedSession] = useState<string>("");
 
-  const [modalOpen, setModalOpen] = useState(false);
-  const [selectedAssignment, setSelectedAssignment] =
-    useState<AssignmentWithMeta | null>(null);
+const [modalOpen, setModalOpen] = useState(false);
+const [selectedAssignment, setSelectedAssignment] =
+  useState<AssignmentWithMeta | null>(null);
+
+// 🔥 썸네일 클릭 시 큰 이미지 보기용 상태
+const [previewImageUrl, setPreviewImageUrl] = useState<string | null>(null);
+
 
   const classroomMap = useMemo(() => {
     const map = new Map<string, string>();
@@ -229,32 +233,39 @@ export default function AssignmentList() {
     setModalOpen(false);
   };
 
-  const renderThumbnail = (assignment: AssignmentWithMeta) => {
-    if (assignment.imageUrl) {
-      return (
+ const renderThumbnail = (assignment: AssignmentWithMeta) => {
+  if (assignment.imageUrl) {
+    return (
+      <button
+        type="button"
+        onClick={() => setPreviewImageUrl(assignment.imageUrl!)}
+        className="inline-flex items-center justify-center rounded-lg border bg-white p-0 overflow-hidden hover:ring-2 hover:ring-[#FFD331]"
+      >
         <img
           src={assignment.imageUrl}
           alt={assignment.title ?? "과제 이미지"}
-          className="h-16 w-16 rounded-lg object-cover border"
+          className="h-16 w-16 object-cover"
         />
-      );
-    }
+      </button>
+    );
+  }
 
-    if (assignment.linkUrl) {
-      return (
-        <a
-          href={assignment.linkUrl}
-          target="_blank"
-          rel="noreferrer"
-          className="text-sm text-[#2563EB] underline"
-        >
-          제출 링크 열기
-        </a>
-      );
-    }
+  if (assignment.linkUrl) {
+    return (
+      <a
+        href={assignment.linkUrl}
+        target="_blank"
+        rel="noreferrer"
+        className="text-sm text-[#2563EB] underline"
+      >
+        제출 링크 열기
+      </a>
+    );
+  }
 
-    return <span className="text-xs text-gray-400">제출 미리보기 없음</span>;
-  };
+  return <span className="text-xs text-gray-400">제출 미리보기 없음</span>;
+};
+
 
   return (
     <div className="space-y-4">
@@ -439,6 +450,26 @@ export default function AssignmentList() {
         </>
       )}
 
+          {/* 🔍 썸네일 클릭 시 큰 이미지 보기 모달 */}
+      {previewImageUrl && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60">
+          <div className="relative max-w-4xl max-h-[90vh]">
+            <button
+              type="button"
+              onClick={() => setPreviewImageUrl(null)}
+              className="absolute -right-3 -top-3 rounded-full bg-white px-3 py-1 text-xs font-semibold text-gray-700 shadow"
+            >
+              닫기
+            </button>
+            <img
+              src={previewImageUrl}
+              alt="과제 이미지 확대"
+              className="max-h-[90vh] max-w-full rounded-xl object-contain bg-black"
+            />
+          </div>
+        </div>
+      )}
+
       <AssignmentFeedbackModal
         open={modalOpen}
         onClose={() => setModalOpen(false)}
@@ -449,3 +480,4 @@ export default function AssignmentList() {
     </div>
   );
 }
+
