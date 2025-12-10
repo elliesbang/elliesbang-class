@@ -421,7 +421,7 @@ const sessionNo = hasSessionSelection
       );
     }
 
-   return (
+  return (
   <div className="space-y-3">
     {assignmentList.map((assignment) => {
       const authorName = getProfileDisplayName(assignment.profiles);
@@ -518,7 +518,7 @@ const sessionNo = hasSessionSelection
       );
     })}
   </div>
-);
+);   // ✅ 이 한 줄이 반드시 있어야 한다!
 
 
   const sessionOptions = useMemo(
