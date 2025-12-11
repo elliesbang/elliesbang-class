@@ -75,7 +75,9 @@ useEffect(() => {
       try {
         const { data, error } = await supabase
           .from("vod_videos")
-          .select("id, title, url, thumbnail_url, created_at")
+         .select(
+  "id, vod_category_id, title, video_url, thumbnail_url, created_at, vod_category(id, name)"
+)
           .order("created_at", { ascending: false });
 
         if (error) {
