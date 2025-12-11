@@ -28,14 +28,19 @@ export default function ClassroomMaterials() {
   const [listLoading, setListLoading] = useState(false);
 
   // ------------------------------
-  // 강의실 불러오기
+  // 강의실 불러오기 (외래키가 연결된 classrooms 테이블 사용)
   // ------------------------------
   useEffect(() => {
     const fetchClassrooms = async () => {
-      const { data } = await supabase
-        .from("class_category")
+      const { data, error } = await supabase
+        .from("classrooms")
         .select("id, name, parent_id")
-        .order("order_num", { ascending: true });
+        .order("id", { ascending: true });
+
+      if (error) {
+        console.error("강의실 목록 불러오기 실패", error);
+        return;
+      }
 
       setClassrooms(data || []);
     };
@@ -185,7 +190,9 @@ export default function ClassroomMaterials() {
     setMaterials((prev) => prev.filter((m) => m.id !== id));
   };
 
-  const childClassrooms = classrooms.filter((cls) => cls.parent_id !== null);
+  const childClassrooms = classrooms.filter((cls) =>
+    cls.parent_id === undefined ? true : cls.parent_id !== null
+  );
 
   // ------------------------------
   // UI
