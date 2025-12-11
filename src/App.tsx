@@ -33,12 +33,7 @@ import ClassroomNotices from "./pages/admin/classroom/ClassroomNotices";
 import AssignmentList from "./pages/admin/AssignmentList";
 
 import GlobalNotices from "./pages/admin/notices/GlobalNotices";
-import VodCategoryList from "./pages/admin/vod/VodCategoryList";
-import VodCategoryForm from "./pages/admin/vod/VodCategoryForm";
-import VodTopicList from "./pages/admin/vod/VodTopicList";
-import VodTopicForm from "./pages/admin/vod/VodTopicForm";
-import VodVideoList from "./pages/admin/vod/VodVideoList";
-import VodVideoForm from "./pages/admin/vod/VodVideoForm";
+import VodManager from "./pages/admin/vod/VodManager";
 
 import UserManage from "./pages/admin/users/UserManage";
 import StudentUsers from "./pages/admin/users/StudentUsers";
@@ -252,93 +247,11 @@ const AppContent = () => {
           />
 
           <Route
-            path="/admin/vod/categories"
+            path="/admin/vod"
             element={
               <ProtectedRoute allow={["admin"]}>
                 <AdminLayout>
-                  <VodCategoryList />
-                </AdminLayout>
-              </ProtectedRoute>
-            }
-          />
-          <Route
-            path="/admin/vod/categories/new"
-            element={
-              <ProtectedRoute allow={["admin"]}>
-                <AdminLayout>
-                  <VodCategoryForm />
-                </AdminLayout>
-              </ProtectedRoute>
-            }
-          />
-          <Route
-            path="/admin/vod/categories/:id"
-            element={
-              <ProtectedRoute allow={["admin"]}>
-                <AdminLayout>
-                  <VodCategoryForm />
-                </AdminLayout>
-              </ProtectedRoute>
-            }
-          />
-
-          <Route
-            path="/admin/vod/topics"
-            element={
-              <ProtectedRoute allow={["admin"]}>
-                <AdminLayout>
-                  <VodTopicList />
-                </AdminLayout>
-              </ProtectedRoute>
-            }
-          />
-          <Route
-            path="/admin/vod/topics/new"
-            element={
-              <ProtectedRoute allow={["admin"]}>
-                <AdminLayout>
-                  <VodTopicForm />
-                </AdminLayout>
-              </ProtectedRoute>
-            }
-          />
-          <Route
-            path="/admin/vod/topics/:id"
-            element={
-              <ProtectedRoute allow={["admin"]}>
-                <AdminLayout>
-                  <VodTopicForm />
-                </AdminLayout>
-              </ProtectedRoute>
-            }
-          />
-
-          <Route
-            path="/admin/vod/videos"
-            element={
-              <ProtectedRoute allow={["admin"]}>
-                <AdminLayout>
-                  <VodVideoList />
-                </AdminLayout>
-              </ProtectedRoute>
-            }
-          />
-          <Route
-            path="/admin/vod/videos/new"
-            element={
-              <ProtectedRoute allow={["admin"]}>
-                <AdminLayout>
-                  <VodVideoForm />
-                </AdminLayout>
-              </ProtectedRoute>
-            }
-          />
-          <Route
-            path="/admin/vod/videos/:id"
-            element={
-              <ProtectedRoute allow={["admin"]}>
-                <AdminLayout>
-                  <VodVideoForm />
+                  <VodManager />
                 </AdminLayout>
               </ProtectedRoute>
             }

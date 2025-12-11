@@ -1,337 +1,429 @@
 import { useEffect, useMemo, useState } from "react";
-import { Plus, Edit, Trash2 } from "lucide-react";
-import { supabase } from "../../../lib/supabaseClient";
-import { VodCategory, VodVideo } from "../../../types/VodVideo";
-import { ensureVodThumbnail, generateThumbnailUrl } from "../../../utils/vodThumbnails";
+import VodCategorySelector from "@/components/admin/vod/VodCategorySelector";
+import VodTopicFormModal from "@/components/admin/vod/VodTopicFormModal";
+import VodTopicList from "@/components/admin/vod/VodTopicList";
+import VodVideoFormModal from "@/components/admin/vod/VodVideoFormModal";
+import VodVideoList from "@/components/admin/vod/VodVideoList";
+import { supabase } from "@/lib/supabaseClient";
+import {
+  VodAdminCategory,
+  VodAdminTopic,
+  VodAdminVideo,
+} from "@/types/VodAdmin";
 
-const placeholderThumbnail = "/fallback-thumbnail.png";
-
-type VodFormState = {
-  title: string;
-  url: string;
+const defaultTopicValues: Pick<
+  VodAdminTopic,
+  "title" | "description" | "order"
+> = {
+  title: "",
+  description: null,
+  order: null,
 };
 
-export default function VodManage() {
-  const [categories, setCategories] = useState<VodCategory[]>([]);
-  const [selectedCategory, setSelectedCategory] = useState<string>("");
-  const [vodList, setVodList] = useState<VodVideo[]>([]);
-  const [newVod, setNewVod] = useState<VodFormState>({ title: "", url: "" });
-  const [editingVod, setEditingVod] = useState<VodVideo | null>(null);
-  const [loading, setLoading] = useState(false);
+const defaultVideoValues: Pick<
+  VodAdminVideo,
+  "title" | "video_url" | "thumbnail_url" | "level" | "duration" | "order"
+> = {
+  title: "",
+  video_url: null,
+  thumbnail_url: null,
+  level: null,
+  duration: null,
+  order: null,
+};
 
-  const selectedCategoryId = useMemo(
-    () => (selectedCategory ? Number(selectedCategory) : null),
-    [selectedCategory]
+export default function VodManager() {
+  const [categories, setCategories] = useState<VodAdminCategory[]>([]);
+  const [topics, setTopics] = useState<VodAdminTopic[]>([]);
+  const [videos, setVideos] = useState<VodAdminVideo[]>([]);
+
+  const [selectedCategoryId, setSelectedCategoryId] = useState<number | null>(
+    null
+  );
+  const [selectedTopicId, setSelectedTopicId] = useState<number | null>(null);
+
+  const [loadingCategories, setLoadingCategories] = useState(false);
+  const [loadingTopics, setLoadingTopics] = useState(false);
+  const [loadingVideos, setLoadingVideos] = useState(false);
+
+  const [topicModalOpen, setTopicModalOpen] = useState(false);
+  const [videoModalOpen, setVideoModalOpen] = useState(false);
+  const [editingTopic, setEditingTopic] = useState<VodAdminTopic | null>(null);
+  const [editingVideo, setEditingVideo] = useState<VodAdminVideo | null>(null);
+  const [topicFormValues, setTopicFormValues] = useState(
+    defaultTopicValues
+  );
+  const [videoFormValues, setVideoFormValues] = useState(
+    defaultVideoValues
   );
 
+  const nextTopicOrder = useMemo(() => {
+    const max = topics.reduce((acc, cur) => Math.max(acc, cur.order ?? 0), 0);
+    return max + 1;
+  }, [topics]);
+
+  const nextVideoOrder = useMemo(() => {
+    const max = videos.reduce((acc, cur) => Math.max(acc, cur.order ?? 0), 0);
+    return max + 1;
+  }, [videos]);
+
   useEffect(() => {
-    async function loadCategories() {
+    const loadCategories = async () => {
+      setLoadingCategories(true);
       const { data, error } = await supabase
         .from("vod_category")
         .select("id, name")
+        .not("parent_id", "is", null)
         .order("id", { ascending: true });
 
       if (error) {
-        console.error("카테고리 불러오기 오류", error);
+        console.error("하위 카테고리 불러오기 오류", error);
         setCategories([]);
-        return;
+      } else {
+        setCategories((data ?? []) as VodAdminCategory[]);
       }
 
-      setCategories((data ?? []) as VodCategory[]);
-    }
+      setLoadingCategories(false);
+    };
 
     void loadCategories();
   }, []);
 
   useEffect(() => {
     if (!selectedCategoryId) {
-      setVodList([]);
+      setTopics([]);
+      setSelectedTopicId(null);
+      setVideos([]);
       return;
     }
 
-    async function loadVodList() {
-      setLoading(true);
+    const loadTopics = async (categoryId: number) => {
+      setLoadingTopics(true);
       const { data, error } = await supabase
-        .from("vod_videos")
-        .select("id, vod_category_id, title, url, thumbnail_url, created_at")
-        .eq("vod_category_id", selectedCategoryId)
-        .order("created_at", { ascending: false });
+        .from("vod_topics")
+        .select("id, title, description, order, category_id")
+        .eq("category_id", categoryId)
+        .order("order", { ascending: true, nullsLast: true })
+        .order("id", { ascending: true });
 
       if (error) {
-        console.error("VOD 불러오기 오류", error);
-        setVodList([]);
-        setLoading(false);
+        console.error("토픽 불러오기 오류", error);
+        setTopics([]);
+      } else {
+        setTopics((data ?? []) as VodAdminTopic[]);
+      }
+
+      setLoadingTopics(false);
+    };
+
+    void loadTopics(selectedCategoryId);
+  }, [selectedCategoryId]);
+
+  useEffect(() => {
+    if (!selectedTopicId) {
+      setVideos([]);
+      return;
+    }
+
+    const loadVideos = async (topicId: number) => {
+      setLoadingVideos(true);
+      const { data, error } = await supabase
+        .from("vod_videos")
+        .select(
+          "id, title, video_url, thumbnail_url, level, duration, order, topic_id, created_at"
+        )
+        .eq("topic_id", topicId)
+        .order("order", { ascending: true, nullsLast: true })
+        .order("created_at", { ascending: true });
+
+      if (error) {
+        console.error("영상 불러오기 오류", error);
+        setVideos([]);
+      } else {
+        setVideos((data ?? []) as VodAdminVideo[]);
+      }
+
+      setLoadingVideos(false);
+    };
+
+    void loadVideos(selectedTopicId);
+  }, [selectedTopicId]);
+
+  const openCreateTopic = () => {
+    setEditingTopic(null);
+    setTopicFormValues({
+      ...defaultTopicValues,
+      order: nextTopicOrder,
+    });
+    setTopicModalOpen(true);
+  };
+
+  const openEditTopic = (topic: VodAdminTopic) => {
+    setEditingTopic(topic);
+    setTopicFormValues({
+      title: topic.title,
+      description: topic.description,
+      order: topic.order,
+    });
+    setTopicModalOpen(true);
+  };
+
+  const openCreateVideo = () => {
+    setEditingVideo(null);
+    setVideoFormValues({
+      ...defaultVideoValues,
+      order: nextVideoOrder,
+    });
+    setVideoModalOpen(true);
+  };
+
+  const openEditVideo = (video: VodAdminVideo) => {
+    setEditingVideo(video);
+    setVideoFormValues({
+      title: video.title,
+      video_url: video.video_url,
+      thumbnail_url: video.thumbnail_url,
+      level: video.level,
+      duration: video.duration,
+      order: video.order,
+    });
+    setVideoModalOpen(true);
+  };
+
+  const handleSubmitTopic = async (
+    values: Pick<VodAdminTopic, "title" | "description" | "order">
+  ) => {
+    if (!selectedCategoryId) {
+      alert("하위 카테고리를 선택해주세요.");
+      return;
+    }
+
+    if (editingTopic) {
+      const { data, error } = await supabase
+        .from("vod_topics")
+        .update({ title: values.title, order: values.order })
+        .eq("id", editingTopic.id)
+        .select("id, title, description, order, category_id")
+        .maybeSingle();
+
+      if (error) {
+        console.error("토픽 수정 오류", error);
         return;
       }
 
-      const normalized = (data ?? []).map((video) =>
-        ensureVodThumbnail(video)
-      ) as VodVideo[];
+      const updated = (data ?? editingTopic) as VodAdminTopic;
+      setTopics((prev) =>
+        prev
+          .map((topic) => (topic.id === updated.id ? updated : topic))
+          .sort((a, b) => (a.order ?? 0) - (b.order ?? 0) || a.id - b.id)
+      );
+    } else {
+      const { data, error } = await supabase
+        .from("vod_topics")
+        .insert([
+          {
+            title: values.title,
+            description: values.description,
+            order: values.order,
+            category_id: selectedCategoryId,
+          },
+        ])
+        .select("id, title, description, order, category_id")
+        .maybeSingle();
 
-      setVodList(normalized);
-      setLoading(false);
+      if (error) {
+        console.error("토픽 생성 오류", error);
+        return;
+      }
+
+      if (data) {
+        setTopics((prev) =>
+          [...prev, data as VodAdminTopic].sort(
+            (a, b) => (a.order ?? 0) - (b.order ?? 0) || a.id - b.id
+          )
+        );
+      }
     }
 
-    void loadVodList();
-  }, [selectedCategoryId]);
-
-  const handleAddVod = async () => {
-    if (!newVod.title || !newVod.url || !selectedCategoryId) {
-      alert("카테고리, 제목, 영상 URL을 모두 입력해주세요!");
-      return;
-    }
-
-    const thumbnail_url = generateThumbnailUrl(newVod.url);
-
-    const { data, error } = await supabase
-      .from("vod_videos")
-      .insert([
-        {
-          title: newVod.title,
-          url: newVod.url,
-          vod_category_id: selectedCategoryId,
-          thumbnail_url,
-        },
-      ])
-      .select("id, vod_category_id, title, url, thumbnail_url, created_at")
-      .maybeSingle();
-
-    if (error) {
-      console.error("VOD 등록 실패", error);
-      return;
-    }
-
-    const created = data ? (ensureVodThumbnail(data) as VodVideo) : null;
-
-    if (created) {
-      setVodList((prev) => [created, ...prev]);
-    }
-
-    setNewVod({ title: "", url: "" });
+    setTopicModalOpen(false);
+    setEditingTopic(null);
   };
 
-  const handleDelete = async (id: number) => {
-    if (!confirm("삭제하시겠습니까?")) return;
-
-    const { error } = await supabase.from("vod_videos").delete().eq("id", id);
-
-    if (error) {
-      console.error("VOD 삭제 실패", error);
+  const handleSubmitVideo = async (
+    values: Pick<
+      VodAdminVideo,
+      "title" | "video_url" | "thumbnail_url" | "level" | "duration" | "order"
+    >
+  ) => {
+    if (!selectedTopicId) {
+      alert("토픽을 선택해주세요.");
       return;
     }
 
-    setVodList((prev) => prev.filter((v) => v.id !== id));
+    if (editingVideo) {
+      const { data, error } = await supabase
+        .from("vod_videos")
+        .update({
+          title: values.title,
+          video_url: values.video_url,
+          thumbnail_url: values.thumbnail_url,
+          level: values.level,
+          duration: values.duration,
+          order: values.order,
+        })
+        .eq("id", editingVideo.id)
+        .select(
+          "id, title, video_url, thumbnail_url, level, duration, order, topic_id, created_at"
+        )
+        .maybeSingle();
+
+      if (error) {
+        console.error("영상 수정 오류", error);
+        return;
+      }
+
+      const updated = (data ?? editingVideo) as VodAdminVideo;
+      setVideos((prev) =>
+        prev
+          .map((video) => (video.id === updated.id ? updated : video))
+          .sort((a, b) => (a.order ?? 0) - (b.order ?? 0) || a.id - b.id)
+      );
+    } else {
+      const { data, error } = await supabase
+        .from("vod_videos")
+        .insert([
+          {
+            title: values.title,
+            video_url: values.video_url,
+            thumbnail_url: values.thumbnail_url,
+            level: values.level,
+            duration: values.duration,
+            order: values.order,
+            topic_id: selectedTopicId,
+          },
+        ])
+        .select(
+          "id, title, video_url, thumbnail_url, level, duration, order, topic_id, created_at"
+        )
+        .maybeSingle();
+
+      if (error) {
+        console.error("영상 생성 오류", error);
+        return;
+      }
+
+      if (data) {
+        setVideos((prev) =>
+          [...prev, data as VodAdminVideo].sort(
+            (a, b) => (a.order ?? 0) - (b.order ?? 0) || a.id - b.id
+          )
+        );
+      }
+    }
+
+    setVideoModalOpen(false);
+    setEditingVideo(null);
   };
 
-  const handleSaveEdit = async () => {
-    if (!editingVod) return;
+  const handleDeleteTopic = async (topicId: number) => {
+    if (!confirm("토픽을 삭제하시겠습니까?")) return;
 
-    const thumbnail_url = generateThumbnailUrl(editingVod.url);
-
-    const { data, error } = await supabase
-      .from("vod_videos")
-      .update({
-        title: editingVod.title,
-        url: editingVod.url,
-        thumbnail_url,
-      })
-      .eq("id", editingVod.id)
-      .select("id, vod_category_id, title, url, thumbnail_url, created_at")
-      .maybeSingle();
+    const { error } = await supabase.from("vod_topics").delete().eq("id", topicId);
 
     if (error) {
-      console.error("VOD 수정 실패", error);
+      console.error("토픽 삭제 오류", error);
       return;
     }
 
-    const updated = data
-      ? (ensureVodThumbnail(data) as VodVideo)
-      : ensureVodThumbnail(editingVod);
+    setTopics((prev) => prev.filter((topic) => topic.id !== topicId));
 
-    setVodList((prev) => prev.map((v) => (v.id === updated.id ? updated : v)));
-    setEditingVod(null);
+    if (selectedTopicId === topicId) {
+      setSelectedTopicId(null);
+      setVideos([]);
+    }
+  };
+
+  const handleDeleteVideo = async (videoId: number) => {
+    if (!confirm("영상을 삭제하시겠습니까?")) return;
+
+    const { error } = await supabase.from("vod_videos").delete().eq("id", videoId);
+
+    if (error) {
+      console.error("영상 삭제 오류", error);
+      return;
+    }
+
+    setVideos((prev) => prev.filter((video) => video.id !== videoId));
   };
 
   return (
     <div className="space-y-6">
-      <h1 className="text-lg md:text-2xl font-bold text-[#404040] mb-2 whitespace-nowrap break-keep max-w-full overflow-hidden text-ellipsis">
+      <h1 className="text-lg md:text-2xl font-bold text-[#404040]">
         VOD 관리
       </h1>
 
-      {/* ---------------- 카테고리 선택 ---------------- */}
-      <div className="mb-4 md:mb-6 relative flex flex-col md:flex-row md:items-center md:gap-3 w-full">
-        <label className="text-sm font-medium text-[#404040] whitespace-nowrap">카테고리 선택</label>
+      <VodCategorySelector
+        categories={categories}
+        selectedCategoryId={selectedCategoryId}
+        loading={loadingCategories}
+        onChange={(id) => {
+          setSelectedCategoryId(id);
+          setSelectedTopicId(null);
+          setVideos([]);
+        }}
+      />
 
-        <select
-          className="mt-1 md:mt-0 w-full md:max-w-xs border rounded-lg px-3 py-2 bg-white"
-          value={selectedCategory}
-          onChange={(e) => setSelectedCategory(e.target.value)}
-        >
-          <option value="">카테고리를 선택하세요</option>
-          {categories.map((cat) => (
-            <option key={cat.id} value={cat.id}>
-              {cat.name}
-            </option>
-          ))}
-        </select>
-      </div>
+      {!selectedCategoryId ? (
+        <p className="text-sm text-gray-500">하위 카테고리를 선택해주세요.</p>
+      ) : (
+        <div className="space-y-4">
+          <VodTopicList
+            topics={topics}
+            selectedTopicId={selectedTopicId}
+            loading={loadingTopics}
+            onSelect={(topicId) => setSelectedTopicId(topicId)}
+            onCreate={openCreateTopic}
+            onEdit={openEditTopic}
+            onDelete={handleDeleteTopic}
+          />
 
-      {/* ---------------- VOD 작성 영역 ---------------- */}
-      {selectedCategoryId && (
-        <>
-          <div className="border rounded-xl bg-white p-5 shadow-sm mb-4 admin-card">
-            <h2 className="text-base md:text-lg font-semibold text-[#404040] mb-3 whitespace-nowrap break-keep max-w-full overflow-hidden text-ellipsis">새 VOD 등록</h2>
-
-            <p className="text-xs text-[#7a6f68] mb-2">
-              유튜브 영상 URL을 입력하면 썸네일이 자동으로 생성됩니다.
+          {!selectedTopicId ? (
+            <p className="text-sm text-gray-500">
+              토픽을 선택하면 영상 목록이 표시됩니다.
             </p>
-
-            <input
-              type="text"
-              placeholder="제목"
-              className="w-full border rounded-lg px-3 py-2 mb-3"
-              value={newVod.title}
-              onChange={(e) =>
-                setNewVod((prev) => ({ ...prev, title: e.target.value }))
-              }
+          ) : (
+            <VodVideoList
+              videos={videos}
+              loading={loadingVideos}
+              onCreate={openCreateVideo}
+              onEdit={openEditVideo}
+              onDelete={handleDeleteVideo}
             />
-
-            <input
-              type="text"
-              placeholder="영상 URL"
-              className="w-full border rounded-lg px-3 py-2 mb-4"
-              value={newVod.url}
-              onChange={(e) =>
-                setNewVod((prev) => ({ ...prev, url: e.target.value }))
-              }
-            />
-
-            <button
-              onClick={handleAddVod}
-              className="flex items-center gap-2 bg-[#f3efe4] text-[#404040] px-4 py-2 rounded-lg w-full md:w-auto justify-center"
-            >
-              <Plus size={18} />
-              등록하기
-            </button>
-          </div>
-
-          {/* ---------------- VOD 리스트 ---------------- */}
-          <div className="rounded-xl border bg-white p-5 shadow-sm admin-card">
-            <h2 className="text-base md:text-lg font-semibold text-[#404040] mb-4 whitespace-nowrap break-keep max-w-full overflow-hidden text-ellipsis">
-              등록된 VOD 목록
-            </h2>
-
-            {loading && (
-              <p className="text-sm text-[#777]">불러오는 중...</p>
-            )}
-
-            {!loading && vodList.length === 0 && (
-              <p className="text-sm text-[#777]">등록된 VOD가 없습니다.</p>
-            )}
-
-            <ul className="space-y-4">
-              {vodList.map((v) => (
-                <li
-                  key={v.id}
-                  className="border-b pb-4 flex flex-col gap-4 md:flex-row md:justify-between md:items-start"
-                >
-                  <div className="flex items-start gap-3 w-full">
-                    <img
-                      src={v.thumbnail_url || placeholderThumbnail}
-                      onError={(e) => {
-                        e.currentTarget.src = placeholderThumbnail;
-                      }}
-                      className="w-24 h-16 object-cover rounded-lg border flex-shrink-0"
-                      alt={v.title}
-                    />
-
-                    <div className="min-w-0 space-y-1">
-                      <p className="font-semibold text-[#404040] text-base md:text-lg whitespace-nowrap break-keep max-w-full overflow-hidden text-ellipsis">
-                        {v.title}
-                      </p>
-
-                      <a
-                        href={v.url}
-                        target="_blank"
-                        className="text-blue-600 underline text-sm break-keep"
-                        rel="noreferrer"
-                      >
-                        영상 링크 열기
-                      </a>
-
-                      <p className="text-xs text-[#888] mt-1 whitespace-nowrap">
-                        업로드일: {v.created_at?.slice(0, 10) ?? "-"}
-                      </p>
-                    </div>
-                  </div>
-
-                  <div className="flex items-center gap-3 self-end md:self-start">
-                    <button
-                      onClick={() => setEditingVod(v)}
-                      className="text-gray-600 hover:text-black"
-                    >
-                      <Edit size={18} />
-                    </button>
-
-                    <button
-                      onClick={() => handleDelete(v.id)}
-                      className="text-red-500 hover:text-red-700"
-                    >
-                      <Trash2 size={18} />
-                    </button>
-                  </div>
-                </li>
-              ))}
-            </ul>
-          </div>
-        </>
-      )}
-
-      {/* ---------------- VOD 수정 모달 ---------------- */}
-      {editingVod && (
-        <div className="fixed inset-0 bg-black/40 flex justify-center items-center z-50">
-          <div className="bg-white p-6 rounded-xl w-full max-w-md shadow-xl">
-            <h2 className="text-lg font-semibold mb-4">VOD 수정</h2>
-
-            <input
-              type="text"
-              className="w-full border rounded-lg px-3 py-2 mb-3"
-              value={editingVod.title}
-              onChange={(e) =>
-                setEditingVod((prev) =>
-                  prev ? { ...prev, title: e.target.value } : prev
-                )
-              }
-            />
-
-            <input
-              type="text"
-              className="w-full border rounded-lg px-3 py-2 mb-3"
-              value={editingVod.url}
-              onChange={(e) =>
-                setEditingVod((prev) =>
-                  prev ? { ...prev, url: e.target.value } : prev
-                )
-              }
-            />
-
-            <div className="flex justify-end gap-3 mt-4">
-              <button
-                onClick={() => setEditingVod(null)}
-                className="px-4 py-2 text-sm text-gray-600"
-              >
-                취소
-              </button>
-              <button
-                onClick={handleSaveEdit}
-                className="px-4 py-2 bg-[#f3efe4] text-[#404040] rounded-lg text-sm"
-              >
-                저장하기
-              </button>
-            </div>
-          </div>
+          )}
         </div>
       )}
+
+      <VodTopicFormModal
+        isOpen={topicModalOpen}
+        isEditing={!!editingTopic}
+        initialValues={topicFormValues}
+        onClose={() => {
+          setTopicModalOpen(false);
+          setEditingTopic(null);
+        }}
+        onSubmit={handleSubmitTopic}
+      />
+
+      <VodVideoFormModal
+        isOpen={videoModalOpen}
+        isEditing={!!editingVideo}
+        initialValues={videoFormValues}
+        onClose={() => {
+          setVideoModalOpen(false);
+          setEditingVideo(null);
+        }}
+        onSubmit={handleSubmitVideo}
+      />
     </div>
   );
 }
