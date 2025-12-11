@@ -77,31 +77,36 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
 
     restoreSession();
 
-    const {
-      data: { subscription },
-    } = supabase.auth.onAuthStateChange(async (_event, session) => {
-      try {
-        if (session?.user) {
-          await saveOAuthRole(session);
-          if (!isMounted) return;
+   let subscription: any = null;
 
-          setUser(session.user);
-          const userRole = session.user.user_metadata?.role ?? null;
-          setRole(userRole as UserRole);
-        } else {
-          if (!isMounted) return;
-          setUser(null);
-          setRole(null);
-        }
-      } catch (err) {
-        console.error("onAuthStateChange error:", err);
+if (typeof window !== "undefined") {
+  const listener = supabase.auth.onAuthStateChange(async (_event, session) => {
+    try {
+      if (session?.user) {
+        await saveOAuthRole(session);
+        if (!isMounted) return;
+
+        setUser(session.user);
+        const userRole = session.user.user_metadata?.role ?? null;
+        setRole(userRole as UserRole);
+      } else {
+        if (!isMounted) return;
+        setUser(null);
+        setRole(null);
       }
-    });
+    } catch (err) {
+      console.error("onAuthStateChange error:", err);
+    }
+  });
 
-    return () => {
-      isMounted = false;
-      subscription.unsubscribe();
-    };
+  subscription = listener.data.subscription;
+}
+
+return () => {
+  isMounted = false;
+  if (subscription) subscription.unsubscribe();
+};
+
   }, []);
 
   return (
