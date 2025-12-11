@@ -35,6 +35,14 @@ import LoginModal from "./components/LoginModal";
 import SignupModal from "./components/SignupModal";
 import { AuthModalDetail, openLoginModal } from "./lib/authModal";
 
+const LoginPage = () => {
+  useEffect(() => {
+    openLoginModal(null, "로그인이 필요한 서비스입니다.");
+  }, []);
+
+  return <Home />;
+};
+
 const MyPage = () => {
   const { role, loading } = useAuth(); // loading 여부 반드시 가져오기
 
