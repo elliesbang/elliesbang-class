@@ -50,7 +50,7 @@ const VodMy = () => {
   const menuItems: MenuItem[] = [
     {
       label: "구매한 VOD 리스트 보기",
-      path: "/vod/list",
+      path: "/vod",
       meta: purchaseCount ? `${purchaseCount}개` : "내역 없음",
     },
     { label: "내 알림 보기", path: "/user-notifications" },

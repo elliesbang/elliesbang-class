@@ -16,8 +16,9 @@ import VodMy from "./pages/vod/VodMy";
 import Home from "./pages/Home";
 import VodHome from "./pages/vod/VodHome";
 import VodDetail from "./pages/vod/VodDetail";
-import VodProgramPage from "./pages/vod/VodProgram";
-import VodTopic from "./pages/vod/VodTopic";
+import VodCategoryPage from "./pages/vod/VodCategoryPage";
+import VodTopicPage from "./pages/vod/VodTopicPage";
+import VodVideoListPage from "./pages/vod/VodVideoListPage";
 
 
 
@@ -99,9 +100,9 @@ const AppContent = () => {
 
           {/* ✅ VOD 목록은 누구나 접근 가능 (ProtectedRoute 제거) */}
           <Route path="/vod" element={<VodHome />} />
-          <Route path="/vod/list" element={<VodHome />} />
-          <Route path="/vod/program/:programId" element={<VodProgramPage />} />
-          <Route path="/vod/topic/:topicId" element={<VodTopic />} />
+          <Route path="/vod/category/:categoryId" element={<VodCategoryPage />} />
+          <Route path="/vod/category/:categoryId/topics" element={<VodTopicPage />} />
+          <Route path="/vod/topics/:topicId/videos" element={<VodVideoListPage />} />
 
 
 

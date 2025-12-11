@@ -199,7 +199,7 @@ useEffect(() => {
             videos: (vodByCategory[category] ?? []).slice(0, 2),
           }))}
           onPlay={handlePlay}
-          onSeeAll={() => navigate("/vod/list")}
+          onSeeAll={() => navigate("/vod")}
         />
       </div>
     </div>
