@@ -1,5 +1,4 @@
 import { useMemo, useState, useEffect } from "react";
-import { sendUserNotification } from "@/lib/supabase/userNotifications";
 import { supabase } from "@/lib/supabaseClient";
 
 type Role = "admin" | "student" | "vod";
@@ -48,60 +47,74 @@ type Props = {
   userId?: string;
 };
 
+/**
+ * DB 컬럼 ↔ UI key 매핑
+ * 테이블: user_notification_settings
+ */
+const keyToColumn: Record<string, string> = {
+  assignmentSubmission: "assignment_submission",
+  memberSignups: "member_signups",
+  feedback: "feedback",
+  classroomAssignments: "classroom_assignments",
+};
+
 const NotificationPreferences = ({ role, userId }: Props) => {
   const [selected, setSelected] = useState<Record<string, boolean>>({});
   const [submitting, setSubmitting] = useState(false);
-  const [saved, setSaved] = useState(false); // 🔥 저장 여부 state 추가
-  const [loading, setLoading] = useState(true); // 🔥 초기 로딩
+  const [saved, setSaved] = useState(false);
+  const [loading, setLoading] = useState(true);
 
   const options = useMemo(() => notificationOptions[role], [role]);
 
-  // ------------------------------------------------------------------------
-  // 🔥 1) 저장된 알림 불러오기: notification_settings 테이블 조회
-  // ------------------------------------------------------------------------
+  // 🔥 1) 유저 노티피케이션 설정 불러오기
   useEffect(() => {
-    if (!userId) return;
+    if (!userId) {
+      setLoading(false);
+      return;
+    }
 
-    async function load() {
+    const load = async () => {
       setLoading(true);
 
       const { data, error } = await supabase
-        .from("notification_settings")
-        .select("*")
+        .from("user_notification_settings")
+        .select(
+          "assignment_submission, member_signups, feedback, classroom_assignments"
+        )
         .eq("user_id", userId)
-        .single();
+        .maybeSingle();
 
-      if (data && !error) {
+      if (error) {
+        console.error("load user_notification_settings error:", error);
+        setLoading(false);
+        return;
+      }
+
+      if (data) {
         const initial: Record<string, boolean> = {};
-
-        options.forEach((opt) => {
-          initial[opt.key] = Boolean(data[opt.key]);
+        Object.entries(keyToColumn).forEach(([key, column]) => {
+          initial[key] = Boolean((data as any)[column]);
         });
-
         setSelected(initial);
-        setSaved(true); // 기존 설정이 있으면 저장됨 상태
+        setSaved(true);
       }
 
       setLoading(false);
-    }
+    };
 
     load();
-  }, [userId, options]);
+  }, [userId]);
 
-  // ------------------------------------------------------------------------
-  // 🔥 2) 체크박스 선택 시 저장 상태 초기화
-  // ------------------------------------------------------------------------
+  // 체크박스 토글 시 "저장 필요" 상태로
   const toggle = (key: string) => {
     setSelected((prev) => {
       const updated = { ...prev, [key]: !prev[key] };
-      setSaved(false); // 변경이 있으면 "저장됨" → "저장 필요"
+      setSaved(false);
       return updated;
     });
   };
 
-  // ------------------------------------------------------------------------
-  // 🔥 3) 알림 설정 저장
-  // ------------------------------------------------------------------------
+  // 🔥 2) 설정 저장 (유저노티피케이션 세팅 upsert)
   const submit = async () => {
     if (!userId) {
       alert("로그인이 필요합니다.");
@@ -111,35 +124,41 @@ const NotificationPreferences = ({ role, userId }: Props) => {
     try {
       setSubmitting(true);
 
-      const payload: Record<string, boolean | string> = {
+      const payload: Record<string, any> = {
         user_id: userId,
       };
-      options.forEach((opt) => {
-        payload[opt.key] = Boolean(selected[opt.key]);
+
+      // 모든 key → 컬럼으로 변환해서 payload에 넣기
+      Object.entries(keyToColumn).forEach(([key, column]) => {
+        payload[column] = Boolean(selected[key]);
       });
 
-      // upsert로 저장
-      await supabase.from("notification_settings").upsert(payload);
+      const { error } = await supabase
+        .from("user_notification_settings")
+        .upsert(payload, { onConflict: "user_id" });
+
+      if (error) {
+        console.error("save user_notification_settings error:", error);
+        alert("알림 설정 저장 중 문제가 발생했습니다.");
+        return;
+      }
 
       setSaved(true);
       alert("알림 설정이 저장되었습니다.");
-    } catch (error) {
-      console.error("알림 설정 저장 실패", error);
-      alert("저장 중 오류가 발생했습니다.");
+    } catch (err) {
+      console.error("알림 설정 저장 실패:", err);
+      alert("알림 설정 저장 중 오류가 발생했습니다.");
     } finally {
       setSubmitting(false);
     }
   };
 
-  // ------------------------------------------------------------------------
-  // 🔥 4) UI 렌더링
-  // ------------------------------------------------------------------------
   return (
     <div className="rounded-2xl bg-white shadow-sm border border-[#f1f1f1] p-5 space-y-4">
       <div>
         <p className="text-lg font-semibold text-[#404040]">알림 설정</p>
         <p className="text-sm text-[#9ca3af] mt-1">
-          로그인 후 받을 알림을 선택하면 종 알림에 추가돼요.
+          로그인 후 받을 유저 노티피케이션을 선택하면 종 알림에 추가돼요.
         </p>
       </div>
 
@@ -166,20 +185,23 @@ const NotificationPreferences = ({ role, userId }: Props) => {
         </div>
       )}
 
-      {/* 🔥 저장됨 상태 표시 */}
-      {saved ? (
-        <div className="text-center text-green-600 font-medium">
-          ✓ 저장되었습니다
-        </div>
-      ) : (
-        <button
-          type="button"
-          onClick={submit}
-          disabled={options.length === 0 || submitting}
-          className="w-full bg-[#ffd331] text-[#404040] font-semibold py-3 rounded-xl disabled:opacity-60"
-        >
-          {submitting ? "등록 중..." : "알림 등록"}
-        </button>
+      {options.length > 0 && !loading && (
+        <>
+          {saved ? (
+            <div className="text-center text-green-600 font-medium">
+              ✓ 유저 노티피케이션 설정이 저장되었습니다
+            </div>
+          ) : (
+            <button
+              type="button"
+              onClick={submit}
+              disabled={submitting}
+              className="w-full bg-[#ffd331] text-[#404040] font-semibold py-3 rounded-xl disabled:opacity-60"
+            >
+              {submitting ? "등록 중..." : "알림 등록"}
+            </button>
+          )}
+        </>
       )}
     </div>
   );
