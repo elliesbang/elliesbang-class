@@ -35,7 +35,7 @@ export default function BottomNav() {
 
   // ⭐ VOD active 정확하게 체크
   const isVodActive =
-    pathname === "/vod/list" || pathname.startsWith("/vod/");
+    pathname === "/vod" || pathname === "/vod/list" || pathname.startsWith("/vod/");
 
   // ⭐ 역할별 마이페이지 분기
   const myPath =
