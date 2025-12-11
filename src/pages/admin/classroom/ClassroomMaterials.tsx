@@ -27,6 +27,9 @@ export default function ClassroomMaterials() {
   const [loading, setLoading] = useState(false);
   const [listLoading, setListLoading] = useState(false);
 
+  // ------------------------------
+  // 강의실 불러오기
+  // ------------------------------
   useEffect(() => {
     const fetchClassrooms = async () => {
       const { data } = await supabase
@@ -39,6 +42,9 @@ export default function ClassroomMaterials() {
     fetchClassrooms();
   }, []);
 
+  // ------------------------------
+  // 강의실 자료 불러오기
+  // ------------------------------
   const fetchMaterials = useCallback(async () => {
     if (!selectedClassroomId) {
       setMaterials([]);
@@ -65,6 +71,32 @@ export default function ClassroomMaterials() {
     fetchMaterials();
   }, [fetchMaterials]);
 
+  // ------------------------------
+  // file_name 자동 추출 함수 ★
+  // ------------------------------
+  const extractFileName = (url: string) => {
+    try {
+      return decodeURIComponent(url.split("/").pop() || "unknown");
+    } catch {
+      return "unknown";
+    }
+  };
+
+  // ------------------------------
+  // file_type 자동 추출 함수 ★
+  // ------------------------------
+  const guessFileType = (fileName: string) => {
+    const ext = fileName.split(".").pop()?.toLowerCase();
+
+    if (ext === "pdf") return "application/pdf";
+    if (["jpg", "jpeg", "png", "gif", "webp"].includes(ext || ""))
+      return `image/${ext}`;
+    return "application/octet-stream";
+  };
+
+  // ------------------------------
+  // 자료 추가/수정
+  // ------------------------------
   const handleSubmit = async () => {
     if (!selectedClassroomId) {
       alert("강의실을 먼저 선택해주세요.");
@@ -78,8 +110,12 @@ export default function ClassroomMaterials() {
 
     setLoading(true);
 
+    // ★ file_name, file_type 자동 생성
+    const fileName = extractFileName(form.file_url.trim());
+    const fileType = guessFileType(fileName);
+
     if (editingId) {
-      // 수정
+      // 수정 (file_name/file_type은 변경 X)
       await supabase
         .from("classroom_materials")
         .update({
@@ -88,11 +124,13 @@ export default function ClassroomMaterials() {
         })
         .eq("id", editingId);
     } else {
-      // 추가
+      // 추가 ★ file_name / file_type 포함
       await supabase.from("classroom_materials").insert({
         classroom_id: selectedClassroomId,
         title: form.title.trim(),
         file_url: form.file_url.trim(),
+        file_name: fileName, //
+        file_type: fileType, //
       });
     }
 
@@ -102,11 +140,17 @@ export default function ClassroomMaterials() {
     fetchMaterials();
   };
 
+  // ------------------------------
+  // 수정 버튼
+  // ------------------------------
   const handleEdit = (material: ClassroomMaterial) => {
     setForm({ title: material.title, file_url: material.file_url });
     setEditingId(material.id);
   };
 
+  // ------------------------------
+  // 삭제
+  // ------------------------------
   const handleDelete = async (id: number) => {
     if (!confirm("정말 삭제하시겠습니까?")) return;
 
@@ -116,6 +160,9 @@ export default function ClassroomMaterials() {
 
   const childClassrooms = classrooms.filter((cls) => cls.parent_id !== null);
 
+  // ------------------------------
+  // UI
+  // ------------------------------
   return (
     <div className="space-y-6">
       <h1 className="text-lg md:text-2xl font-bold text-[#404040]">강의실 자료 관리</h1>
