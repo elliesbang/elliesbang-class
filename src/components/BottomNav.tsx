@@ -1,4 +1,3 @@
-import { useEffect, useState } from "react";
 import { Home, BookOpen, PlayCircle, Megaphone, UserSquare } from "lucide-react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { useAuth } from "@/auth/AuthProvider";
@@ -6,27 +5,7 @@ import { useAuth } from "@/auth/AuthProvider";
 export default function BottomNav() {
   const location = useLocation();
   const navigate = useNavigate();
-  const { role } = useAuth();
-
-  const [storedRole, setStoredRole] = useState<"student" | "vod" | "admin" | null>(null);
-
-  useEffect(() => {
-    if (typeof window === "undefined") return;
-
-    try {
-      const raw = window.localStorage.getItem("role");
-      if (raw === "student" || raw === "vod" || raw === "admin") {
-        setStoredRole(raw);
-      } else {
-        setStoredRole(null);
-      }
-    } catch (err) {
-      console.error("BottomNav storage error:", err);
-      setStoredRole(null);
-    }
-  }, []);
-
-  const currentRole = role ?? storedRole;
+  const { user } = useAuth();
   const pathname = location.pathname;
 
   if (pathname.startsWith("/admin")) {
@@ -36,30 +15,32 @@ export default function BottomNav() {
   // ⭐ VOD active 정확하게 체크
   const isVodActive = pathname === "/vod" || pathname.startsWith("/vod/");
 
+  const handleNavigate = (target: string, key: string) => {
+    if (key === "my" && !user) {
+      navigate("/login");
+      return;
+    }
+
+    navigate(target);
+  };
+
   // ⭐ 역할별 마이페이지 분기
-  const myPath =
-    currentRole === "admin"
-      ? "/admin/my"
-      : currentRole === "student"
-      ? "/student/my"
-      : currentRole === "vod"
-      ? "/vod/my"
-      : "/home";
+  const myPath = "/my";
 
   const menu = [
     {
       key: "home",
       label: "홈",
       icon: Home,
-      to: "/home",
+      to: "/",
       active: pathname === "/" || pathname === "/home",
     },
     {
       key: "classroom",
       label: "강의실",
       icon: BookOpen,
-      to: "/student/classroom",
-      active: pathname.startsWith("/student/classroom"),
+      to: "/classroom",
+      active: pathname.startsWith("/classroom"),
     },
     {
       key: "vod",
@@ -72,8 +53,8 @@ export default function BottomNav() {
       key: "notice",
       label: "공지",
       icon: Megaphone,
-      to: "/notifications",
-      active: pathname.startsWith("/notifications"),
+      to: "/notices",
+      active: pathname.startsWith("/notices"),
     },
     {
       key: "my",
@@ -100,7 +81,7 @@ export default function BottomNav() {
           <button
             key={item.key}
             type="button"
-            onClick={() => navigate(item.to)}
+            onClick={() => handleNavigate(item.to, item.key)}
             className={baseBtnClass + (item.active ? activeClass : inactiveClass)}
           >
             <Icon size={20} />
