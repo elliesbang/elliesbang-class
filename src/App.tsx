@@ -36,21 +36,17 @@ import SignupModal from "./components/SignupModal";
 import { AuthModalDetail, openLoginModal } from "./lib/authModal";
 
 const MyPage = () => {
-  const { role } = useAuth();
+  const { role, loading } = useAuth(); // loading 여부 반드시 가져오기
 
+  // 1) role이 아직 로딩 중이면 아무것도 렌더하지 않기
+  if (loading) return null;
+
+  // 2) role 결정 후 처리
   if (role === "admin") return <AdminMy />;
   if (role === "student") return <StudentMy />;
   if (role === "vod") return <VodMy />;
 
   return <Navigate to="/" replace />;
-};
-
-const LoginPage = () => {
-  useEffect(() => {
-    openLoginModal(null, "로그인이 필요한 서비스입니다.");
-  }, []);
-
-  return <Home />;
 };
 
 const AppContent = () => {
