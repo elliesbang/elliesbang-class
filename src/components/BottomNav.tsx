@@ -62,6 +62,7 @@ export default function BottomNav() {
       icon: UserSquare,
       to: myPath,
       active:
+        pathname === "/my" ||
         pathname.startsWith("/student/my") ||
         pathname.startsWith("/admin/my") ||
         pathname.startsWith("/vod/my"),
