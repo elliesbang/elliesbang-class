@@ -75,10 +75,8 @@ useEffect(() => {
       try {
         const { data, error } = await supabase
           .from("vod_videos")
-         .select(
-  "id, vod_category_id, title, video_url, thumbnail_url, created_at, vod_category(id, name)"
-)
-          .order("created_at", { ascending: false });
+         .select("id, title, video_url, vod_topics(id, title)")
+ .order("created_at", { ascending: false });
 
         if (error) {
           console.error("VOD 불러오기 오류", error);
