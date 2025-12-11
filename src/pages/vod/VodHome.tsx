@@ -2,19 +2,23 @@ import { useEffect, useState } from "react";
 import { supabase } from "@/lib/supabaseClient";
 import { useNavigate } from "react-router-dom";
 import type { VodCategory } from "@/types/VodVideo";
+import VodCategoryIcon from "@/components/VodCategoryIcon";
+
+type VodCategoryWithParent = VodCategory & { parent_id: number | null };
 
 export default function VodHome() {
-  const [categories, setCategories] = useState<VodCategory[]>([]);
+  const [categories, setCategories] = useState<VodCategoryWithParent[]>([]);
   const [loading, setLoading] = useState(true);
   const navigate = useNavigate();
 
   const loadCategories = async () => {
     const { data, error } = await supabase
       .from("vod_category")
-      .select("id, name")
+      .select("id, name, parent_id")
+      .is("parent_id", null)
       .order("id", { ascending: true });
 
-    if (!error) setCategories(data ?? []);
+    if (!error) setCategories((data ?? []) as VodCategoryWithParent[]);
     setLoading(false);
   };
 
@@ -37,8 +41,8 @@ export default function VodHome() {
             className="flex flex-col items-center cursor-pointer"
             onClick={() => navigate(`/vod/category/${cat.id}`)}
           >
-            <div className="w-14 h-14 rounded-full bg-[#fdf7d8] flex items-center justify-center shadow">
-              <span className="text-2xl">🎬</span>
+            <div className="w-14 h-14 rounded-full bg-[#fdf7d8] flex items-center justify-center shadow text-[#404040]">
+              <VodCategoryIcon name={cat.name} />
             </div>
             <p className="text-sm mt-2 text-center">{cat.name}</p>
           </div>

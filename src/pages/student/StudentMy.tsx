@@ -45,9 +45,7 @@ const StudentMy = () => {
   const menuItems = [
     { label: "강의실 바로가기", path: "/student/classroom" },
     { label: "내 알림 보기", path: "/user-notifications" },
-    hasVodPurchase
-      ? { label: "VOD 구매내역", path: "/vod/list" }
-      : null,
+    hasVodPurchase ? { label: "VOD 구매내역", path: "/vod" } : null,
   ].filter(Boolean) as { label: string; path: string }[];
 
   return (
