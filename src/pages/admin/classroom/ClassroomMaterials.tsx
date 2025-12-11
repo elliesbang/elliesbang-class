@@ -31,24 +31,23 @@ export default function ClassroomMaterials() {
   // 강의실 불러오기 (외래키가 연결된 classrooms 테이블 사용)
   // ------------------------------
   useEffect(() => {
-    const fetchClassrooms = async () => {
-      const fetchClassrooms = async () => {
-  const { data, error } = await supabase
-    .from("class_category")
-    .select("id, name, parent_id, depth, order_num")
-    .order("order_num", { ascending: true });
+  const fetchClassrooms = async () => {
+    const { data, error } = await supabase
+      .from("class_category")
+      .select("id, name, parent_id")
+      .order("order_num", { ascending: true });
 
-  if (error) {
-    console.error("강의실 목록 불러오기 실패", error);
-    return;
-  }
+    if (error) {
+      console.error("강의실 목록 불러오기 실패", error);
+      return;
+    }
 
-  setClassrooms(data || []);
-};
-      
-    fetchClassrooms();
-  }, []);
+    setClassrooms(data || []);
+  };
 
+  fetchClassrooms();
+}, []);
+  
   // ------------------------------
   // 강의실 자료 불러오기
   // ------------------------------
