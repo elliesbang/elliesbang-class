@@ -1,3 +1,4 @@
+import { useEffect, useState } from "react";
 import { Navigate } from "react-router-dom";
 import { useAuth } from "./AuthProvider";
 import { openLoginModal } from "../lib/authModal";
@@ -9,26 +10,32 @@ type Props = {
 
 const ProtectedRoute = ({ children, allow }: Props) => {
   const { user, role, loading } = useAuth();
+  const [storedRole, setStoredRole] = useState<"student" | "vod" | "admin" | null>(null);
+  const [roleReady, setRoleReady] = useState(false);
 
-  // 🔒 localStorage 접근을 항상 try/catch로 감싸기
-  let storedRole: "student" | "vod" | "admin" | null = null;
+  useEffect(() => {
+    if (typeof window === "undefined") {
+      setRoleReady(true);
+      return;
+    }
 
-  if (typeof window !== "undefined") {
     try {
       const raw = window.localStorage.getItem("role");
       if (raw === "student" || raw === "vod" || raw === "admin") {
-        storedRole = raw;
+        setStoredRole(raw);
       }
     } catch (err) {
       console.error("ProtectedRoute storage error:", err);
-      storedRole = null;
+      setStoredRole(null);
+    } finally {
+      setRoleReady(true);
     }
-  }
+  }, []);
 
   const effectiveRole = role ?? storedRole;
 
   // 1) 세션 로딩 중이면 아무것도 렌더링하지 않음 (스켈레톤을 쓰고 싶으면 여기서 교체)
-  if (loading) return null;
+  if (loading || !roleReady) return null;
 
   // 2) allow가 없으면 보호하지 않음 → 그냥 통과
   if (!allow) {

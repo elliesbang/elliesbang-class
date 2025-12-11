@@ -30,7 +30,9 @@ const LoginModal = ({ role, onClose, onChangeMode, onSelectRole }: LoginModalPro
       return;
     }
 
-    localStorage.setItem("role", activeRole);
+    if (typeof window !== "undefined") {
+      localStorage.setItem("role", activeRole);
+    }
 
     if (activeRole === "admin") window.location.href = "/admin/my";
     else if (activeRole === "student") window.location.href = "/student/my";

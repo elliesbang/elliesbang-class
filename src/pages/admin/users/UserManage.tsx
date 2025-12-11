@@ -49,6 +49,12 @@ export default function UserManage() {
   const [error, setError] = useState<string | null>(null);
 
   const fetchUsers = async () => {
+    if (typeof window === "undefined") {
+      setLoading(false);
+      setError("브라우저 환경에서만 사용자 목록을 불러올 수 있습니다.");
+      return;
+    }
+
     try {
       setLoading(true);
       setError(null);

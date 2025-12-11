@@ -6,18 +6,29 @@ export default function VodUsers() {
   const [loading, setLoading] = useState(true);
 
   const fetchVodUsers = async () => {
-    setLoading(true);
+    if (typeof window === "undefined") {
+      setLoading(false);
+      return;
+    }
 
-    const { data: sessionData } = await supabase.auth.getSession();
-    const accessToken = sessionData.session?.access_token;
+    try {
+      setLoading(true);
 
-    const res = await fetch("/api/admin-users?role=vod", {
-      headers: { Authorization: `Bearer ${accessToken}` },
-    });
+      const { data: sessionData } = await supabase.auth.getSession();
+      const accessToken = sessionData.session?.access_token;
 
-    const payload = await res.json();
-    setUsers(payload.users ?? []);
-    setLoading(false);
+      const res = await fetch("/api/admin-users?role=vod", {
+        headers: { Authorization: `Bearer ${accessToken}` },
+      });
+
+      const payload = await res.json();
+      setUsers(payload.users ?? []);
+    } catch (err) {
+      console.error("fetchVodUsers error:", err);
+      setUsers([]);
+    } finally {
+      setLoading(false);
+    }
   };
 
   useEffect(() => {

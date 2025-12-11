@@ -1,5 +1,5 @@
 // src/pages/Home.tsx
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Megaphone, PlayCircle, ChevronRight } from "lucide-react";
 import { supabase } from "../lib/supabaseClient";
@@ -108,12 +108,7 @@ useEffect(() => {
   }, []);
 
   // 재생 권한 체크
-  const effectiveRole = useMemo(
-    () => role ?? (typeof window !== "undefined"
-      ? ((window.localStorage.getItem("role") as "student" | "vod" | "admin" | null) ?? null)
-      : null),
-    [role]
-  );
+  const effectiveRole = role;
 
   async function handlePlay(videoId: number) {
     const currentRole = effectiveRole;

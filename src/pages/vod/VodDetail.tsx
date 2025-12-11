@@ -41,8 +41,14 @@ export default function VodDetail() {
   // 로그인 / 역할 체크
   // ------------------------------
   useEffect(() => {
-    const localRole = window.localStorage.getItem("role") as UserRole;
-    if (localRole) setRole(localRole);
+    if (typeof window === "undefined") return;
+
+    try {
+      const localRole = window.localStorage.getItem("role") as UserRole;
+      if (localRole) setRole(localRole);
+    } catch (err) {
+      console.error("VodDetail storage error:", err);
+    }
   }, []);
 
   useEffect(() => {

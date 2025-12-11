@@ -1,3 +1,4 @@
+import { useEffect, useState } from "react";
 import { Home, BookOpen, PlayCircle, Megaphone, UserSquare } from "lucide-react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { useAuth } from "@/auth/AuthProvider";
@@ -7,8 +8,23 @@ export default function BottomNav() {
   const navigate = useNavigate();
   const { role } = useAuth();
 
-  const storedRole =
-    typeof window !== "undefined" ? localStorage.getItem("role") : null;
+  const [storedRole, setStoredRole] = useState<"student" | "vod" | "admin" | null>(null);
+
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+
+    try {
+      const raw = window.localStorage.getItem("role");
+      if (raw === "student" || raw === "vod" || raw === "admin") {
+        setStoredRole(raw);
+      } else {
+        setStoredRole(null);
+      }
+    } catch (err) {
+      console.error("BottomNav storage error:", err);
+      setStoredRole(null);
+    }
+  }, []);
 
   const currentRole = role ?? storedRole;
   const pathname = location.pathname;
