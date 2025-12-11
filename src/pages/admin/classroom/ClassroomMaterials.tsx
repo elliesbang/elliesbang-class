@@ -32,18 +32,20 @@ export default function ClassroomMaterials() {
   // ------------------------------
   useEffect(() => {
     const fetchClassrooms = async () => {
-      const { data, error } = await supabase
-        .from("classrooms")
-        .select("id, name, parent_id")
-        .order("id", { ascending: true });
+      const fetchClassrooms = async () => {
+  const { data, error } = await supabase
+    .from("class_category")
+    .select("id, name, parent_id, depth, order_num")
+    .order("order_num", { ascending: true });
 
-      if (error) {
-        console.error("강의실 목록 불러오기 실패", error);
-        return;
-      }
+  if (error) {
+    console.error("강의실 목록 불러오기 실패", error);
+    return;
+  }
 
-      setClassrooms(data || []);
-    };
+  setClassrooms(data || []);
+};
+      
     fetchClassrooms();
   }, []);
 
