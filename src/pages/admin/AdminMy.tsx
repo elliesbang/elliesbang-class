@@ -2,6 +2,7 @@ import { useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "../../auth/AuthProvider";
 import { useLogout } from "../../hooks/useLogout";
+import NotificationPreferences from "@/components/NotificationPreferences";
 
 const AdminMy = () => {
   const navigate = useNavigate();
@@ -36,6 +37,8 @@ const AdminMy = () => {
           <p className="text-sm text-[#9ca3af]">{displayEmail}</p>
         </div>
       </div>
+
+      <NotificationPreferences role="admin" userId={user?.id} />
 
       <div className="mt-8 space-y-3">
         {menuItems.map((item) => (
