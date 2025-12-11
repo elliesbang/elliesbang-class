@@ -88,10 +88,10 @@ export default function ClassroomMaterials() {
   const guessFileType = (fileName: string) => {
     const ext = fileName.split(".").pop()?.toLowerCase();
 
-    if (ext === "pdf") return "application/pdf";
-    if (["jpg", "jpeg", "png", "gif", "webp"].includes(ext || ""))
-      return `image/${ext}`;
-    return "application/octet-stream";
+    if (ext === "pdf") return "pdf";
+    if (["jpg", "jpeg", "png", "gif", "webp", "avif", "svg"].includes(ext || ""))
+      return "image";
+    return "link";
   };
 
   // ------------------------------
@@ -116,22 +116,39 @@ export default function ClassroomMaterials() {
 
     if (editingId) {
       // 수정 (file_name/file_type은 변경 X)
-      await supabase
+      const { error } = await supabase
         .from("classroom_materials")
         .update({
           title: form.title.trim(),
           file_url: form.file_url.trim(),
         })
         .eq("id", editingId);
+
+      if (error) {
+        console.error("자료 수정 실패", error);
+        alert(error.message || "자료 수정에 실패했습니다. 다시 시도해주세요.");
+        setLoading(false);
+        return;
+      }
     } else {
       // 추가 ★ file_name / file_type 포함
-      await supabase.from("classroom_materials").insert({
+      const { error } = await supabase.from("classroom_materials").insert({
         classroom_id: selectedClassroomId,
         title: form.title.trim(),
         file_url: form.file_url.trim(),
         file_name: fileName, //
         file_type: fileType, //
       });
+
+      if (error) {
+        console.error("자료 추가 실패", error);
+        alert(
+          error.message ||
+            "자료 추가에 실패했습니다. 입력한 링크나 파일 형식을 다시 확인해주세요."
+        );
+        setLoading(false);
+        return;
+      }
     }
 
     setForm({ title: "", file_url: "" });
@@ -154,7 +171,17 @@ export default function ClassroomMaterials() {
   const handleDelete = async (id: number) => {
     if (!confirm("정말 삭제하시겠습니까?")) return;
 
-    await supabase.from("classroom_materials").delete().eq("id", id);
+    const { error } = await supabase
+      .from("classroom_materials")
+      .delete()
+      .eq("id", id);
+
+    if (error) {
+      console.error("자료 삭제 실패", error);
+      alert(error.message || "자료 삭제에 실패했습니다. 다시 시도해주세요.");
+      return;
+    }
+
     setMaterials((prev) => prev.filter((m) => m.id !== id));
   };
 
