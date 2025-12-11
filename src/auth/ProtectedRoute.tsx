@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { Navigate } from "react-router-dom";
+import { Navigate, useLocation } from "react-router-dom";
 import { useAuth } from "./AuthProvider";
 import { openLoginModal } from "../lib/authModal";
 
@@ -10,8 +10,18 @@ type Props = {
 
 const ProtectedRoute = ({ children, allow }: Props) => {
   const { user, role, loading } = useAuth();
-  const [storedRole, setStoredRole] = useState<"student" | "vod" | "admin" | null>(null);
+  const [storedRole, setStoredRole] =
+    useState<"student" | "vod" | "admin" | null>(null);
   const [roleReady, setRoleReady] = useState(false);
+
+  const location = useLocation();
+
+  // 🔥 마이탭 경로인지 체크
+  const isMyTab =
+    location.pathname.startsWith("/my") ||
+    location.pathname.startsWith("/student/my") ||
+    location.pathname.startsWith("/vod/my") ||
+    location.pathname.startsWith("/admin/my");
 
   useEffect(() => {
     if (typeof window === "undefined") {
@@ -34,17 +44,31 @@ const ProtectedRoute = ({ children, allow }: Props) => {
 
   const effectiveRole = role ?? storedRole;
 
-  // 1) 세션 로딩 중이면 아무것도 렌더링하지 않음 (스켈레톤을 쓰고 싶으면 여기서 교체)
   if (loading || !roleReady) return null;
 
-  // 2) allow가 없으면 보호하지 않음 → 그냥 통과
+  // 🔥🔥 1) 마이탭은 모든 역할이 접근 가능 (권한 제한 없음)
+  if (isMyTab) {
+    // 로그인 안 됨 → 로그인 필요
+    if (!user) {
+      try {
+        openLoginModal(null, "로그인이 필요한 서비스입니다.");
+      } catch (err) {
+        console.error("openLoginModal error:", err);
+      }
+      return <Navigate to="/" replace />;
+    }
+
+    // 로그인 OK → 그냥 children 렌더링
+    return <>{children}</>;
+  }
+
+  // 🔥🔥 2) allow 없으면 그냥 통과
   if (!allow) {
     return <>{children}</>;
   }
 
-  // 3) 로그인 필요 + 역할 필요
+  // 🔥🔥 3) 로그인 필요
   if (!user || !effectiveRole) {
-    // ❗ 렌더 중에 모달 여는 것도 약간 위험하긴 하지만, 지금 구조에 맞춰 유지
     try {
       openLoginModal(null, "로그인이 필요한 서비스입니다.");
     } catch (err) {
@@ -53,7 +77,7 @@ const ProtectedRoute = ({ children, allow }: Props) => {
     return <Navigate to="/" replace />;
   }
 
-  // 4) 허용된 역할이 아닌 경우
+  // 🔥🔥 4) 역할 불일치
   if (!allow.includes(effectiveRole)) {
     if (effectiveRole === "student") {
       alert("해당 메뉴는 VOD 전용 서비스입니다.");
