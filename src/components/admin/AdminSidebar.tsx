@@ -164,17 +164,56 @@ export default function AdminSidebar({ isOpen, onClose }: Props) {
         </NavLink>
 
         {/* ----------------------- */}
-        {/* VOD 관리 (링크 추가 방식) */}
+        {/* VOD 관리 */}
         {/* ----------------------- */}
-        <NavLink
-          to="/admin/vod"
-          className={({ isActive }) =>
-            `${menuStyle} ${isActive ? "bg-[#f3efe4]" : ""}`
-          }
+        <button
+          className={`${menuStyle} justify-between`}
+          onClick={() => toggleMenu("vod")}
         >
-          <PlaySquare size={18} />
-          VOD 관리
-        </NavLink>
+          <span className="flex items-center gap-2">
+            <PlaySquare size={18} />
+            VOD 관리
+          </span>
+          {openMenu === "vod" ? (
+            <ChevronDown size={18} />
+          ) : (
+            <ChevronRight size={18} />
+          )}
+        </button>
+
+        {openMenu === "vod" && (
+          <div className="flex flex-col">
+            <NavLink
+              to="/admin/vod/categories"
+              className={({ isActive }) =>
+                `${subMenuStyle} ${isActive ? "bg-[#f3efe4]" : ""}`
+              }
+            >
+              <PlaySquare size={16} />
+              카테고리 관리
+            </NavLink>
+
+            <NavLink
+              to="/admin/vod/topics"
+              className={({ isActive }) =>
+                `${subMenuStyle} ${isActive ? "bg-[#f3efe4]" : ""}`
+              }
+            >
+              <PlaySquare size={16} />
+              토픽 관리
+            </NavLink>
+
+            <NavLink
+              to="/admin/vod/videos"
+              className={({ isActive }) =>
+                `${subMenuStyle} ${isActive ? "bg-[#f3efe4]" : ""}`
+              }
+            >
+              <PlaySquare size={16} />
+              영상 관리
+            </NavLink>
+          </div>
+        )}
 
         {/* ----------------------- */}
         {/* 사용자 관리 */}
