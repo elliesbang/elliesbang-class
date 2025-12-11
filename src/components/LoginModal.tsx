@@ -20,9 +20,17 @@ const LoginModal = ({ role, onClose, onChangeMode, onSelectRole }: LoginModalPro
   const [password, setPassword] = useState("");
 
   const login = async () => {
+    const trimmedEmail = email.trim().toLowerCase();
+    const trimmedPassword = password.trim();
+
+    if (!trimmedEmail || !trimmedPassword) {
+      alert("이메일과 비밀번호를 모두 입력해주세요.");
+      return;
+    }
+
     const { data, error } = await supabase.auth.signInWithPassword({
-      email,
-      password,
+      email: trimmedEmail,
+      password: trimmedPassword,
     });
 
     if (error) {
