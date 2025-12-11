@@ -23,7 +23,12 @@ const ProtectedRoute = ({ children, allow }: Props) => {
     location.pathname.startsWith("/vod/my") ||
     location.pathname.startsWith("/admin/my");
 
-  // 1) 로컬스토리지에서 role 불러오기
+  // 🔥 홈("/")은 항상 즉시 렌더 → 빈 화면 방지
+  if (location.pathname === "/") {
+    return <>{children}</>;
+  }
+
+  // role 불러오기
   useEffect(() => {
     if (typeof window === "undefined") {
       setRoleReady(true);
@@ -45,7 +50,7 @@ const ProtectedRoute = ({ children, allow }: Props) => {
 
   const effectiveRole = role ?? storedRole;
 
-  // 로딩 중에는 렌더링 x
+  // 초기 로딩 중엔 잠시 렌더링 안함
   if (loading || !roleReady) return null;
 
   // ------------------------------------------------------------------------
@@ -65,8 +70,7 @@ const ProtectedRoute = ({ children, allow }: Props) => {
   }
 
   // ------------------------------------------------------------------------
-  // 🔥 2) 마이탭이 아닌 경우 → 완전한 공개 페이지로 처리
-  //     allow, role, user 모두 무시하고 그대로 children 렌더링
+  // 🔥 2) 마이탭이 아닌 경우 → 로그인 여부와 관계없이 공개
   // ------------------------------------------------------------------------
   return <>{children}</>;
 };
