@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { useAuth } from "../../auth/AuthProvider";
 import { useLogout } from "../../hooks/useLogout";
 import { supabase } from "../../lib/supabaseClient";
+import NotificationPreferences from "@/components/NotificationPreferences";
 
 const StudentMy = () => {
   const navigate = useNavigate();
@@ -60,6 +61,8 @@ const StudentMy = () => {
           <p className="text-sm text-[#9ca3af]">{displayEmail}</p>
         </div>
       </div>
+
+      <NotificationPreferences role="student" userId={user?.id} />
 
       <div className="mt-8 space-y-3">
         {menuItems.map((item) => (
