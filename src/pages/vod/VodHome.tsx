@@ -1,12 +1,7 @@
 import { useEffect, useState } from "react";
 import { supabase } from "@/lib/supabaseClient";
 import { useNavigate } from "react-router-dom";
-
-type VodCategory = {
-  id: number;
-  name: string;
-  icon_url?: string | null;
-};
+import type { VodCategory } from "@/types/VodVideo";
 
 export default function VodHome() {
   const [categories, setCategories] = useState<VodCategory[]>([]);
@@ -16,7 +11,7 @@ export default function VodHome() {
   const loadCategories = async () => {
     const { data, error } = await supabase
       .from("vod_category")
-      .select("id, name, icon_url")
+      .select("id, name")
       .order("id", { ascending: true });
 
     if (!error) setCategories(data ?? []);
@@ -43,15 +38,7 @@ export default function VodHome() {
             onClick={() => navigate(`/vod/category/${cat.id}`)}
           >
             <div className="w-14 h-14 rounded-full bg-[#fdf7d8] flex items-center justify-center shadow">
-              {cat.icon_url ? (
-                <img
-                  src={cat.icon_url}
-                  className="w-8 h-8 object-contain"
-                  alt={cat.name}
-                />
-              ) : (
-                <span className="text-2xl">🎬</span>
-              )}
+              <span className="text-2xl">🎬</span>
             </div>
             <p className="text-sm mt-2 text-center">{cat.name}</p>
           </div>
