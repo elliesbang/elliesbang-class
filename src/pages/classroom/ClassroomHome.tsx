@@ -26,10 +26,10 @@ export default function ClassroomHome() {
 
   useEffect(() => {
     const loadCategories = async () => {
-      const { data, error } = await supabase
-        .from("class_category")
-        .select("id, name, parent_id, description")
-        .order("order_num", { ascending: true });
+     const { data, error } = await supabase
+  .from("class_category")
+  .select("id, name, parent_id") // description 제거
+  .order("order_num", { ascending: true });
 
       if (error) {
         console.error("강의실 카테고리 불러오기 실패", error);
