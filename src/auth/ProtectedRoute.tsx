@@ -23,6 +23,7 @@ const ProtectedRoute = ({ children, allow }: Props) => {
     location.pathname.startsWith("/vod/my") ||
     location.pathname.startsWith("/admin/my");
 
+  // 1) 로컬스토리지에서 role 불러오기
   useEffect(() => {
     if (typeof window === "undefined") {
       setRoleReady(true);
@@ -44,11 +45,13 @@ const ProtectedRoute = ({ children, allow }: Props) => {
 
   const effectiveRole = role ?? storedRole;
 
+  // 로딩 중에는 렌더링 x
   if (loading || !roleReady) return null;
 
-  // 🔥🔥 1) 마이탭은 모든 역할이 접근 가능 (권한 제한 없음)
+  // ------------------------------------------------------------------------
+  // 🔥 1) 마이탭 보호 처리 (로그인 필수)
+  // ------------------------------------------------------------------------
   if (isMyTab) {
-    // 로그인 안 됨 → 로그인 필요
     if (!user) {
       try {
         openLoginModal(null, "로그인이 필요한 서비스입니다.");
@@ -58,38 +61,13 @@ const ProtectedRoute = ({ children, allow }: Props) => {
       return <Navigate to="/" replace />;
     }
 
-    // 로그인 OK → 그냥 children 렌더링
     return <>{children}</>;
   }
 
-  // 🔥🔥 2) allow 없으면 그냥 통과
-  if (!allow) {
-    return <>{children}</>;
-  }
-
-  // 🔥🔥 3) 로그인 필요
-  if (!user || !effectiveRole) {
-    try {
-      openLoginModal(null, "로그인이 필요한 서비스입니다.");
-    } catch (err) {
-      console.error("openLoginModal error:", err);
-    }
-    return <Navigate to="/" replace />;
-  }
-
-  // 🔥🔥 4) 역할 불일치
-  if (!allow.includes(effectiveRole)) {
-    if (effectiveRole === "student") {
-      alert("해당 메뉴는 VOD 전용 서비스입니다.");
-    }
-
-    if (effectiveRole === "admin") return <Navigate to="/admin/my" replace />;
-    if (effectiveRole === "student") return <Navigate to="/student/my" replace />;
-    if (effectiveRole === "vod") return <Navigate to="/vod/my" replace />;
-
-    return <Navigate to="/" replace />;
-  }
-
+  // ------------------------------------------------------------------------
+  // 🔥 2) 마이탭이 아닌 경우 → 완전한 공개 페이지로 처리
+  //     allow, role, user 모두 무시하고 그대로 children 렌더링
+  // ------------------------------------------------------------------------
   return <>{children}</>;
 };
 
