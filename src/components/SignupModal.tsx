@@ -55,7 +55,9 @@ const SignupModal = ({
     }
 
     // 자동 로그인되었을 때
-    localStorage.setItem("role", activeRole);
+    if (typeof window !== "undefined") {
+      localStorage.setItem("role", activeRole);
+    }
 
     if (activeRole === "student") window.location.href = "/student/my";
     else if (activeRole === "vod") window.location.href = "/vod/my";

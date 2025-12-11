@@ -43,6 +43,13 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   useEffect(() => {
     let isMounted = true;
 
+    if (typeof window === "undefined") {
+      setLoading(false);
+      return () => {
+        isMounted = false;
+      };
+    }
+
     const restoreSession = async () => {
       try {
         const { data, error } = await supabase.auth.getSession();
