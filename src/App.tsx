@@ -35,6 +35,8 @@ import GlobalNotices from "./pages/admin/notices/GlobalNotices";
 import VodManager from "./pages/admin/vod/VodManager";
 
 import UserManage from "./pages/admin/users/UserManage";
+import StudentUsers from "./pages/admin/users/StudentUsers";
+import VodUsers from "./pages/admin/users/VodUsers";
 
 import ClassManager from "./pages/admin/class/ClassManager";
 
@@ -96,21 +98,22 @@ const AppContent = () => {
           {/* ---------------- VOD ---------------- */}
 
           {/* ✅ VOD 목록은 누구나 접근 가능 (ProtectedRoute 제거) */}
-         <Route path="/vod" element={<VodHome />} />
-<Route path="/vod/program/:programId" element={<VodProgramPage />} />
-<Route path="/vod/topic/:topicId" element={<VodTopic />} />
+          <Route path="/vod" element={<VodHome />} />
+          <Route path="/vod/list" element={<VodHome />} />
+          <Route path="/vod/program/:programId" element={<VodProgramPage />} />
+          <Route path="/vod/topic/:topicId" element={<VodTopic />} />
 
 
 
           {/* ✅ VOD 영상 재생만 로그인 + 권한 필요 */}
-         <Route
-  path="/vod/video/:videoId"
-  element={
-    <ProtectedRoute allow={["admin", "vod"]}>
-      <VodDetail />
-    </ProtectedRoute>
-  }
-/>
+          <Route
+            path="/vod/video/:videoId"
+            element={
+              <ProtectedRoute allow={["admin", "vod"]}>
+                <VodDetail />
+              </ProtectedRoute>
+            }
+          />
 
 
           {/* ---------------- 관리자 마이 ---------------- */}
@@ -259,6 +262,28 @@ const AppContent = () => {
               <ProtectedRoute allow={["admin"]}>
                 <AdminLayout>
                   <UserManage />
+                </AdminLayout>
+              </ProtectedRoute>
+            }
+          />
+
+          <Route
+            path="/admin/users/students"
+            element={
+              <ProtectedRoute allow={["admin"]}>
+                <AdminLayout>
+                  <StudentUsers />
+                </AdminLayout>
+              </ProtectedRoute>
+            }
+          />
+
+          <Route
+            path="/admin/users/vod"
+            element={
+              <ProtectedRoute allow={["admin"]}>
+                <AdminLayout>
+                  <VodUsers />
                 </AdminLayout>
               </ProtectedRoute>
             }
