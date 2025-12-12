@@ -130,16 +130,7 @@ const AppContent = () => {
             }
           />
 
-          <Route
-            path="/admin/my"
-            element={
-              <ProtectedRoute allow={["admin"]}>
-                <AdminLayout>
-                  <AdminMy />
-                </AdminLayout>
-              </ProtectedRoute>
-            }
-          />
+          <Route path="/admin/my" element={<Navigate to="/my" replace />} />
 
           <Route
             path="/admin/classroom/videos"
