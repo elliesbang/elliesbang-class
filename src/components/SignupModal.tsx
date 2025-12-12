@@ -59,6 +59,22 @@ const SignupModal = ({
       localStorage.setItem("role", activeRole);
     }
 
+    // 프로필 자동 저장
+    const { error: profileError } = await supabase.from("profiles").upsert(
+      {
+        id: data.user.id,
+        role: activeRole,
+        name,
+        full_name: name,
+        email,
+      },
+      { onConflict: "id" }
+    );
+
+    if (profileError) {
+      console.error("Failed to save profile:", profileError);
+    }
+
     window.location.href = "/my";
 
     setLoading(false);
