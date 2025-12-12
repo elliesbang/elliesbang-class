@@ -68,7 +68,7 @@ export default function VodHome() {
             key={topic.id}
             title={topic.title}
             iconUrl={topic.icon_url}
-            onClick={() => navigate(`/vod/topic/${topic.id}`)}
+            onClick={() => navigate(`/vod/topics/${topic.id}/videos`)}
           />
         ))}
       </div>
