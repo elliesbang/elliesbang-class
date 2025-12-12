@@ -116,9 +116,9 @@ return () => {
   }, []);
 
   return (
-    <AuthContext.Provider value={{ user, role, loading }}>
-      {children}
-    </AuthContext.Provider>
+    <AuthContext.Provider value={{ user, role, loading, roleReady }}>
+  {children}
+</AuthContext.Provider>
   );
 };
 
