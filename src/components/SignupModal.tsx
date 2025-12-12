@@ -59,8 +59,7 @@ const SignupModal = ({
       localStorage.setItem("role", activeRole);
     }
 
-    if (activeRole === "student") window.location.href = "/student/my";
-    else if (activeRole === "vod") window.location.href = "/vod/my";
+    window.location.href = "/my";
 
     setLoading(false);
 

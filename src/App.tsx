@@ -89,6 +89,7 @@ const AppContent = () => {
         <Routes>
           <Route path="/" element={<Home />} />
           <Route path="/home" element={<Home />} />
+          <Route path="" element={<Navigate to="/" replace />} />
           <Route path="/login" element={<LoginPage />} />
 
           <Route path="/vod" element={<VodHome />} />
@@ -263,6 +264,8 @@ const AppContent = () => {
               </ProtectedRoute>
             }
           />
+
+          <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
       </div>
 
