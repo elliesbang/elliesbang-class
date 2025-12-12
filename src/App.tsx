@@ -4,7 +4,6 @@ import { useEffect, useState } from "react";
 import { BrowserRouter, Routes, Route, useLocation, Navigate } from "react-router-dom";
 import { AuthProvider, useAuth } from "./auth/AuthProvider";
 import ProtectedRoute from "./auth/ProtectedRoute";
-import AdminMy from "./pages/admin/AdminMy";
 import StudentMy from "./pages/student/StudentMy";
 import VodMy from "./pages/vod/VodMy";
 import Home from "./pages/Home";
@@ -48,7 +47,7 @@ const MyPage = () => {
   if (loading) return null;
 
   // 2) role 결정 후 처리
-  if (role === "admin") return <AdminMy />;
+  if (role === "admin") return <Navigate to="/admin" replace />;
   if (role === "student") return <StudentMy />;
   if (role === "vod") return <VodMy />;
 

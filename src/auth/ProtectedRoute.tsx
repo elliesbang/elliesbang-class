@@ -49,6 +49,10 @@ const ProtectedRoute = ({ children, allow }: Props) => {
   // auth/role 아직 준비 안 됐으면 렌더링 지연
   if (loading || !roleReady) return null;
 
+  if (effectiveRole === "admin" && !location.pathname.startsWith("/admin")) {
+    return <Navigate to="/admin" replace />;
+  }
+
   // ------------------------------------------------------------------
   // 1) 마이탭 보호: 로그인 필수, 모달만 띄우고 화면은 비움
   // ------------------------------------------------------------------

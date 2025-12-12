@@ -12,6 +12,11 @@ export default function BottomNav() {
   const isVodActive = pathname === "/vod" || pathname.startsWith("/vod/");
 
   const handleNavigate = (target: string, key: string) => {
+    if (key === "my" && role === "admin") {
+      navigate("/admin");
+      return;
+    }
+
     if (key === "my" && !user) {
       navigate("/login");
       return;
