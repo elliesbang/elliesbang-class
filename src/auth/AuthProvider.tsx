@@ -1,4 +1,5 @@
 import { createContext, useContext, useEffect, useState } from "react";
+import { useLocation, useNavigate } from "react-router-dom";
 import { supabase } from "../lib/supabaseClient";
 
 type UserRole = "student" | "vod" | "admin" | null;
@@ -14,7 +15,7 @@ const AuthContext = createContext<AuthContextType>({
   user: null,
   role: null,
   loading: true,
-  roleReady: false, 
+  roleReady: false,
 });
 
 export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
@@ -22,6 +23,8 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const [role, setRole] = useState<UserRole>(null);
   const [loading, setLoading] = useState(true);
   const [roleReady, setRoleReady] = useState(false);
+  const navigate = useNavigate();
+  const location = useLocation();
 
   // OAuth 리다이렉트 후 role 저장 함수
   const saveOAuthRole = async (session: any) => {
@@ -66,6 +69,9 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
           const userRole = data.session.user.user_metadata?.role ?? null;
           setRole(userRole as UserRole);
           setRoleReady(true);
+        } else {
+          if (!isMounted) return;
+          setRoleReady(true);
         }
       } catch (err) {
         // 여기서 storage 관련 에러를 잡아줌
@@ -73,6 +79,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         if (isMounted) {
           setUser(null);
           setRole(null);
+          setRoleReady(true);
         }
       } finally {
         if (isMounted) setLoading(false);
@@ -81,44 +88,50 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
 
     restoreSession();
 
-   let subscription: any = null;
+    let subscription: any = null;
 
-if (typeof window !== "undefined") {
-  const listener = supabase.auth.onAuthStateChange(async (_event, session) => {
-    try {
-      if (session?.user) {
-        await saveOAuthRole(session);
-        if (!isMounted) return;
+    if (typeof window !== "undefined") {
+      const listener = supabase.auth.onAuthStateChange(async (_event, session) => {
+        try {
+          if (session?.user) {
+            await saveOAuthRole(session);
+            if (!isMounted) return;
 
-        setUser(session.user);
-        const userRole = session.user.user_metadata?.role ?? null;
-        setRole(userRole as UserRole);
-        setRoleReady(true); 
-      } else {
-        if (!isMounted) return;
-        setUser(null);
-        setRole(null);
-        setRoleReady(true);
-      }
-    } catch (err) {
-      console.error("onAuthStateChange error:", err);
+            setUser(session.user);
+            const userRole = session.user.user_metadata?.role ?? null;
+            setRole(userRole as UserRole);
+            setRoleReady(true);
+          } else {
+            if (!isMounted) return;
+            setUser(null);
+            setRole(null);
+            setRoleReady(true);
+          }
+        } catch (err) {
+          console.error("onAuthStateChange error:", err);
+        }
+      });
+
+      subscription = listener.data.subscription;
     }
-  });
 
-  subscription = listener.data.subscription;
-}
-
-return () => {
-  isMounted = false;
-  if (subscription) subscription.unsubscribe();
-};
-
+    return () => {
+      isMounted = false;
+      if (subscription) subscription.unsubscribe();
+    };
   }, []);
+
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    if (role === "admin" && !location.pathname.startsWith("/admin")) {
+      navigate("/admin", { replace: true });
+    }
+  }, [role, navigate, location.pathname]);
 
   return (
     <AuthContext.Provider value={{ user, role, loading, roleReady }}>
-  {children}
-</AuthContext.Provider>
+      {children}
+    </AuthContext.Provider>
   );
 };
 
