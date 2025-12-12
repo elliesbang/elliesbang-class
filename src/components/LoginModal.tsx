@@ -42,7 +42,8 @@ const LoginModal = ({ role, onClose, onChangeMode, onSelectRole }: LoginModalPro
       localStorage.setItem("role", activeRole);
     }
 
-    window.location.href = "/my";
+    const targetPath = activeRole === "admin" ? "/admin/my" : "/my";
+    window.location.href = targetPath;
   };
 
   const googleLogin = async () => {
