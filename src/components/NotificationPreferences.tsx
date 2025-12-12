@@ -158,7 +158,7 @@ const NotificationPreferences = ({ role, userId }: Props) => {
       <div>
         <p className="text-lg font-semibold text-[#404040]">알림 설정</p>
         <p className="text-sm text-[#9ca3af] mt-1">
-          로그인 후 받을 유저 노티피케이션을 선택하면 종 알림에 추가돼요.
+          로그인 후 알림을 선택하면 종 알림에 추가돼요.
         </p>
       </div>
 
@@ -189,7 +189,7 @@ const NotificationPreferences = ({ role, userId }: Props) => {
         <>
           {saved ? (
             <div className="text-center text-green-600 font-medium">
-              ✓ 유저 노티피케이션 설정이 저장되었습니다
+              ✓ 알림 설정이 저장되었습니다
             </div>
           ) : (
             <button
