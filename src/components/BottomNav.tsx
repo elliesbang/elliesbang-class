@@ -5,7 +5,7 @@ import { useAuth } from "@/auth/AuthProvider";
 export default function BottomNav() {
   const location = useLocation();
   const navigate = useNavigate();
-  const { user } = useAuth();
+  const { user, role } = useAuth();
   const pathname = location.pathname;
 
   if (pathname.startsWith("/admin")) {
@@ -25,7 +25,7 @@ export default function BottomNav() {
   };
 
   // ⭐ 역할별 마이페이지 분기
-  const myPath = "/my";
+  const myPath = role === "admin" ? "/admin/my" : "/my";
 
   const menu = [
     {
