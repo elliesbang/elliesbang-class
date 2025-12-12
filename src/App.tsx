@@ -10,9 +10,7 @@ import VodMy from "./pages/vod/VodMy";
 import Home from "./pages/Home";
 import VodHome from "./pages/vod/VodHome";
 import VodDetail from "./pages/vod/VodDetail";
-import VodCategoryPage from "./pages/vod/VodCategoryPage";
 import VodTopicPage from "./pages/vod/VodTopicPage";
-import VodVideoListPage from "./pages/vod/VodVideoListPage";
 import AdminLayout from "./components/admin/AdminLayout";
 import AdminHome from "./pages/admin/AdminHome";
 import ClassroomVideos from "./pages/admin/classroom/ClassroomVideos";
@@ -93,9 +91,8 @@ const AppContent = () => {
           <Route path="/login" element={<LoginPage />} />
 
           <Route path="/vod" element={<VodHome />} />
-          <Route path="/vod/category/:categoryId" element={<VodCategoryPage />} />
-          <Route path="/vod/category/:categoryId/topics" element={<VodTopicPage />} />
-          <Route path="/vod/topics/:topicId/videos" element={<VodVideoListPage />} />
+          <Route path="/vod/topic/:topicId" element={<VodTopicPage />} />
+          <Route path="/vod/topics/:topicId/videos" element={<VodTopicPage />} />
           <Route path="/vod/video/:videoId" element={<VodDetail />} />
 
           <Route path="/classroom" element={<ClassroomHome />} />
