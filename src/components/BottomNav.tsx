@@ -8,10 +8,6 @@ export default function BottomNav() {
   const { user, role } = useAuth();
   const pathname = location.pathname;
 
-  if (pathname.startsWith("/admin")) {
-    return null;
-  }
-
   // ⭐ VOD active 정확하게 체크
   const isVodActive = pathname === "/vod" || pathname.startsWith("/vod/");
 
@@ -25,7 +21,7 @@ export default function BottomNav() {
   };
 
   // ⭐ 역할별 마이페이지 분기
-  const myPath = role === "admin" ? "/admin/my" : "/my";
+  const myPath = "/my";
 
   const menu = [
     {
@@ -61,11 +57,7 @@ export default function BottomNav() {
       label: "마이",
       icon: UserSquare,
       to: myPath,
-      active:
-        pathname === "/my" ||
-        pathname.startsWith("/student/my") ||
-        pathname.startsWith("/admin/my") ||
-        pathname.startsWith("/vod/my"),
+      active: pathname === "/my" || pathname.startsWith("/my/"),
     },
   ];
 

@@ -17,11 +17,7 @@ const ProtectedRoute = ({ children, allow }: Props) => {
   const location = useLocation();
 
   // 🔹 마이탭 경로인지 체크
-  const isMyTab =
-    location.pathname.startsWith("/my") ||
-    location.pathname.startsWith("/student/my") ||
-    location.pathname.startsWith("/vod/my") ||
-    location.pathname.startsWith("/admin/my");
+  const isMyTab = location.pathname.startsWith("/my");
 
   // 🔹 홈("/")은 항상 공개
   if (location.pathname === "/") {
