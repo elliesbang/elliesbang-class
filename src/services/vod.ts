@@ -19,10 +19,20 @@ export async function fetchVodCategories() {
 }
 
 export async function fetchVodTopics() {
-  const { data, error } = await supabase
-    .from("vod_topics")
-    .select("id, title, description, icon_url, category_id")
-    .order("id", { ascending: true });
+  try {
+    const res = await fetch("/api/vod-topics");
 
-  return { data: (data ?? []) as VodTopic[], error };
+    if (!res.ok) {
+      return {
+        data: [],
+        error: new Error(`Failed to load VOD topics: ${res.statusText}`),
+      };
+    }
+
+    const data = (await res.json()) as VodTopic[];
+
+    return { data, error: null };
+  } catch (error) {
+    return { data: [], error };
+  }
 }
