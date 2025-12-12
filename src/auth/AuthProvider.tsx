@@ -7,18 +7,21 @@ type AuthContextType = {
   user: any;
   role: UserRole;
   loading: boolean;
+  roleReady: boolean;
 };
 
 const AuthContext = createContext<AuthContextType>({
   user: null,
   role: null,
   loading: true,
+  roleReady: false, 
 });
 
 export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const [user, setUser] = useState<any>(null);
   const [role, setRole] = useState<UserRole>(null);
   const [loading, setLoading] = useState(true);
+  const [roleReady, setRoleReady] = useState(false);
 
   // OAuth 리다이렉트 후 role 저장 함수
   const saveOAuthRole = async (session: any) => {
@@ -62,6 +65,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
           setUser(data.session.user);
           const userRole = data.session.user.user_metadata?.role ?? null;
           setRole(userRole as UserRole);
+          setRoleReady(true);
         }
       } catch (err) {
         // 여기서 storage 관련 에러를 잡아줌
@@ -89,10 +93,12 @@ if (typeof window !== "undefined") {
         setUser(session.user);
         const userRole = session.user.user_metadata?.role ?? null;
         setRole(userRole as UserRole);
+        setRoleReady(true); 
       } else {
         if (!isMounted) return;
         setUser(null);
         setRole(null);
+        setRoleReady(true);
       }
     } catch (err) {
       console.error("onAuthStateChange error:", err);
