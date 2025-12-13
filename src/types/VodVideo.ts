@@ -1,6 +1,8 @@
 export type VodCategory = {
   id: number;
   name: string;
+  parent_id?: number | null;
+  order_num?: number | null;
 };
 
 export type VodVideo = {
