@@ -13,9 +13,8 @@ export type VodTopic = {
 export async function fetchVodCategories() {
   const { data, error } = await supabase
     .from("vod_category")
-    .select("id, name, parent_id")
-    .not("parent_id", "is", null)
-    .order("order", { ascending: true, nullsLast: true })
+    .select("id, name, parent_id, order_num")
+    .order("order_num", { ascending: true, nullsLast: true })
     .order("id", { ascending: true });
 
   return { data: (data ?? []) as VodCategory[], error };
