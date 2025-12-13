@@ -5,6 +5,7 @@ export type VodTopic = {
   id: number;
   title: string;
   description: string | null;
+  order?: number | null;
   icon_url: string | null;
   category_id: number | null;
 };
@@ -12,27 +13,21 @@ export type VodTopic = {
 export async function fetchVodCategories() {
   const { data, error } = await supabase
     .from("vod_category")
-    .select("id, name")
+    .select("id, name, parent_id")
+    .not("parent_id", "is", null)
+    .order("order", { ascending: true, nullsLast: true })
     .order("id", { ascending: true });
 
   return { data: (data ?? []) as VodCategory[], error };
 }
 
-export async function fetchVodTopics() {
-  try {
-    const res = await fetch("/api/vod-topics");
+export async function fetchVodTopics(categoryId: number) {
+  const { data, error } = await supabase
+    .from("vod_topics")
+    .select("id, title, description, order, icon_url, category_id")
+    .eq("category_id", categoryId)
+    .order("order", { ascending: true, nullsLast: true })
+    .order("id", { ascending: true });
 
-    if (!res.ok) {
-      return {
-        data: [],
-        error: new Error(`Failed to load VOD topics: ${res.statusText}`),
-      };
-    }
-
-    const data = (await res.json()) as VodTopic[];
-
-    return { data, error: null };
-  } catch (error) {
-    return { data: [], error };
-  }
+  return { data: (data ?? []) as VodTopic[], error };
 }
