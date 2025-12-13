@@ -46,7 +46,7 @@ export default function VodVideoListPage() {
           .from("vod_videos")
           .select("id, title, level, thumbnail_url, duration")
           .eq("topic_id", idNum)
-          .order("order", { ascending: true }),
+          .order("order_num", { ascending: true }),
       ]);
 
       if (topicRes.error) {
