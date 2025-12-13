@@ -1,6 +1,5 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import VodTopicCard from "@/components/vod/VodTopicCard";
 import { fetchVodCategories, fetchVodTopics } from "@/services/vod";
 import type { VodTopic } from "@/services/vod";
 import type { VodCategory } from "@/types/VodVideo";
@@ -8,68 +7,101 @@ import type { VodCategory } from "@/types/VodVideo";
 export default function VodHome() {
   const [categories, setCategories] = useState<VodCategory[]>([]);
   const [topics, setTopics] = useState<VodTopic[]>([]);
-  const [selectedCategory, setSelectedCategory] = useState<number | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+  const [selectedCategoryId, setSelectedCategoryId] = useState<number | null>(null);
+  const [categoriesLoading, setCategoriesLoading] = useState(true);
+  const [topicsLoading, setTopicsLoading] = useState(false);
+  const [categoryError, setCategoryError] = useState<string | null>(null);
+  const [topicError, setTopicError] = useState<string | null>(null);
   const navigate = useNavigate();
 
   useEffect(() => {
-    async function load() {
-      setLoading(true);
-      setError(null);
+    async function loadCategories() {
+      setCategoriesLoading(true);
+      setCategoryError(null);
 
-      const [categoryRes, topicRes] = await Promise.all([
-        fetchVodCategories(),
-        fetchVodTopics(),
-      ]);
+      const categoryRes = await fetchVodCategories();
 
       if (categoryRes.error) {
-        setError("카테고리를 불러오지 못했습니다.");
+        setCategoryError("카테고리를 불러오지 못했습니다.");
         setCategories([]);
+        setSelectedCategoryId(null);
       } else {
         setCategories(categoryRes.data);
+        setSelectedCategoryId(categoryRes.data[0]?.id ?? null);
       }
 
+      setCategoriesLoading(false);
+    }
+
+    void loadCategories();
+  }, []);
+
+  useEffect(() => {
+    if (selectedCategoryId === null) {
+      setTopics([]);
+      return;
+    }
+
+    let cancelled = false;
+
+    async function loadTopics() {
+      setTopicsLoading(true);
+      setTopicError(null);
+
+      const topicRes = await fetchVodTopics(selectedCategoryId);
+
+      if (cancelled) return;
+
       if (topicRes.error) {
-        setError("토픽을 불러오지 못했습니다.");
+        setTopicError("토픽을 불러오지 못했습니다.");
         setTopics([]);
       } else {
         setTopics(topicRes.data);
       }
 
-      setLoading(false);
+      setTopicsLoading(false);
     }
 
-    load();
-  }, []);
+    void loadTopics();
 
-  const filteredTopics = useMemo(() => {
-    if (selectedCategory === null) return topics;
-    return topics.filter((topic) => topic.category_id === selectedCategory);
-  }, [selectedCategory, topics]);
+    return () => {
+      cancelled = true;
+    };
+  }, [selectedCategoryId]);
 
   const renderContent = () => {
-    if (loading) {
+    if (categoriesLoading || topicsLoading) {
       return <p className="text-center text-gray-500 p-6">불러오는 중...</p>;
     }
 
-    if (error) {
-      return <p className="text-center text-red-600 p-6">{error}</p>;
+    if (categoryError || topicError) {
+      return (
+        <p className="text-center text-red-600 p-6">{categoryError ?? topicError}</p>
+      );
     }
 
-    if (filteredTopics.length === 0) {
-      return <p className="text-center text-sm text-gray-500 p-6">토픽이 없습니다.</p>;
+    if (topics.length === 0) {
+      return (
+        <p className="text-center text-sm text-gray-500 p-6">
+          이 카테고리에 등록된 강의가 없습니다.
+        </p>
+      );
     }
 
     return (
-      <div className="grid grid-cols-2 md:grid-cols-5 gap-4 md:gap-6">
-        {filteredTopics.map((topic) => (
-          <VodTopicCard
+      <div className="space-y-3">
+        {topics.map((topic) => (
+          <button
             key={topic.id}
-            title={topic.title}
-            iconUrl={topic.icon_url}
-            onClick={() => navigate(`/vod/topics/${topic.id}/videos`)}
-          />
+            type="button"
+            onClick={() => navigate(`/vod/topic/${topic.id}`)}
+            className="w-full text-left rounded-xl border border-[#f1f1f1] bg-white p-4 shadow-sm transition hover:border-[#ffd331]"
+          >
+            <p className="text-base font-semibold text-[#404040]">{topic.title}</p>
+            {topic.description && (
+              <p className="mt-1 text-sm text-[#7a6f68]">{topic.description}</p>
+            )}
+          </button>
         ))}
       </div>
     );
@@ -89,19 +121,12 @@ export default function VodHome() {
       <div className="sticky top-0 z-20 -mx-4 md:-mx-6 bg-white">
         <div className="overflow-x-auto px-4 md:px-6 py-3">
           <div className="flex gap-2 w-max">
-            <button
-              type="button"
-              className={filterButtonClass(selectedCategory === null)}
-              onClick={() => setSelectedCategory(null)}
-            >
-              전체
-            </button>
             {categories.map((category) => (
               <button
                 key={category.id}
                 type="button"
-                className={filterButtonClass(selectedCategory === category.id)}
-                onClick={() => setSelectedCategory(category.id)}
+                className={filterButtonClass(selectedCategoryId === category.id)}
+                onClick={() => setSelectedCategoryId(category.id)}
               >
                 {category.name}
               </button>
