@@ -40,12 +40,12 @@ if (!parsedId) {
 if (!user) {
   return;
 }
-      // 관리자는 바로 통과
       if (role === "admin") {
-        setVerified(true);
-        setLoading(false);
-        return;
-      }
+  setVerified(true);
+  setShowModal(false); // ⭐ 이 줄이 핵심
+  setLoading(false);
+  return;
+}
 
       // 1. 강의실 시즌 정보 조회
       const { data: classroom, error } = await supabase
