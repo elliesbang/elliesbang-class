@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { useAuth } from "@/auth/AuthProvider";
+import { supabase } from "@/lib/supabaseClient";
 import ClassroomAccessCodeModal from "@/modals/ClassroomAccessCodeModal";
 import NoticesTab from "@/pages/student/tabs/NoticesTab";
 import ClassroomVideosTab from "@/pages/student/tabs/ClassroomVideosTab";
@@ -19,39 +20,99 @@ const TABS = [
 export default function ClassroomDetail() {
   const { classroomId } = useParams();
   const navigate = useNavigate();
-  const { role } = useAuth();
+  const { role, user } = useAuth(); // ✅ user 추가 (수정)
 
   const parsedId = useMemo(() => Number(classroomId ?? "0"), [classroomId]);
   const [activeTab, setActiveTab] = useState<(typeof TABS)[number]["key"]>("video");
   const [verified, setVerified] = useState(false);
   const [showModal, setShowModal] = useState(false);
+  const [loading, setLoading] = useState(true); // ✅ loading 추가 (수정)
 
   useEffect(() => {
-    if (role === "admin") {
-      setVerified(true);
-      return;
-    }
+    const checkSeasonAccess = async () => {
+      if (!parsedId || !user) {
+        setLoading(false); // ✅ 무한 로딩 방지 (수정)
+        return;
+      }
 
-    const verifiedRaw = localStorage.getItem("verifiedClassrooms");
-    const verifiedList = verifiedRaw ? (JSON.parse(verifiedRaw) as number[]) : [];
-    if (parsedId && verifiedList.includes(parsedId)) {
-      setVerified(true);
-    } else {
-      setShowModal(true);
-    }
-  }, [parsedId, role]);
+      // 관리자는 바로 통과
+      if (role === "admin") {
+        setVerified(true);
+        setLoading(false);
+        return;
+      }
 
-  const handleCodeSuccess = () => {
-    const verifiedRaw = localStorage.getItem("verifiedClassrooms");
-    const verifiedList = verifiedRaw ? (JSON.parse(verifiedRaw) as number[]) : [];
-    if (parsedId && !verifiedList.includes(parsedId)) {
-      verifiedList.push(parsedId);
-      localStorage.setItem("verifiedClassrooms", JSON.stringify(verifiedList));
-    }
+      // 1. 강의실 시즌 정보 조회
+      const { data: classroom, error } = await supabase
+        .from("classrooms")
+        .select("start_date, end_date")
+        .eq("id", parsedId)
+        .single();
+
+      if (error || !classroom) {
+        setLoading(false);
+        return;
+      }
+
+      const today = new Date();
+      const startDate = new Date(classroom.start_date);
+      const endDate = new Date(classroom.end_date);
+
+      // 시즌 외 → 접근 불가
+      if (today < startDate || today > endDate) {
+        setVerified(false);
+        setShowModal(false);
+        setLoading(false);
+        return;
+      }
+
+      // 2. 시즌 인증 여부 확인
+      const { data: access } = await supabase
+        .from("class_season_access")
+        .select("id")
+        .eq("user_id", user.id)
+        .eq("class_id", parsedId)
+        .eq("season_start_date", classroom.start_date)
+        .eq("season_end_date", classroom.end_date)
+        .maybeSingle();
+
+      if (access) {
+        setVerified(true);
+        setShowModal(false);
+      } else {
+        setVerified(false);
+        setShowModal(true);
+      }
+
+      setLoading(false);
+    };
+
+    checkSeasonAccess();
+  }, [parsedId, role, user]);
+
+  const handleCodeSuccess = async () => {
+    if (!user || !parsedId) return;
+
+    const { data: classroom } = await supabase
+      .from("classrooms")
+      .select("start_date, end_date")
+      .eq("id", parsedId)
+      .single();
+
+    if (!classroom) return;
+
+    await supabase.from("class_season_access").insert({
+      user_id: user.id,
+      class_id: parsedId,
+      season_start_date: classroom.start_date,
+      season_end_date: classroom.end_date,
+    });
 
     setVerified(true);
     setShowModal(false);
   };
+
+  if (loading) return null; // ✅ loading 처리 (수정)
 
   if (!classroomId || Number.isNaN(parsedId)) {
     return (
