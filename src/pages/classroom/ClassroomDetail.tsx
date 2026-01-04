@@ -112,7 +112,13 @@ export default function ClassroomDetail() {
     setShowModal(false);
   };
 
-  if (loading) return null; // ✅ loading 처리 (수정)
+  if (loading) {
+  return (
+    <div className="p-6 text-center text-sm text-gray-400">
+      강의실을 불러오는 중입니다…
+    </div>
+  );
+}
 
   if (!classroomId || Number.isNaN(parsedId)) {
     return (
