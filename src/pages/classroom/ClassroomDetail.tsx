@@ -1,7 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { useAuth } from "@/auth/AuthProvider";
-import { supabase } from "@/lib/supabaseClient";
 import ClassroomAccessCodeModal from "@/modals/ClassroomAccessCodeModal";
 import NoticesTab from "@/pages/student/tabs/NoticesTab";
 import ClassroomVideosTab from "@/pages/student/tabs/ClassroomVideosTab";
@@ -20,110 +19,49 @@ const TABS = [
 export default function ClassroomDetail() {
   const { classroomId } = useParams();
   const navigate = useNavigate();
-  const { role, user } = useAuth(); // ✅ user 추가 (수정)
+  const { role } = useAuth();
 
   const parsedId = useMemo(() => Number(classroomId ?? "0"), [classroomId]);
-  const [activeTab, setActiveTab] = useState<(typeof TABS)[number]["key"]>("video");
+  const [activeTab, setActiveTab] =
+    useState<(typeof TABS)[number]["key"]>("video");
   const [verified, setVerified] = useState(false);
   const [showModal, setShowModal] = useState(false);
-  const [loading, setLoading] = useState(true); // ✅ loading 추가 (수정)
 
   useEffect(() => {
-    const checkSeasonAccess = async () => {
-      
-if (!parsedId) {
-  setLoading(false);
-  return;
-}
+    if (role === "admin") {
+      setVerified(true);
+      return;
+    }
 
-// user가 아직 없으면 기다린다 (loading 유지)
-if (!user) {
-  return;
-}
-      if (role === "admin") {
-  setVerified(true);
-  setShowModal(false); // ⭐ 이 줄이 핵심
-  setLoading(false);
-  return;
-}
+    const verifiedRaw = localStorage.getItem("verifiedClassrooms");
+    const verifiedList = verifiedRaw
+      ? (JSON.parse(verifiedRaw) as number[])
+      : [];
 
-      // 1. 강의실 시즌 정보 조회
-      const { data: classroom, error } = await supabase
-        .from("classrooms")
-        .select("start_date, end_date")
-        .eq("id", parsedId)
-        .single();
+    if (parsedId && verifiedList.includes(parsedId)) {
+      setVerified(true);
+    } else {
+      setShowModal(true);
+    }
+  }, [parsedId, role]);
 
-      if (error || !classroom) {
-        setLoading(false);
-        return;
-      }
+  const handleCodeSuccess = () => {
+    const verifiedRaw = localStorage.getItem("verifiedClassrooms");
+    const verifiedList = verifiedRaw
+      ? (JSON.parse(verifiedRaw) as number[])
+      : [];
 
-      const today = new Date();
-      const startDate = new Date(classroom.start_date);
-      const endDate = new Date(classroom.end_date);
-
-      // 시즌 외 → 접근 불가
-      if (today < startDate || today > endDate) {
-        setVerified(false);
-        setShowModal(false);
-        setLoading(false);
-        return;
-      }
-
-      // 2. 시즌 인증 여부 확인
-      const { data: access } = await supabase
-        .from("class_season_access")
-        .select("id")
-        .eq("user_id", user.id)
-        .eq("class_id", parsedId)
-        .eq("season_start_date", classroom.start_date)
-        .eq("season_end_date", classroom.end_date)
-        .maybeSingle();
-
-      if (access) {
-        setVerified(true);
-        setShowModal(false);
-      } else {
-        setVerified(false);
-        setShowModal(true);
-      }
-
-      setLoading(false);
-    };
-
-    checkSeasonAccess();
-  }, [parsedId, role, user]);
-
-  const handleCodeSuccess = async () => {
-    if (!user || !parsedId) return;
-
-    const { data: classroom } = await supabase
-      .from("classrooms")
-      .select("start_date, end_date")
-      .eq("id", parsedId)
-      .single();
-
-    if (!classroom) return;
-
-    await supabase.from("class_season_access").insert({
-      user_id: user.id,
-      class_id: parsedId,
-      season_start_date: classroom.start_date,
-      season_end_date: classroom.end_date,
-    });
+    if (parsedId && !verifiedList.includes(parsedId)) {
+      verifiedList.push(parsedId);
+      localStorage.setItem(
+        "verifiedClassrooms",
+        JSON.stringify(verifiedList)
+      );
+    }
 
     setVerified(true);
     setShowModal(false);
   };
-
-  if (loading) {
-  return (
-    <div className="p-6 text-center text-sm text-gray-400">
-      강의실을 불러오는 중입니다…
-    </div>
-  );
-}
 
   if (!classroomId || Number.isNaN(parsedId)) {
     return (
@@ -136,7 +74,9 @@ if (!user) {
   return (
     <div className="min-h-screen bg-[#fffdf6] px-4 pb-24 pt-4">
       <div className="mb-4 flex items-center justify-between">
-        <h1 className="text-xl font-bold text-[#404040]">강의실 #{classroomId}</h1>
+        <h1 className="text-xl font-bold text-[#404040]">
+          강의실 #{classroomId}
+        </h1>
         <button
           type="button"
           onClick={() => navigate(-1)}
@@ -162,16 +102,26 @@ if (!user) {
         ))}
       </div>
 
-      {verified && activeTab === "video" && <ClassroomVideosTab classroomId={parsedId} />}
+      {verified && activeTab === "video" && (
+        <ClassroomVideosTab classroomId={parsedId} />
+      )}
       {verified && activeTab === "material" && (
         <ClassroomMaterialsTab classroomId={parsedId} />
       )}
-      {verified && activeTab === "notice" && <NoticesTab classroomId={parsedId} />}
+      {verified && activeTab === "notice" && (
+        <NoticesTab classroomId={parsedId} />
+      )}
       {verified && activeTab === "assignment" && (
-        <ClassroomAssignmentsTab classroomId={parsedId} classId={parsedId} />
+        <ClassroomAssignmentsTab
+          classroomId={parsedId}
+          classId={parsedId}
+        />
       )}
       {verified && activeTab === "feedback" && (
-        <ClassroomFeedbackTab classroomId={parsedId} classId={parsedId} />
+        <ClassroomFeedbackTab
+          classroomId={parsedId}
+          classId={parsedId}
+        />
       )}
 
       {!verified && role !== "admin" && showModal && (
