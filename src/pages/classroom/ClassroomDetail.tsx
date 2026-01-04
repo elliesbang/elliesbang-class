@@ -30,11 +30,16 @@ export default function ClassroomDetail() {
 
   useEffect(() => {
     const checkSeasonAccess = async () => {
-      if (!parsedId || !user) {
-        setLoading(false); // ✅ 무한 로딩 방지 (수정)
-        return;
-      }
+      
+if (!parsedId) {
+  setLoading(false);
+  return;
+}
 
+// user가 아직 없으면 기다린다 (loading 유지)
+if (!user) {
+  return;
+}
       // 관리자는 바로 통과
       if (role === "admin") {
         setVerified(true);
