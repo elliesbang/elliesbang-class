@@ -109,11 +109,16 @@ const FeedbackCard = ({ item }: { item: AssignmentFeedbackItem }) => {
     if (!item.feedbackId) return;
 
     const fetchComments = async () => {
-      const { data } = await supabase
+      const { data, error } = await supabase
         .from("feedback_comments")
         .select("id, content, role, created_at")
         .eq("feedback_id", item.feedbackId)
         .order("created_at", { ascending: true });
+
+      if (error) {
+        console.error("댓글을 불러오는 중 오류가 발생했습니다.", error);
+        return;
+      }
 
       setComments(data || []);
     };
@@ -122,30 +127,38 @@ const FeedbackCard = ({ item }: { item: AssignmentFeedbackItem }) => {
   }, [item.feedbackId]);
 
   const handleSubmit = async () => {
-    if (!commentText.trim() || !user) return;
+    if (!commentText.trim()) return;
 
     setSending(true);
 
     const { error } = await supabase.from("feedback_comments").insert({
       feedback_id: item.feedbackId,
-      user_id: user.id,
-      role: user.role === "admin" ? "admin" : "student",
+      user_id: user?.id,
+      role: user?.role === "admin" ? "admin" : "student",
       content: commentText,
     });
 
     setSending(false);
 
-    if (!error) {
-      setCommentText("");
-
-      const { data } = await supabase
-        .from("feedback_comments")
-        .select("id, content, role, created_at")
-        .eq("feedback_id", item.feedbackId)
-        .order("created_at", { ascending: true });
-
-      setComments(data || []);
+    if (error) {
+      console.error("댓글 등록 중 오류가 발생했습니다.", error);
+      return;
     }
+
+    setCommentText("");
+
+    const { data, error: fetchError } = await supabase
+      .from("feedback_comments")
+      .select("id, content, role, created_at")
+      .eq("feedback_id", item.feedbackId)
+      .order("created_at", { ascending: true });
+
+    if (fetchError) {
+      console.error("댓글을 불러오는 중 오류가 발생했습니다.", fetchError);
+      return;
+    }
+
+    setComments(data || []);
   };
 
   return (
@@ -188,7 +201,10 @@ const FeedbackCard = ({ item }: { item: AssignmentFeedbackItem }) => {
           </div>
         ))}
 
-        <div className="flex gap-2">
+        <form className="flex gap-2" onSubmit={(event) => {
+          event.preventDefault();
+          handleSubmit();
+        }}>
           <textarea
             value={commentText}
             onChange={(e) => setCommentText(e.target.value)}
@@ -197,13 +213,13 @@ const FeedbackCard = ({ item }: { item: AssignmentFeedbackItem }) => {
             className="flex-1 border rounded-lg p-2 text-sm"
           />
           <button
-            onClick={handleSubmit}
-            disabled={sending}
+            type="submit"
+            disabled={sending || !user || commentText.trim().length === 0}
             className="px-3 py-2 rounded-lg bg-[#ffd331] text-sm font-medium"
           >
             등록
           </button>
-        </div>
+        </form>
       </div>
     </div>
   );

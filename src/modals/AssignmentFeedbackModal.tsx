@@ -40,6 +40,9 @@ const AssignmentFeedbackModal = ({
   const [feedbackText, setFeedbackText] = useState("");
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [comments, setComments] = useState<
+    { id: number; content: string; role: string; created_at: string }[]
+  >([]);
 
   useEffect(() => {
     if (open && assignment) {
@@ -47,6 +50,32 @@ const AssignmentFeedbackModal = ({
       setError(null);
     }
   }, [assignment, open]);
+
+  useEffect(() => {
+    const fetchComments = async () => {
+      if (!assignment?.feedback?.id) {
+        setComments([]);
+        return;
+      }
+
+      const { data, error: fetchError } = await supabase
+        .from("feedback_comments")
+        .select("id, content, role, created_at")
+        .eq("feedback_id", assignment.feedback.id)
+        .order("created_at", { ascending: true });
+
+      if (fetchError) {
+        console.error("댓글을 불러오는 중 오류가 발생했습니다.", fetchError);
+        return;
+      }
+
+      setComments(data || []);
+    };
+
+    if (open) {
+      fetchComments();
+    }
+  }, [assignment?.feedback?.id, open]);
 
   if (!open || !assignment) return null;
 
@@ -161,6 +190,33 @@ const AssignmentFeedbackModal = ({
                 placeholder="학생에게 전달할 피드백을 입력해주세요."
                 disabled={saving}
               />
+
+              <div className="space-y-2">
+                <p className="text-sm font-semibold text-[#404040]">댓글</p>
+                {comments.length === 0 ? (
+                  <div className="rounded-lg border border-dashed p-3 text-xs text-gray-500">
+                    등록된 댓글이 없습니다.
+                  </div>
+                ) : (
+                  <div className="space-y-2">
+                    {comments.map((comment) => (
+                      <div
+                        key={comment.id}
+                        className={`rounded-lg px-3 py-2 text-xs ${
+                          comment.role === "admin"
+                            ? "bg-[#fff7cc] border-l-4 border-[#ffd331]"
+                            : "bg-gray-100"
+                        }`}
+                      >
+                        {comment.content}
+                        <div className="mt-1 text-[10px] text-gray-400">
+                          {new Date(comment.created_at).toLocaleString("ko-KR")}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
 
               {error && (
                 <div className="rounded-lg border border-red-200 bg-red-50 p-2 text-xs text-red-600">
