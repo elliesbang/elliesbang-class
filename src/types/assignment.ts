@@ -1,4 +1,5 @@
 export interface AssignmentFeedbackItem {
+  feedbackId: number;
   assignmentId: number;
   sessionNo?: number | null;
   title?: string | null;
