@@ -150,6 +150,7 @@ export const useAssignmentFeedback = ({
           if (!assignment) return null;
 
           return {
+            feedbackId: feedback.id,
             assignmentId: assignment.id,
             sessionNo: assignment.session_no ?? null,
             title: assignment.title ?? "제목 없는 과제",
