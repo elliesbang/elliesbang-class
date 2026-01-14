@@ -1,15 +1,13 @@
-import { useEffect, useMemo, useState } from "react";
+import { useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "../../auth/AuthProvider";
 import { useLogout } from "../../hooks/useLogout";
-import { supabase } from "../../lib/supabaseClient";
 import NotificationPreferences from "@/components/NotificationPreferences";
 
 const StudentMy = () => {
   const navigate = useNavigate();
   const { user } = useAuth();
   const logout = useLogout();
-  const [hasVodPurchase, setHasVodPurchase] = useState(false);
 
   const displayName = useMemo(
     () => user?.user_metadata?.name || user?.email || "수강생",
@@ -21,31 +19,9 @@ const StudentMy = () => {
     [user]
   );
 
-  useEffect(() => {
-    const loadVodPurchases = async () => {
-      if (!user) return;
-
-      const { data, error } = await supabase
-        .from("vod_purchases")
-        .select("id")
-        .eq("user_id", user.id)
-        .limit(1);
-
-      if (error) {
-        console.error("VOD 구매내역 조회 실패", error);
-        return;
-      }
-
-      setHasVodPurchase((data ?? []).length > 0);
-    };
-
-    loadVodPurchases();
-  }, [user]);
-
   const menuItems = [
     { label: "강의실 바로가기", path: "/student/classroom" },
     { label: "내 알림 보기", path: "/user-notifications" },
-    hasVodPurchase ? { label: "VOD 구매내역", path: "/vod" } : null,
   ].filter(Boolean) as { label: string; path: string }[];
 
   return (

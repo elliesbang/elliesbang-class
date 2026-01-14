@@ -1,6 +1,6 @@
 export type AuthModalDetail = {
   mode: "login" | "signup";
-  role?: "student" | "vod" | "admin" | null;
+  role?: "student" | "admin" | null;
   message?: string;
 };
 
@@ -10,14 +10,14 @@ export const openAuthModal = (detail: AuthModalDetail) => {
 };
 
 export const openLoginModal = (
-  role?: "student" | "vod" | "admin" | null,
+  role?: "student" | "admin" | null,
   message?: string
 ) => {
   openAuthModal({ mode: "login", role, message });
 };
 
 export const openSignupModal = (
-  role?: "student" | "vod" | "admin" | null,
+  role?: "student" | "admin" | null,
   message?: string
 ) => {
   openAuthModal({ mode: "signup", role, message });

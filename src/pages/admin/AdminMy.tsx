@@ -22,7 +22,6 @@ const AdminMy = () => {
   const menuItems = [
     { label: "강의실 관리", path: "/admin/classroom/videos" },
     { label: "유저 관리", path: "/admin/users" },
-    { label: "VOD 관리", path: "/admin/vod" },
     { label: "전체 공지 관리", path: "/admin/notices" },
   ];
 

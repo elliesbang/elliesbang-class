@@ -5,11 +5,7 @@ import { BrowserRouter, Routes, Route, useLocation, Navigate } from "react-route
 import { AuthProvider, useAuth } from "./auth/AuthProvider";
 import ProtectedRoute from "./auth/ProtectedRoute";
 import StudentMy from "./pages/student/StudentMy";
-import VodMy from "./pages/vod/VodMy";
 import Home from "./pages/Home";
-import VodHome from "./pages/vod/VodHome";
-import VodDetail from "./pages/vod/VodDetail";
-import VodTopicPage from "./pages/vod/VodTopicPage";
 import AdminLayout from "./components/admin/AdminLayout";
 import AdminHome from "./pages/admin/AdminHome";
 import ClassroomVideos from "./pages/admin/classroom/ClassroomVideos";
@@ -17,10 +13,8 @@ import ClassroomMaterials from "./pages/admin/classroom/ClassroomMaterials";
 import ClassroomNotices from "./pages/admin/classroom/ClassroomNotices";
 import AssignmentList from "./pages/admin/AssignmentList";
 import GlobalNotices from "./pages/admin/notices/GlobalNotices";
-import VodManager from "./pages/admin/vod/VodManager";
 import UserManage from "./pages/admin/users/UserManage";
 import StudentUsers from "./pages/admin/users/StudentUsers";
-import VodUsers from "./pages/admin/users/VodUsers";
 import ClassManager from "./pages/admin/class/ClassManager";
 import ClassroomCreate from "./pages/admin/classroom/ClassroomCreate";
 import BottomNav from "./components/BottomNav";
@@ -49,14 +43,13 @@ const MyPage = () => {
   // 2) role 결정 후 처리
   if (role === "admin") return <Navigate to="/admin" replace />;
   if (role === "student") return <StudentMy />;
-  if (role === "vod") return <VodMy />;
 
   return <Navigate to="/" replace />;
 };
 
 const AppContent = () => {
   const [modalMode, setModalMode] = useState<null | "login" | "signup">(null);
-  const [selectedRole, setSelectedRole] = useState<"student" | "vod" | "admin" | null>(null);
+  const [selectedRole, setSelectedRole] = useState<"student" | "admin" | null>(null);
   const location = useLocation();
 
   const isAdminRoute = location.pathname.startsWith("/admin");
@@ -89,11 +82,6 @@ const AppContent = () => {
           <Route path="" element={<Navigate to="/" replace />} />
           <Route path="/login" element={<LoginPage />} />
 
-          <Route path="/vod" element={<VodHome />} />
-          <Route path="/vod/topic/:topicId" element={<VodTopicPage />} />
-          <Route path="/vod/topics/:topicId/videos" element={<VodTopicPage />} />
-          <Route path="/vod/video/:videoId" element={<VodDetail />} />
-
           <Route path="/classroom" element={<ClassroomHome />} />
           <Route path="/classroom/:classroomId" element={<ClassroomDetail />} />
 
@@ -102,7 +90,7 @@ const AppContent = () => {
           <Route
             path="/my"
             element={
-              <ProtectedRoute allow={["admin", "student", "vod"]}>
+              <ProtectedRoute allow={["admin", "student"]}>
                 <MyPage />
               </ProtectedRoute>
             }
@@ -112,7 +100,7 @@ const AppContent = () => {
           <Route
             path="/user-notifications"
             element={
-              <ProtectedRoute allow={["admin", "student", "vod"]}>
+              <ProtectedRoute allow={["admin", "student"]}>
                 <UserNotifications />
               </ProtectedRoute>
             }
@@ -198,17 +186,6 @@ const AppContent = () => {
           />
 
           <Route
-            path="/admin/vod"
-            element={
-              <ProtectedRoute allow={["admin"]}>
-                <AdminLayout>
-                  <VodManager />
-                </AdminLayout>
-              </ProtectedRoute>
-            }
-          />
-
-          <Route
             path="/admin/users"
             element={
               <ProtectedRoute allow={["admin"]}>
@@ -225,17 +202,6 @@ const AppContent = () => {
               <ProtectedRoute allow={["admin"]}>
                 <AdminLayout>
                   <StudentUsers />
-                </AdminLayout>
-              </ProtectedRoute>
-            }
-          />
-
-          <Route
-            path="/admin/users/vod"
-            element={
-              <ProtectedRoute allow={["admin"]}>
-                <AdminLayout>
-                  <VodUsers />
                 </AdminLayout>
               </ProtectedRoute>
             }

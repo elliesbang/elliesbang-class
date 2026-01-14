@@ -1,7 +1,7 @@
 import { useMemo, useState, useEffect } from "react";
 import { supabase } from "@/lib/supabaseClient";
 
-type Role = "admin" | "student" | "vod";
+type Role = "admin" | "student";
 
 type NotificationOption = {
   key: string;
@@ -39,7 +39,6 @@ const notificationOptions: Record<Role, NotificationOption[]> = {
       message: "같은 강의실 학생들의 과제 소식을 전달해드릴게요.",
     },
   ],
-  vod: [],
 };
 
 type Props = {

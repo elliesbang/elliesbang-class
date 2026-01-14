@@ -3,15 +3,14 @@ import { supabase } from "../lib/supabaseClient";
 
 const roles = [
   { key: "student", label: "수강생" },
-  { key: "vod", label: "VOD" },
   { key: "admin", label: "관리자" },
 ];
 
 type LoginModalProps = {
-  role: "student" | "vod" | "admin" | null;
+  role: "student" | "admin" | null;
   onClose: () => void;
   onChangeMode: (mode: "login" | "signup") => void;
-  onSelectRole: (role: "student" | "vod" | "admin") => void;
+  onSelectRole: (role: "student" | "admin") => void;
 };
 
 const LoginModal = ({ role, onClose, onChangeMode, onSelectRole }: LoginModalProps) => {

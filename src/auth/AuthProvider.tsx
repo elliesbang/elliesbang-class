@@ -2,7 +2,7 @@ import { createContext, useContext, useEffect, useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { supabase } from "../lib/supabaseClient";
 
-type UserRole = "student" | "vod" | "admin" | null;
+type UserRole = "student" | "admin" | null;
 
 type AuthContextType = {
   user: any;

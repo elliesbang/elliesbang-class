@@ -1,4 +1,4 @@
-import { Home, BookOpen, PlayCircle, Megaphone, UserSquare } from "lucide-react";
+import { Home, BookOpen, Megaphone, UserSquare } from "lucide-react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { useAuth } from "@/auth/AuthProvider";
 
@@ -7,9 +7,6 @@ export default function BottomNav() {
   const navigate = useNavigate();
   const { user, role } = useAuth();
   const pathname = location.pathname;
-
-  // ⭐ VOD active 정확하게 체크
-  const isVodActive = pathname === "/vod" || pathname.startsWith("/vod/");
 
   const handleNavigate = (target: string, key: string) => {
     if (key === "my" && role === "admin") {
@@ -42,13 +39,6 @@ export default function BottomNav() {
       icon: BookOpen,
       to: "/classroom",
       active: pathname.startsWith("/classroom"),
-    },
-    {
-      key: "vod",
-      label: "VOD",
-      icon: PlayCircle,
-      to: "/vod",
-      active: isVodActive,
     },
     {
       key: "notice",
