@@ -4,6 +4,8 @@ import { useAssignmentFeedback } from "@/hooks/useAssignmentFeedback";
 import { AssignmentFeedbackItem } from "@/types/assignment";
 import { supabase } from "@/lib/supabaseClient";
 
+const FEEDBACK_COMMENT_BUCKET = "assignments";
+
 interface ClassroomFeedbackTabProps {
   classroomId?: number;
   classId?: number;
@@ -96,8 +98,20 @@ const ClassroomFeedbackTab = ({
 const FeedbackCard = ({ item }: { item: AssignmentFeedbackItem }) => {
   const { user } = useAuth();
 
-  const [comments, setComments] = useState<any[]>([]);
+  const [comments, setComments] = useState<
+    {
+      id: number;
+      content: string | null;
+      author_role: string;
+      created_at: string;
+      image_url: string | null;
+    }[]
+  >([]);
   const [commentText, setCommentText] = useState("");
+  const [commentImageFile, setCommentImageFile] = useState<File | null>(null);
+  const [commentImagePreview, setCommentImagePreview] = useState<string | null>(
+    null
+  );
   const [sending, setSending] = useState(false);
 
   const formattedDate = new Date(item.feedbackCreatedAt).toLocaleDateString(
@@ -111,7 +125,7 @@ const FeedbackCard = ({ item }: { item: AssignmentFeedbackItem }) => {
     const fetchComments = async () => {
       const { data } = await supabase
         .from("feedback_comments")
-        .select("id, content, role, created_at")
+        .select("id, content, author_role, created_at, image_url")
         .eq("feedback_id", item.feedbackId)
         .order("created_at", { ascending: true });
 
@@ -121,26 +135,80 @@ const FeedbackCard = ({ item }: { item: AssignmentFeedbackItem }) => {
     fetchComments();
   }, [item.feedbackId]);
 
+  useEffect(() => {
+    if (!commentImageFile) {
+      setCommentImagePreview(null);
+      return;
+    }
+
+    const previewUrl = URL.createObjectURL(commentImageFile);
+    setCommentImagePreview(previewUrl);
+
+    return () => {
+      URL.revokeObjectURL(previewUrl);
+    };
+  }, [commentImageFile]);
+
+  const uploadCommentImage = async (file: File) => {
+    const fileExt = file.name.split(".").pop();
+    const fileName = `${crypto.randomUUID()}.${fileExt}`;
+    const filePath = `feedback-comments/${item.feedbackId}/${fileName}`;
+
+    const { error: uploadError } = await supabase.storage
+      .from(FEEDBACK_COMMENT_BUCKET)
+      .upload(filePath, file, {
+        upsert: false,
+      });
+
+    if (uploadError) {
+      console.error("댓글 이미지 업로드 실패", uploadError);
+      throw new Error("댓글 이미지 업로드에 실패했습니다.");
+    }
+
+    const { data } = supabase.storage
+      .from(FEEDBACK_COMMENT_BUCKET)
+      .getPublicUrl(filePath);
+
+    return data.publicUrl;
+  };
+
   const handleSubmit = async () => {
-    if (!commentText.trim() || !user) return;
+    if (!user || !item.feedbackId) return;
+
+    const trimmedText = commentText.trim();
+    const hasContent = Boolean(trimmedText || commentImageFile);
+
+    if (!hasContent) return;
 
     setSending(true);
 
+    let imageUrl: string | null = null;
+
+    if (commentImageFile) {
+      try {
+        imageUrl = await uploadCommentImage(commentImageFile);
+      } catch (uploadError) {
+        console.error("댓글 이미지 업로드 오류", uploadError);
+      }
+    }
+
     const { error } = await supabase.from("feedback_comments").insert({
       feedback_id: item.feedbackId,
-      user_id: user.id,
-      role: user.role === "admin" ? "admin" : "student",
-      content: commentText,
+      author_id: user.id,
+      author_role: "student",
+      content: trimmedText,
+      image_url: imageUrl,
     });
 
     setSending(false);
 
     if (!error) {
       setCommentText("");
+      setCommentImageFile(null);
 
       const { data } = await supabase
         .from("feedback_comments")
-        .select("id, content, role, created_at")
+        .select("id, content, author_role, created_at, image_url")
         .eq("feedback_id", item.feedbackId)
         .order("created_at", { ascending: true });
 
@@ -176,12 +244,19 @@ const FeedbackCard = ({ item }: { item: AssignmentFeedbackItem }) => {
           <div
             key={c.id}
             className={`rounded-lg px-3 py-2 text-sm ${
-              c.role === "admin"
+              c.author_role === "admin"
                 ? "bg-[#fff7cc] border-l-4 border-[#ffd331]"
                 : "bg-gray-100"
             }`}
           >
             {c.content}
+            {c.image_url && (
+              <img
+                src={c.image_url}
+                alt="댓글 이미지"
+                className="mt-2 max-h-48 w-full rounded-lg object-cover"
+              />
+            )}
             <div className="text-[10px] text-gray-400 mt-1">
               {new Date(c.created_at).toLocaleString("ko-KR")}
             </div>
@@ -189,13 +264,39 @@ const FeedbackCard = ({ item }: { item: AssignmentFeedbackItem }) => {
         ))}
 
         <div className="flex gap-2">
-          <textarea
-            value={commentText}
-            onChange={(e) => setCommentText(e.target.value)}
-            placeholder="댓글을 입력하세요"
-            rows={2}
-            className="flex-1 border rounded-lg p-2 text-sm"
-          />
+          <div className="flex flex-1 flex-col gap-2">
+            <textarea
+              value={commentText}
+              onChange={(e) => setCommentText(e.target.value)}
+              placeholder="댓글을 입력하세요"
+              rows={2}
+              className="w-full border rounded-lg p-2 text-sm"
+            />
+            <div className="flex items-center gap-2 text-xs text-gray-500">
+              <input
+                type="file"
+                accept="image/*"
+                onChange={(e) => setCommentImageFile(e.target.files?.[0] ?? null)}
+                className="text-xs"
+              />
+              {commentImageFile && (
+                <button
+                  type="button"
+                  onClick={() => setCommentImageFile(null)}
+                  className="text-xs text-red-500"
+                >
+                  이미지 제거
+                </button>
+              )}
+            </div>
+            {commentImagePreview && (
+              <img
+                src={commentImagePreview}
+                alt="업로드할 댓글 이미지 미리보기"
+                className="max-h-40 w-full rounded-lg object-cover"
+              />
+            )}
+          </div>
           <button
             onClick={handleSubmit}
             disabled={sending}

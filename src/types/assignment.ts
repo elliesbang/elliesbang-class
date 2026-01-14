@@ -1,5 +1,6 @@
 export interface AssignmentFeedbackItem {
   assignmentId: number;
+  feedbackId: number;
   sessionNo?: number | null;
   title?: string | null;
   imageUrl?: string | null;

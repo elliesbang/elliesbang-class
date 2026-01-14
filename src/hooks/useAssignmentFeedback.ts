@@ -151,6 +151,7 @@ export const useAssignmentFeedback = ({
 
           return {
             assignmentId: assignment.id,
+            feedbackId: feedback.id,
             sessionNo: assignment.session_no ?? null,
             title: assignment.title ?? "제목 없는 과제",
             imageUrl: assignment.image_url ?? null,
