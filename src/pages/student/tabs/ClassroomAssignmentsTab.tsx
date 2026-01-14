@@ -90,6 +90,18 @@ const ClassroomAssignmentsTab = ({
 
   const totalSessions = hasSessionSelection ? sessionCount ?? 0 : 0;
 
+  const resolveSessionNo = () => {
+    if (selectedSessionNo) {
+      return String(selectedSessionNo);
+    }
+
+    if (typeof sessionCount === "number") {
+      return String(sessionCount);
+    }
+
+    return FALLBACK_SESSION_NO;
+  };
+
   // 회차 드롭다운 초기값
   useEffect(() => {
     if (editingId !== null) return;
@@ -199,10 +211,7 @@ const ClassroomAssignmentsTab = ({
       return;
     }
 
-   // 🔥 session_no를 항상 문자열로 저장
-const sessionNo = hasSessionSelection
-  ? String(selectedSessionNo ?? FALLBACK_SESSION_NO)
-  : selectedSessionNo ? String(selectedSessionNo) : null;
+    const sessionNo = resolveSessionNo();
 
 
     if (!hasSubmissionContent) {
@@ -216,14 +225,14 @@ const sessionNo = hasSessionSelection
       let imageUrl = existingImageUrl ?? "";
 
       if (imageFile) {
-        imageUrl = await uploadImage(imageFile, sessionNo);
+        imageUrl = await uploadImage(imageFile);
       }
 
       const payload = {
         classroom_id: classroomKey,
         class_id: classId,
         student_id: user.id,
-        session_no: sessionNo ? String(sessionNo) : null,
+        session_no: sessionNo,
         image_url: imageUrl || null,
         link_url: linkUrl || null,
         title: title || null,
