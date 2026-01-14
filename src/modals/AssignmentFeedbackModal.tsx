@@ -3,7 +3,7 @@ import { Loader2, X } from "lucide-react";
 import { supabase } from "@/lib/supabaseClient";
 
 export type AssignmentFeedbackRecord = {
-  id: number;
+  id: string;
   assignment_id: number;
   feedback_text: string;
   created_at?: string;
