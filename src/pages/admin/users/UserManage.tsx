@@ -5,7 +5,6 @@ import { supabase } from "@/lib/supabaseClient";
 const roleOptions = [
   { value: "all", label: "전체" },
   { value: "student", label: "수강생" },
-  { value: "vod", label: "VOD" },
   { value: "admin", label: "관리자" },
 ];
 

@@ -162,16 +162,6 @@ export default function AdminSidebar({ isOpen, onClose }: Props) {
           전체 공지 관리
         </NavLink>
 
-        <NavLink
-          to="/admin/vod"
-          className={({ isActive }) =>
-            `${menuStyle} ${isActive ? "bg-[#f3efe4]" : ""}`
-          }
-        >
-          <Video size={18} />
-          VOD 관리
-        </NavLink>
-
         {/* ----------------------- */}
         {/* 사용자 관리 */}
         {/* ----------------------- */}
@@ -200,16 +190,6 @@ export default function AdminSidebar({ isOpen, onClose }: Props) {
             >
               <Users size={16} />
               수강생 관리
-            </NavLink>
-
-            <NavLink
-              to="/admin/users/vod"
-              className={({ isActive }) =>
-                `${subMenuStyle} ${isActive ? "bg-[#f3efe4]" : ""}`
-              }
-            >
-              <Users size={16} />
-              VOD 사용자 관리
             </NavLink>
           </div>
         )}

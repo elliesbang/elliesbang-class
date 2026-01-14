@@ -5,13 +5,12 @@ import { openLoginModal } from "../lib/authModal";
 
 type Props = {
   children: React.ReactNode;
-  allow?: ("student" | "vod" | "admin")[];
+  allow?: ("student" | "admin")[];
 };
 
 const ProtectedRoute = ({ children, allow }: Props) => {
   const { user, role, loading } = useAuth();
-  const [storedRole, setStoredRole] =
-    useState<"student" | "vod" | "admin" | null>(null);
+  const [storedRole, setStoredRole] = useState<"student" | "admin" | null>(null);
   const [roleReady, setRoleReady] = useState(false);
 
   const location = useLocation();
@@ -33,7 +32,7 @@ const ProtectedRoute = ({ children, allow }: Props) => {
 
     try {
       const raw = window.localStorage.getItem("role");
-      if (raw === "student" || raw === "vod" || raw === "admin") {
+      if (raw === "student" || raw === "admin") {
         setStoredRole(raw);
       }
     } catch (err) {
