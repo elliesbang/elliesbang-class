@@ -40,6 +40,15 @@ const AssignmentFeedbackModal = ({
   const [feedbackText, setFeedbackText] = useState("");
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [comments, setComments] = useState<
+    {
+      id: number;
+      content: string | null;
+      author_role: string;
+      created_at: string;
+      image_url: string | null;
+    }[]
+  >([]);
 
   useEffect(() => {
     if (open && assignment) {
@@ -47,6 +56,25 @@ const AssignmentFeedbackModal = ({
       setError(null);
     }
   }, [assignment, open]);
+
+  useEffect(() => {
+    if (!open || !assignment?.feedback?.id) {
+      setComments([]);
+      return;
+    }
+
+    const fetchComments = async () => {
+      const { data } = await supabase
+        .from("feedback_comments")
+        .select("id, content, author_role, created_at, image_url")
+        .eq("feedback_id", assignment.feedback?.id)
+        .order("created_at", { ascending: true });
+
+      setComments(data || []);
+    };
+
+    fetchComments();
+  }, [assignment?.feedback?.id, open]);
 
   if (!open || !assignment) return null;
 
@@ -185,6 +213,38 @@ const AssignmentFeedbackModal = ({
                   저장하기
                 </button>
               </div>
+
+              {comments.length > 0 && (
+                <div className="mt-4 border-t pt-3">
+                  <p className="text-sm font-semibold text-[#404040]">
+                    학생 댓글
+                  </p>
+                  <div className="mt-2 space-y-2">
+                    {comments.map((comment) => (
+                      <div
+                        key={comment.id}
+                        className={`rounded-lg px-3 py-2 text-sm ${
+                          comment.author_role === "admin"
+                            ? "bg-[#fff7cc] border-l-4 border-[#ffd331]"
+                            : "bg-gray-100"
+                        }`}
+                      >
+                        {comment.content}
+                        {comment.image_url && (
+                          <img
+                            src={comment.image_url}
+                            alt="댓글 이미지"
+                            className="mt-2 max-h-48 w-full rounded-lg object-cover"
+                          />
+                        )}
+                        <div className="mt-1 text-[10px] text-gray-400">
+                          {new Date(comment.created_at).toLocaleString("ko-KR")}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
             </div>
           </div>
         </div>
