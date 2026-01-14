@@ -120,20 +120,20 @@ const FeedbackCard = ({ item }: { item: AssignmentFeedbackItem }) => {
   const hasSession = item.sessionNo !== undefined && item.sessionNo !== null;
 
   useEffect(() => {
-    if (!item.feedbackId) return;
+    if (!item.feedbackUuid) return;
 
     const fetchComments = async () => {
       const { data } = await supabase
         .from("feedback_comments")
         .select("id, content, author_role, created_at, image_url")
-        .eq("feedback_id", item.feedbackId)
+        .eq("feedback_id", item.feedbackUuid)
         .order("created_at", { ascending: true });
 
       setComments(data || []);
     };
 
     fetchComments();
-  }, [item.feedbackId]);
+  }, [item.feedbackUuid]);
 
   useEffect(() => {
     if (!commentImageFile) {
@@ -152,7 +152,7 @@ const FeedbackCard = ({ item }: { item: AssignmentFeedbackItem }) => {
   const uploadCommentImage = async (file: File) => {
     const fileExt = file.name.split(".").pop();
     const fileName = `${crypto.randomUUID()}.${fileExt}`;
-    const filePath = `feedback-comments/${item.feedbackId}/${fileName}`;
+    const filePath = `feedback-comments/${item.feedbackUuid}/${fileName}`;
 
     const { error: uploadError } = await supabase.storage
       .from(FEEDBACK_COMMENT_BUCKET)
@@ -173,7 +173,7 @@ const FeedbackCard = ({ item }: { item: AssignmentFeedbackItem }) => {
   };
 
   const handleSubmit = async () => {
-    if (!user || !item.feedbackId) return;
+    if (!user || !item.feedbackUuid) return;
 
     const trimmedText = commentText.trim();
     const hasContent = Boolean(trimmedText || commentImageFile);
@@ -193,7 +193,7 @@ const FeedbackCard = ({ item }: { item: AssignmentFeedbackItem }) => {
     }
 
     const { error } = await supabase.from("feedback_comments").insert({
-      feedback_id: item.feedbackId,
+      feedback_id: item.feedbackUuid,
       author_id: user.id,
       author_role: "student",
       content: trimmedText,
@@ -209,7 +209,7 @@ const FeedbackCard = ({ item }: { item: AssignmentFeedbackItem }) => {
       const { data } = await supabase
         .from("feedback_comments")
         .select("id, content, author_role, created_at, image_url")
-        .eq("feedback_id", item.feedbackId)
+        .eq("feedback_id", item.feedbackUuid)
         .order("created_at", { ascending: true });
 
       setComments(data || []);

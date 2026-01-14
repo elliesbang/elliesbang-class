@@ -22,7 +22,7 @@ type AssignmentRecord = {
 };
 
 type AssignmentFeedbackRecord = {
-  id: number;
+  id: string;
   assignment_id: number;
   instructor_id: string;
   feedback_text: string;
@@ -151,7 +151,8 @@ export const useAssignmentFeedback = ({
 
           return {
             assignmentId: assignment.id,
-            feedbackId: feedback.id,
+            displayId: assignment.id,
+            feedbackUuid: feedback.id,
             sessionNo: assignment.session_no ?? null,
             title: assignment.title ?? "제목 없는 과제",
             imageUrl: assignment.image_url ?? null,
